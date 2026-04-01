@@ -25,7 +25,12 @@ defineProps<{
 </script>
 
 <template>
-  <NButton :type="type || 'primary'" :size="size || 'medium'" class="ml-2">
+  <NButton
+    :type="type || 'primary'"
+    :size="size || 'medium'"
+    class="ml-2"
+    :style="{ margin: '0 5px' }"
+  >
     <template #icon>
       <div class="transition duration-300" :style="iconStyle || {}">
         <VbenIcon :icon="icon" />
