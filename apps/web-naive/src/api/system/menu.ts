@@ -1,4 +1,4 @@
-import type {Recordable} from '@vben/types';
+import type { Recordable } from '@vben/types';
 
 import type {
   BaseData,
@@ -8,7 +8,7 @@ import type {
   UpdateStatusResponse,
 } from '#/types/common';
 
-import {requestClient} from '#/api/request';
+import { requestClient } from '#/api/request';
 
 export namespace SystemMenuApi {
   /** 徽标颜色集合 */

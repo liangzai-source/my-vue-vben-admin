@@ -1,12 +1,17 @@
 <script lang="ts" setup>
-import type {FormInst, FormItemRule, FormRules, FormValidationError,} from 'naive-ui';
+import type {
+  FormInst,
+  FormItemRule,
+  FormRules,
+  FormValidationError,
+} from 'naive-ui';
 
-import {computed, ref, useTemplateRef} from 'vue';
+import { computed, ref, useTemplateRef } from 'vue';
 
-import {IconPicker, useVbenDrawer} from '@vben/common-ui';
-import {$t} from '@vben/locales';
+import { IconPicker, useVbenDrawer } from '@vben/common-ui';
+import { $t } from '@vben/locales';
 
-import {VbenIcon} from '@vben-core/shadcn-ui';
+import { VbenIcon } from '@vben-core/shadcn-ui';
 
 import {
   NCheckbox,
@@ -19,11 +24,16 @@ import {
   NPopover,
   NRadioButton,
   NRadioGroup,
-  NSelect
+  NSelect,
 } from 'naive-ui';
 
-import {z} from '#/adapter/form';
-import {createMenuApi, isMenuNameExists, SystemMenuApi, updateMenuApi,} from '#/api/system/menu';
+import { z } from '#/adapter/form';
+import {
+  createMenuApi,
+  isMenuNameExists,
+  SystemMenuApi,
+  updateMenuApi,
+} from '#/api/system/menu';
 import MenuSelect from '#/components/common/MenuSelect.vue';
 import StatusRadios from '#/components/common/StatusRadios.vue';
 import {
@@ -31,10 +41,14 @@ import {
   handleFormError,
   isEmpty,
   refreshMenu,
-  showFormMessage
-} from "#/utils/tools";
+  showFormMessage,
+} from '#/utils/tools';
 
-import {getBadgeOptions, getBadgeTypeOptions, getMenuTypeOptions,} from '../hooks';
+import {
+  getBadgeOptions,
+  getBadgeTypeOptions,
+  getMenuTypeOptions,
+} from '../hooks';
 
 const emit = defineEmits<{
   (e: 'success'): void;
@@ -122,9 +136,9 @@ async function formConfirm() {
       loading.value = true;
       const data = formData.value;
       if (data.type === 4) {
-        data.meta = {...data.meta, link: data.linkSrc};
+        data.meta = { ...data.meta, link: data.linkSrc };
       } else if (data.type === 3) {
-        data.meta = {...data.meta, iframeSrc: data.linkSrc};
+        data.meta = { ...data.meta, iframeSrc: data.linkSrc };
       }
       delete data.linkSrc;
       try {
@@ -166,8 +180,8 @@ const [Drawer, drawerApi] = useVbenDrawer({
         if (isEmpty(data.status)) {
           data.status = 1;
         }
-        if (isEmpty(data.api_method)){
-          data.api_method = 'POST'
+        if (isEmpty(data.api_method)) {
+          data.api_method = 'POST';
         }
         formData.value = data;
       }
@@ -287,14 +301,17 @@ const getDrawerTitle = computed(() =>
           :span="12"
           path="apiPath"
         >
-            <NInput v-model:value="formData.api_path" />
+          <NInput v-model:value="formData.api_path" />
         </NFormItemGi>
         <NFormItemGi
           :label="`${$t('system.menu.requestMethod')}`"
           :span="12"
           path="apiMethod"
         >
-          <NSelect v-model:value="formData.api_method" :options="getApiMethodList()" />
+          <NSelect
+            v-model:value="formData.api_method"
+            :options="getApiMethodList()"
+          />
         </NFormItemGi>
         <NFormItemGi :label="`${$t('system.menu.status')}`" :span="12">
           <StatusRadios v-model:status="formData.status" />
