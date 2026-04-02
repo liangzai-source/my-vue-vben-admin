@@ -1,17 +1,12 @@
-<script setup lang="ts">
-import type {
-  FormInst,
-  FormItemRule,
-  FormRules,
-  FormValidationError,
-} from 'naive-ui';
+<script lang="ts" setup>
+import type {FormInst, FormItemRule, FormRules, FormValidationError,} from 'naive-ui';
 
-import { computed, ref, useTemplateRef } from 'vue';
+import {computed, ref, useTemplateRef} from 'vue';
 
-import { IconPicker, useVbenDrawer } from '@vben/common-ui';
-import { $t } from '@vben/locales';
+import {IconPicker, useVbenDrawer} from '@vben/common-ui';
+import {$t} from '@vben/locales';
 
-import { VbenIcon } from '@vben-core/shadcn-ui';
+import {VbenIcon} from '@vben-core/shadcn-ui';
 
 import {
   NCheckbox,
@@ -24,30 +19,22 @@ import {
   NPopover,
   NRadioButton,
   NRadioGroup,
-  NSelect,
+  NSelect
 } from 'naive-ui';
 
-import { z } from '#/adapter/form';
-import {
-  createMenuApi,
-  isMenuNameExists,
-  SystemMenuApi,
-  updateMenuApi,
-} from '#/api/system/menu';
+import {z} from '#/adapter/form';
+import {createMenuApi, isMenuNameExists, SystemMenuApi, updateMenuApi,} from '#/api/system/menu';
 import MenuSelect from '#/components/common/MenuSelect.vue';
 import StatusRadios from '#/components/common/StatusRadios.vue';
 import {
+  getApiMethodList,
   handleFormError,
   isEmpty,
   refreshMenu,
-  showFormMessage,
-} from '#/utils/tools';
+  showFormMessage
+} from "#/utils/tools";
 
-import {
-  getBadgeOptions,
-  getBadgeTypeOptions,
-  getMenuTypeOptions,
-} from '../hooks';
+import {getBadgeOptions, getBadgeTypeOptions, getMenuTypeOptions,} from '../hooks';
 
 const emit = defineEmits<{
   (e: 'success'): void;
@@ -56,6 +43,7 @@ const loading = ref<boolean>(false);
 const defaultFormValue = {
   type: 1,
   status: 1,
+  api_method: 'POST',
   meta: {},
 } as SystemMenuApi.SystemMenu;
 const formData = ref<SystemMenuApi.SystemMenu>(defaultFormValue);
@@ -134,9 +122,9 @@ async function formConfirm() {
       loading.value = true;
       const data = formData.value;
       if (data.type === 4) {
-        data.meta = { ...data.meta, link: data.linkSrc };
+        data.meta = {...data.meta, link: data.linkSrc};
       } else if (data.type === 3) {
-        data.meta = { ...data.meta, iframeSrc: data.linkSrc };
+        data.meta = {...data.meta, iframeSrc: data.linkSrc};
       }
       delete data.linkSrc;
       try {
@@ -178,6 +166,9 @@ const [Drawer, drawerApi] = useVbenDrawer({
         if (isEmpty(data.status)) {
           data.status = 1;
         }
+        if (isEmpty(data.api_method)){
+          data.api_method = 'POST'
+        }
         formData.value = data;
       }
     }
@@ -191,19 +182,19 @@ const getDrawerTitle = computed(() =>
 </script>
 <template>
   <Drawer
-    class="w-full max-w-[800px]"
     :loading="loading"
     :title="getDrawerTitle"
+    class="w-full max-w-[800px]"
   >
     <NForm
+      ref="form"
       :model="formData"
       :rules="formRules"
-      ref="form"
       label-placement="left"
       label-width="100px"
     >
       <NGrid :cols="24" :x-gap="24">
-        <NFormItemGi :span="24" :label="`${$t('system.menu.type')}`">
+        <NFormItemGi :label="`${$t('system.menu.type')}`" :span="24">
           <NRadioGroup v-model:value="formData.type">
             <template v-for="v in getMenuTypeOptions()" :key="v.value">
               <NRadioButton :value="v.value">{{ v.label }}</NRadioButton>
@@ -211,31 +202,31 @@ const getDrawerTitle = computed(() =>
           </NRadioGroup>
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
           :label="`${$t('system.menu.menuName')}`"
+          :span="12"
           path="name"
         >
           <NInput v-model:value="formData.name" />
         </NFormItemGi>
-        <NFormItemGi :span="12" :label="`${$t('system.menu.parent')}`">
+        <NFormItemGi :label="`${$t('system.menu.parent')}`" :span="12">
           <MenuSelect v-model:value="formData.pid" />
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
           :label="`${$t('system.menu.menuTitle')}`"
+          :span="12"
           path="meta.title"
         >
           <NInput v-model:value="formData.meta.title" />
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
-          :label="`${$t('system.menu.path')}`"
-          path="path"
           v-if="[5, 1, 3].includes(formData.type)"
+          :label="`${$t('system.menu.path')}`"
+          :span="12"
+          path="path"
         >
           <NInput v-model:value="formData.path" />
         </NFormItemGi>
-        <NFormItemGi :span="12" v-if="[1, 3].includes(formData.type)">
+        <NFormItemGi v-if="[1, 3].includes(formData.type)" :span="12">
           <template #label>
             <div class="flex items-center">
               <span>{{ $t('system.menu.activePath') }}</span>
@@ -243,8 +234,8 @@ const getDrawerTitle = computed(() =>
                 <template #trigger>
                   <div class="ml-1">
                     <VbenIcon
-                      icon="stash:question"
                       class="text-lg text-gray-600"
+                      icon="stash:question"
                     />
                   </div>
                 </template>
@@ -255,60 +246,74 @@ const getDrawerTitle = computed(() =>
           <NInput v-model:value="formData.meta.activePath" />
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
-          :label="`${$t('system.menu.icon')}`"
           v-if="[5, 1, 3, 4].includes(formData.type)"
+          :label="`${$t('system.menu.icon')}`"
+          :span="12"
         >
           <IconPicker v-model="formData.meta.icon" />
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
-          :label="`${$t('system.menu.activeIcon')}`"
           v-if="[5, 1, 3].includes(formData.type)"
+          :label="`${$t('system.menu.activeIcon')}`"
+          :span="12"
         >
           <IconPicker v-model="formData.meta.activeIcon" />
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
-          :label="`${$t('system.menu.component')}`"
-          path="component"
           v-if="formData.type === 1"
+          :label="`${$t('system.menu.component')}`"
+          :span="12"
+          path="component"
         >
           <NInput v-model:value="formData.component" />
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
-          :label="`${$t('system.menu.linkSrc')}`"
-          path="linkSrc"
           v-if="[3, 4].includes(formData.type)"
+          :label="`${$t('system.menu.linkSrc')}`"
+          :span="12"
+          path="linkSrc"
         >
           <NInput v-model:value="formData.linkSrc" />
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
           :label="`${$t('system.menu.authCode')}`"
+          :span="12"
           path="authCode"
         >
           <NInput v-model:value="formData.authCode" />
         </NFormItemGi>
-        <NFormItemGi :span="12" :label="`${$t('system.menu.status')}`">
+        <NFormItemGi
+          :label="`${$t('system.menu.requestRoute')}`"
+          :span="12"
+          path="apiPath"
+        >
+            <NInput v-model:value="formData.api_path" />
+        </NFormItemGi>
+        <NFormItemGi
+          :label="`${$t('system.menu.requestMethod')}`"
+          :span="12"
+          path="apiMethod"
+        >
+          <NSelect v-model:value="formData.api_method" :options="getApiMethodList()" />
+        </NFormItemGi>
+        <NFormItemGi :label="`${$t('system.menu.status')}`" :span="12">
           <StatusRadios v-model:status="formData.status" />
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
-          :label="`${$t('system.menu.badgeType.title')}`"
           v-if="formData.type !== 2"
+          :label="`${$t('system.menu.badgeType.title')}`"
+          :span="12"
         >
           <NSelect
-            :options="getBadgeOptions()"
             v-model:value="formData.meta.badgeType"
+            :options="getBadgeOptions()"
             clearable
           />
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
-          :label="`${$t('system.menu.badge')}`"
           v-if="formData.type !== 2"
+          :label="`${$t('system.menu.badge')}`"
+          :span="12"
         >
           <NInput
             v-model:value="formData.meta.badge"
@@ -316,17 +321,17 @@ const getDrawerTitle = computed(() =>
           />
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
-          :label="`${$t('system.menu.badgeVariants')}`"
           v-if="formData.type !== 2"
+          :label="`${$t('system.menu.badgeVariants')}`"
+          :span="12"
         >
           <NSelect
-            :options="getBadgeTypeOptions()"
             v-model:value="formData.meta.badgeVariants"
+            :options="getBadgeTypeOptions()"
             clearable
           />
         </NFormItemGi>
-        <NFormItemGi :span="12" v-if="![2].includes(formData.type)">
+        <NFormItemGi v-if="![2].includes(formData.type)" :span="12">
           <template #label>
             <div class="flex items-center justify-end">
               <span>{{ $t('system.menu.sort') }}</span>
@@ -334,8 +339,8 @@ const getDrawerTitle = computed(() =>
                 <template #trigger>
                   <div class="ml-1">
                     <VbenIcon
-                      icon="stash:question"
                       class="text-lg text-gray-600"
+                      icon="stash:question"
                     />
                   </div>
                 </template>
@@ -345,64 +350,64 @@ const getDrawerTitle = computed(() =>
           </template>
           <NInputNumber v-model:value="formData.sort" />
         </NFormItemGi>
-        <NFormItemGi :span="24" v-if="![2, 4].includes(formData.type)">
+        <NFormItemGi v-if="![2, 4].includes(formData.type)" :span="24">
           <NDivider>其他设置</NDivider>
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
-          label=""
-          class="pl-10"
           v-if="[1].includes(formData.type)"
+          :span="12"
+          class="pl-10"
+          label=""
         >
           <NCheckbox v-model:checked="formData.meta.keepAlive">
             {{ $t('system.menu.keepAlive') }}
           </NCheckbox>
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
-          label=""
-          class="pl-10"
           v-if="[1, 3].includes(formData.type)"
+          :span="12"
+          class="pl-10"
+          label=""
         >
           <NCheckbox v-model:checked="formData.meta.affixTab">
             {{ $t('system.menu.affixTab') }}
           </NCheckbox>
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
-          label=""
-          class="pl-10"
           v-if="![2].includes(formData.type)"
+          :span="12"
+          class="pl-10"
+          label=""
         >
           <NCheckbox v-model:checked="formData.meta.hideInMenu">
             {{ $t('system.menu.hideInMenu') }}
           </NCheckbox>
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
-          label=""
-          class="pl-10"
           v-if="[5, 1].includes(formData.type)"
+          :span="12"
+          class="pl-10"
+          label=""
         >
           <NCheckbox v-model:checked="formData.meta.hideChildrenInMenu">
             {{ $t('system.menu.hideChildrenInMenu') }}
           </NCheckbox>
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
-          label=""
-          class="pl-10"
           v-if="![2, 4].includes(formData.type)"
+          :span="12"
+          class="pl-10"
+          label=""
         >
           <NCheckbox v-model:checked="formData.meta.hideInBreadcrumb">
             {{ $t('system.menu.hideInBreadcrumb') }}
           </NCheckbox>
         </NFormItemGi>
         <NFormItemGi
-          :span="12"
-          label=""
-          class="pl-10"
           v-if="![2, 4].includes(formData.type)"
+          :span="12"
+          class="pl-10"
+          label=""
         >
           <NCheckbox v-model:checked="formData.meta.hideInTab">
             {{ $t('system.menu.hideInTab') }}

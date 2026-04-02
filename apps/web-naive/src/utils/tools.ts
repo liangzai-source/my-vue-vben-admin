@@ -1,16 +1,17 @@
-import type { FormValidationError } from 'naive-ui';
+import type {FormValidationError} from 'naive-ui';
+import type {SelectMixedOption} from "naive-ui/es/select/src/interface";
 
-import type { Recordable } from '@vben/types';
+import type {Recordable} from '@vben/types';
 
-import { $t } from '@vben/locales';
-import { useAccessStore, useUserStore } from '@vben/stores';
+import {$t} from '@vben/locales';
+import {useAccessStore, useUserStore} from '@vben/stores';
 
-import { dialog, message } from '#/adapter/naive';
-import { router } from '#/router';
-import { generateAccess } from '#/router/access';
-import { accessRoutes } from '#/router/routes';
-import { useAuthStore } from '#/store';
-import { processTableActions } from '#/utils/access';
+import {dialog, message} from '#/adapter/naive';
+import {router} from '#/router';
+import {generateAccess} from '#/router/access';
+import {accessRoutes} from '#/router/routes';
+import {useAuthStore} from '#/store';
+import {processTableActions} from '#/utils/access';
 
 /**
  * 获取表格默认操作按钮
@@ -113,7 +114,7 @@ export async function refreshMenu(): Promise<void> {
   const userRoles = userInfo.roles ?? [];
 
   // 生成菜单和路由
-  const { accessibleMenus, accessibleRoutes } = await generateAccess({
+  const {accessibleMenus, accessibleRoutes} = await generateAccess({
     roles: userRoles,
     router,
     // 则会在菜单中显示，但是访问会被重定向到403
@@ -206,7 +207,7 @@ export function asyncConfirm(options?: ConfirmOptions): Promise<boolean> {
   };
 
   // 合并配置：用户配置 > 默认配置，使用展开运算符浅合并
-  const dialogOptions = { ...defaultOptions, ...options };
+  const dialogOptions = {...defaultOptions, ...options};
 
   // 返回Promise，适配弹窗组件的回调逻辑
   return new Promise((resolve, reject) => {
@@ -242,11 +243,11 @@ export function useDefaultOperation(
     code: string;
     perCode?: string;
   };
-  const updateOperation: Operation = { code: 'update' };
+  const updateOperation: Operation = {code: 'update'};
   if (!isEmpty(updateAuthCode)) {
     updateOperation.perCode = updateAuthCode;
   }
-  const deleteOperation: Operation = { code: 'delete' };
+  const deleteOperation: Operation = {code: 'delete'};
   if (!isEmpty(deleteAuthCode)) {
     deleteOperation.perCode = deleteAuthCode;
   }
@@ -261,4 +262,20 @@ export function showFormMessage(val: any): void {
   const messageText =
     isEmpty(val) || val === 0 ? $t('common.create') : $t('common.update');
   message.success(messageText + $t('common.success'));
+}
+
+/**
+ * 获取完整的 HTTP 请求方法列表
+ * @returns 标准化的 ApiMethod 数组（包含常用 RESTful 请求方法）
+ */
+export function getApiMethodList(): SelectMixedOption[] {
+  return [
+    {label: "GET", value: "GET"},
+    {label: "POST", value: "POST"},
+    {label: "PUT", value: "PUT"},
+    {label: "DELETE", value: "DELETE"},
+    {label: "PATCH", value: "PATCH"},
+    {label: "HEAD", value: "HEAD"},
+    {label: "OPTIONS", value: "OPTIONS"},
+  ];
 }

@@ -1,4 +1,4 @@
-import type { Recordable } from '@vben/types';
+import type {Recordable} from '@vben/types';
 
 import type {
   BaseData,
@@ -8,7 +8,7 @@ import type {
   UpdateStatusResponse,
 } from '#/types/common';
 
-import { requestClient } from '#/api/request';
+import {requestClient} from '#/api/request';
 
 export namespace SystemMenuApi {
   /** 徽标颜色集合 */
@@ -74,7 +74,6 @@ export namespace SystemMenuApi {
   }
 
   export interface SystemMenu extends BaseData {
-    [key: string]: any;
     /** 后端权限标识 */
     authCode: string;
     /** 子级 */
@@ -97,6 +96,12 @@ export namespace SystemMenuApi {
     status: number;
     /** 菜单排序 */
     sort: number;
+    /** 接口路径 */
+    api_path: string;
+    /** 接口请求方法 */
+    api_method: string;
+
+    [key: string]: any;
   }
 }
 
