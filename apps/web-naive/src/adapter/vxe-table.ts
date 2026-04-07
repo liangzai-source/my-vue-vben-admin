@@ -1,17 +1,20 @@
-import type {VxeTableGridOptions} from '@vben/plugins/vxe-table';
-import type {Recordable} from '@vben/types';
+import type { VxeTableGridOptions } from '@vben/plugins/vxe-table';
+import type { Recordable } from '@vben/types';
 
-import type {ComponentPropsMap, ComponentType} from './component';
+import type { ComponentPropsMap, ComponentType } from './component';
 
-import {h, type VNodeProps} from 'vue';
+import { h, type VNodeProps } from 'vue';
 
-import {$te} from '@vben/locales';
-import {setupVbenVxeTable, useVbenVxeGrid as useGrid,} from '@vben/plugins/vxe-table';
-import {get, isFunction, isString} from '@vben/utils';
+import { $te } from '@vben/locales';
+import {
+  setupVbenVxeTable,
+  useVbenVxeGrid as useGrid,
+} from '@vben/plugins/vxe-table';
+import { get, isFunction, isString } from '@vben/utils';
 
-import {VbenIcon} from '@vben-core/shadcn-ui';
+import { VbenIcon } from '@vben-core/shadcn-ui';
 
-import {objectOmit} from '@vueuse/core';
+import { objectOmit } from '@vueuse/core';
 import {
   NImage as Image,
   NButton,
@@ -21,10 +24,10 @@ import {
   NTag as Tag,
 } from 'naive-ui';
 
-import {$t} from '#/locales';
-import {getByPath, getTableDefaultOperation} from '#/utils/tools';
+import { $t } from '#/locales';
+import { getByPath, getTableDefaultOperation } from '#/utils/tools';
 
-import {useVbenForm} from './form';
+import { useVbenForm } from './form';
 
 setupVbenVxeTable({
   configVxeTable: (vxeUI) => {
