@@ -17,6 +17,7 @@ import { message } from '#/adapter/naive';
 import ChangePassword from '#/components/common/ChangePassword.vue';
 import { useAuthStore } from '#/store';
 import LoginForm from '#/views/_core/authentication/login.vue';
+// import {router} from "#/router";
 
 /* const notifications = ref<NotificationItem[]>([
   {
@@ -154,6 +155,52 @@ const avatar = computed(() => {
 async function handleLogout() {
   await authStore.logout(false);
 }
+
+/* function handleNoticeClear() {
+  notifications.value = [];
+}
+
+function markRead(id: number | string) {
+  const item = notifications.value.find((item) => item.id === id);
+  if (item) {
+    item.isRead = true;
+  }
+}
+
+function remove(id: number | string) {
+  notifications.value = notifications.value.filter((item) => item.id !== id);
+}
+
+function handleMakeAll() {
+  notifications.value.forEach((item) => (item.isRead = true));
+}
+
+const viewAll = () => {};
+
+const handleClick = (item: NotificationItem) => {
+  // 如果通知项有链接，点击时跳转
+  if (item.link) {
+    navigateTo(item.link, item.query, item.state);
+  }
+};
+
+function navigateTo(
+  link: string,
+  query?: Record<string, any>,
+  state?: Record<string, any>,
+) {
+  if (link.startsWith('http://') || link.startsWith('https://')) {
+    // 外部链接，在新标签页打开
+    window.open(link, '_blank');
+  } else {
+    // 内部路由链接，支持 query 参数和 state
+    router.push({
+      path: link,
+      query: query || {},
+      state,
+    });
+  }
+}*/
 
 watch(
   () => ({
