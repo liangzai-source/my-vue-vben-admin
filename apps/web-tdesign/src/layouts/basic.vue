@@ -1,25 +1,28 @@
 <script lang="ts" setup>
-import { computed, watch } from 'vue';
+import type { NotificationItem } from '@vben/layouts';
 
-import { AuthenticationLoginExpiredModal, useVbenModal } from '@vben/common-ui';
+import { computed, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
+
+import { AuthenticationLoginExpiredModal } from '@vben/common-ui';
+import { VBEN_DOC_URL, VBEN_GITHUB_URL } from '@vben/constants';
 import { useWatermark } from '@vben/hooks';
+import { BookOpenText, CircleHelp, SvgGithubIcon } from '@vben/icons';
 import {
   BasicLayout,
   LockScreen,
-  // Notification,
+  Notification,
   UserDropdown,
 } from '@vben/layouts';
-import { $t } from '@vben/locales';
 import { preferences, usePreferences } from '@vben/preferences';
 import { useAccessStore, useUserStore } from '@vben/stores';
+import { openWindow } from '@vben/utils';
 
-import { message } from '#/adapter/naive';
-import ChangePassword from '#/components/common/ChangePassword.vue';
+import { $t } from '#/locales';
 import { useAuthStore } from '#/store';
 import LoginForm from '#/views/_core/authentication/login.vue';
-// import {router} from "#/router";
 
-/* const notifications = ref<NotificationItem[]>([
+const notifications = ref<NotificationItem[]>([
   {
     id: 1,
     avatar: 'https://avatar.vercel.sh/vercel.svg?text=VB',
@@ -71,52 +74,19 @@ import LoginForm from '#/views/_core/authentication/login.vue';
     link: 'https://doc.vben.pro',
   },
 ]);
-const showDot = computed(() =>
-  notifications.value.some((item) => !item.isRead),
-);
 
-function handleNoticeClear() {
-  notifications.value = [];
-}
-
-function markRead(id: number | string) {
-  const item = notifications.value.find((item) => item.id === id);
-  if (item) {
-    item.isRead = true;
-  }
-}
-
-function remove(id: number | string) {
-  notifications.value = notifications.value.filter((item) => item.id !== id);
-}
-
-function handleMakeAll() {
-  notifications.value.forEach((item) => (item.isRead = true));
-}
-*/
-
+const router = useRouter();
 const userStore = useUserStore();
 const authStore = useAuthStore();
 const accessStore = useAccessStore();
 const { destroyWatermark, updateWatermark } = useWatermark();
-const [PasswordModal, passwordModalApi] = useVbenModal({
-  connectedComponent: ChangePassword,
-  destroyOnClose: true,
-});
 const { isDark } = usePreferences();
-/* const showDot = computed(() =>
+const showDot = computed(() =>
   notifications.value.some((item) => !item.isRead),
-);*/
+);
 
 const menus = computed(() => [
   {
-    handler: () => {
-      passwordModalApi.open();
-    },
-    icon: 'mdi:password-reset',
-    text: $t('page.auth.changePassword'),
-  },
-  /* {
     handler: () => {
       router.push({ name: 'Profile' });
     },
@@ -149,7 +119,7 @@ const menus = computed(() => [
     },
     icon: CircleHelp,
     text: $t('ui.widgets.qa'),
-  },*/
+  },
 ]);
 
 const avatar = computed(() => {
@@ -160,7 +130,7 @@ async function handleLogout() {
   await authStore.logout(false);
 }
 
-/* function handleNoticeClear() {
+function handleNoticeClear() {
   notifications.value = [];
 }
 
@@ -204,7 +174,7 @@ function navigateTo(
       state,
     });
   }
-}*/
+}
 
 watch(
   () => ({
@@ -244,29 +214,21 @@ watch(
     immediate: true,
   },
 );
-
-async function changePasswordSuccess() {
-  message.success(
-    `${$t('common.successMessage', [$t('page.auth.changePassword')])},${$t('common.pleaseRelogin')}`,
-  );
-  await authStore.logout(true);
-}
 </script>
 
 <template>
-  <PasswordModal @success="changePasswordSuccess" />
   <BasicLayout @clear-preferences-and-logout="handleLogout">
     <template #user-dropdown>
       <UserDropdown
         :avatar
         :menus
         :text="userStore.userInfo?.realName"
-        :description="userStore.userInfo?.username"
-        tag-text=""
+        description="ann.vben@gmail.com"
+        tag-text="Pro"
         @logout="handleLogout"
       />
     </template>
-    <!--    <template #notification>
+    <template #notification>
       <Notification
         :dot="showDot"
         :notifications="notifications"
@@ -274,8 +236,10 @@ async function changePasswordSuccess() {
         @read="(item) => item.id && markRead(item.id)"
         @remove="(item) => item.id && remove(item.id)"
         @make-all="handleMakeAll"
+        @on-click="handleClick"
+        @view-all="viewAll"
       />
-    </template>-->
+    </template>
     <template #extra>
       <AuthenticationLoginExpiredModal
         v-model:open="accessStore.loginExpired"
