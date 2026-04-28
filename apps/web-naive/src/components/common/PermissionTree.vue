@@ -1,9 +1,9 @@
 <script lang="ts" setup>
-import type {TreeOption} from 'naive-ui/lib';
+import type { TreeOption } from 'naive-ui/lib';
 
-import {ref, watch} from 'vue';
+import { ref, watch } from 'vue';
 
-import {NSwitch, NTree} from 'naive-ui';
+import { NSwitch, NTree } from 'naive-ui';
 
 type propsType = {
   control?: boolean;
@@ -29,7 +29,7 @@ watch(
   (val) => {
     checkedKeys.value = val;
   },
-  { immediate: true }
+  { immediate: true },
 );
 function updateCheckedKeys(keys: number[]) {
   emits('change', keys);

@@ -8,7 +8,7 @@ import type {
   UpdateStatusResponse,
 } from '#/types/common';
 
-import {requestClient} from '#/api/request';
+import { requestClient } from '#/api/request';
 
 export namespace SystemRoleApi {
   export interface SystemRole extends BaseData {

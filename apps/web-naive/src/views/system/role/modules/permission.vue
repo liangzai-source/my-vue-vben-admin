@@ -1,22 +1,22 @@
 <script lang="ts" setup>
-import type {TreeOption} from "naive-ui/lib";
+import type { TreeOption } from 'naive-ui/lib';
 
-import {h, ref} from 'vue';
+import { h, ref } from 'vue';
 
-import {useVbenDrawer} from '@vben/common-ui';
-import {$t} from '@vben/locales';
+import { useVbenDrawer } from '@vben/common-ui';
+import { $t } from '@vben/locales';
 
-import {VbenIcon} from '@vben-core/shadcn-ui';
+import { VbenIcon } from '@vben-core/shadcn-ui';
 
-import {message} from '#/adapter/naive';
-import {allPermissionApi, SystemMenuApi} from "#/api/system/menu";
+import { message } from '#/adapter/naive';
+import { allPermissionApi, SystemMenuApi } from '#/api/system/menu';
 import {
   type SystemRoleApi,
   systemRolePermissionsApi,
   systemRolePermissionsIdListApi,
 } from '#/api/system/role';
 import PermissionTree from '#/components/common/PermissionTree.vue';
-import {isEmpty} from '#/utils/tools';
+import { isEmpty } from '#/utils/tools';
 
 const loading = ref(false);
 const formData = ref<SystemRoleApi.SystemRolePermissions>({
@@ -32,8 +32,11 @@ const [Drawer, drawerApi] = useVbenDrawer({
     if (isOpen && !isEmpty(data.id)) {
       formData.value.role_id = data.id;
     }
-    if (isOpen){
-      const [menuList, checkedIds] = await Promise.all([allPermissionApi(), systemRolePermissionsIdListApi(data.id)]);
+    if (isOpen) {
+      const [menuList, checkedIds] = await Promise.all([
+        allPermissionApi(),
+        systemRolePermissionsIdListApi(data.id),
+      ]);
       treeOptions.value = convertMenuToTree(menuList);
       hasPermissions.value = checkedIds;
     }
@@ -48,7 +51,7 @@ function convertMenuToTree(menuList: SystemMenuApi.SystemMenu[]): TreeOption[] {
     const treeNode: TreeOption = {
       key: menu.id,
       label: $t(routeMeta.title || ''),
-      prefix: () => h(VbenIcon, {icon: routeMeta.icon}),
+      prefix: () => h(VbenIcon, { icon: routeMeta.icon }),
     };
 
     // 递归处理子菜单（如果有children且是数组）
