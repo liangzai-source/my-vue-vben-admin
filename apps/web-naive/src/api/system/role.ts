@@ -3,6 +3,7 @@ import type {
   CreateResponse,
   DeleteResponse,
   ListResponse,
+  MessageResponse,
   UpdateResponse,
   UpdateStatusResponse,
 } from '#/types/common';
@@ -73,4 +74,14 @@ export async function systemRoleUpdateStatusApi(id: number, status: number) {
  */
 export async function systemRoleDeleteApi(id: number) {
   return requestClient.post<DeleteResponse>(`/system-role/delete/${id}`, {});
+}
+
+/**
+ * 设置角色权限
+ * @param data
+ */
+export async function systemRolePermissionsApi(
+  data: SystemRoleApi.SystemRolePermissions,
+) {
+  return requestClient.post<MessageResponse>(`/system-role/permissions`, data);
 }

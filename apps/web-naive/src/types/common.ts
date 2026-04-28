@@ -25,3 +25,5 @@ export type UpdateResponse = Record<string, never>;
 export type UpdateStatusResponse = Record<string, never>;
 // 删除返回数据
 export type DeleteResponse = Record<string, never>;
+// 信息返回数据
+export type MessageResponse = Record<string, never>;

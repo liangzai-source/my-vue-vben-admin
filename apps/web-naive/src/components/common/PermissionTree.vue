@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script lang="ts" setup>
 import type { TreeOption } from 'naive-ui/lib';
 
 import { h, onMounted, ref } from 'vue';
@@ -7,17 +7,26 @@ import { $t } from '@vben/locales';
 
 import { VbenIcon } from '@vben-core/shadcn-ui';
 
-import { NTree } from 'naive-ui';
+import { NSwitch, NTree } from 'naive-ui';
 
 import { allPermissionApi, SystemMenuApi } from '#/api/system/menu';
 
+type propsType = {
+  control?: boolean;
+  line?: boolean;
+};
+type TreeOptions = TreeOption[];
+withDefaults(defineProps<propsType>(), {
+  control: true,
+  line: false,
+});
 const emits = defineEmits<{
   (e: 'change', value: number[]): void;
   (e: 'loading', value: boolean): void;
 }>();
-type TreeOptions = TreeOption[];
+const expandAll = ref<boolean>(false);
 const treeData = ref<TreeOptions>([]);
-const defaultCheckedKeys = ref<number[]>([]);
+const defaultCheckedKeys = defineModel<number[]>({ default: [] });
 
 onMounted(() => {
   fetchPermissions();
@@ -26,6 +35,7 @@ onMounted(() => {
 function updateCheckedKeys(keys: number[]) {
   emits('change', keys);
 }
+
 async function fetchPermissions() {
   emits('loading', true);
   const res = await allPermissionApi();
@@ -55,13 +65,21 @@ function convertMenuToTree(menuList: SystemMenuApi.SystemMenu[]): TreeOptions {
 </script>
 
 <template>
+  <div>
+    <NSwitch v-model:value="expandAll">
+      <template #checked> 全部收起 </template>
+      <template #unchecked> 全部展开 </template>
+    </NSwitch>
+  </div>
   <NTree
+    :data="treeData"
+    :default-checked-keys="defaultCheckedKeys"
+    :default-expand-all="expandAll"
+    :selectable="false"
+    :show-line="line"
     block-line
     cascade
     checkable
-    :selectable="false"
-    :data="treeData"
-    :default-checked-keys="defaultCheckedKeys"
     @update:checked-keys="updateCheckedKeys"
   />
 </template>
