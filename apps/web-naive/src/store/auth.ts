@@ -1,17 +1,17 @@
-import type { Recordable, UserInfo } from '@vben/types';
+import type {Recordable, UserInfo} from '@vben/types';
 
-import { ref } from 'vue';
-import { useRouter } from 'vue-router';
+import {ref} from 'vue';
+import {useRouter} from 'vue-router';
 
-import { LOGIN_PATH } from '@vben/constants';
-import { preferences } from '@vben/preferences';
-import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
+import {LOGIN_PATH} from '@vben/constants';
+import {preferences} from '@vben/preferences';
+import {resetAllStores, useAccessStore, useUserStore} from '@vben/stores';
 
-import { defineStore } from 'pinia';
+import {defineStore} from 'pinia';
 
-import { notification } from '#/adapter/naive';
-import { getAccessCodesApi, getUserInfoApi, loginApi, logoutApi } from '#/api';
-import { $t } from '#/locales';
+import {notification} from '#/adapter/naive';
+import {getAccessCodesApi, getUserInfoApi, loginApi, logoutApi} from '#/api';
+import {$t} from '#/locales';
 
 export const useAuthStore = defineStore('auth', () => {
   const accessStore = useAccessStore();
@@ -55,11 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
         if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
         } else {
-          onSuccess
-            ? await onSuccess?.()
-            : await router.push(
-                userInfo.homePath || preferences.app.defaultHomePath,
-              );
+          await (onSuccess ? onSuccess?.() : router.push(userInfo.homePath || preferences.app.defaultHomePath));
         }
 
         if (userInfo?.realName) {
