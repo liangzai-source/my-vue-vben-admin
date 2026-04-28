@@ -1,32 +1,64 @@
 <script lang="ts" setup>
-import { ref } from 'vue';
+import type {TreeOption} from "naive-ui/lib";
 
-import { useVbenDrawer } from '@vben/common-ui';
-import { $t } from '@vben/locales';
+import {h, ref} from 'vue';
 
-import { message } from '#/adapter/naive';
+import {useVbenDrawer} from '@vben/common-ui';
+import {$t} from '@vben/locales';
+
+import {VbenIcon} from '@vben-core/shadcn-ui';
+
+import {message} from '#/adapter/naive';
+import {allPermissionApi, SystemMenuApi} from "#/api/system/menu";
 import {
   type SystemRoleApi,
   systemRolePermissionsApi,
+  systemRolePermissionsIdListApi,
 } from '#/api/system/role';
 import PermissionTree from '#/components/common/PermissionTree.vue';
-import { isEmpty } from '#/utils/tools';
+import {isEmpty} from '#/utils/tools';
 
 const loading = ref(false);
 const formData = ref<SystemRoleApi.SystemRolePermissions>({
   role_id: 0,
   menu_ids: [],
 });
-const hasPermissions = ref<number[]>();
+const treeOptions = ref<TreeOption[]>([]);
+const hasPermissions = ref<number[] | string[]>([]);
 const [Drawer, drawerApi] = useVbenDrawer({
   onConfirm: formConfirm,
-  onOpenChange: (isOpen) => {
+  onOpenChange: async (isOpen) => {
     const data = drawerApi.getData<SystemRoleApi.SystemRole>();
     if (isOpen && !isEmpty(data.id)) {
       formData.value.role_id = data.id;
     }
+    if (isOpen){
+      const [menuList, checkedIds] = await Promise.all([allPermissionApi(), systemRolePermissionsIdListApi(data.id)]);
+      treeOptions.value = convertMenuToTree(menuList);
+      hasPermissions.value = checkedIds;
+    }
   },
 });
+
+function convertMenuToTree(menuList: SystemMenuApi.SystemMenu[]): TreeOption[] {
+  return menuList.map((menu) => {
+    const routeMeta = menu.meta;
+
+    // 构建当前节点的TreeOptions
+    const treeNode: TreeOption = {
+      key: menu.id,
+      label: $t(routeMeta.title || ''),
+      prefix: () => h(VbenIcon, {icon: routeMeta.icon}),
+    };
+
+    // 递归处理子菜单（如果有children且是数组）
+    if (Array.isArray(menu.children) && menu.children.length > 0) {
+      treeNode.children = convertMenuToTree(menu.children);
+    }
+
+    return treeNode;
+  });
+}
 
 function formConfirm() {
   loading.value = true;
@@ -58,7 +90,8 @@ function handleChange(e: number[]) {
     class="w-full max-w-[800px]"
   >
     <PermissionTree
-      v-model="hasPermissions"
+      :default-checked-keys="hasPermissions"
+      :tree-options="treeOptions"
       @change="handleChange"
       @loading="handleLoading"
     />

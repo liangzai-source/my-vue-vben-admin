@@ -8,7 +8,7 @@ import type {
   UpdateStatusResponse,
 } from '#/types/common';
 
-import { requestClient } from '#/api/request';
+import {requestClient} from '#/api/request';
 
 export namespace SystemRoleApi {
   export interface SystemRole extends BaseData {
@@ -74,6 +74,14 @@ export async function systemRoleUpdateStatusApi(id: number, status: number) {
  */
 export async function systemRoleDeleteApi(id: number) {
   return requestClient.post<DeleteResponse>(`/system-role/delete/${id}`, {});
+}
+
+/**
+ * 获取对应角色的所有权限id
+ * @param id
+ */
+export async function systemRolePermissionsIdListApi(id: number) {
+  return requestClient.post<number[]>(`/system-role/permissions-id/${id}`);
 }
 
 /**

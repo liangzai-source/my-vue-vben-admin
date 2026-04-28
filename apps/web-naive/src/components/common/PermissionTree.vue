@@ -1,22 +1,17 @@
 <script lang="ts" setup>
-import type { TreeOption } from 'naive-ui/lib';
+import type {TreeOption} from 'naive-ui/lib';
 
-import { h, onMounted, ref } from 'vue';
+import {ref, watch} from 'vue';
 
-import { $t } from '@vben/locales';
-
-import { VbenIcon } from '@vben-core/shadcn-ui';
-
-import { NSwitch, NTree } from 'naive-ui';
-
-import { allPermissionApi, SystemMenuApi } from '#/api/system/menu';
+import {NSwitch, NTree} from 'naive-ui';
 
 type propsType = {
   control?: boolean;
+  defaultCheckedKeys: number[] | string[];
   line?: boolean;
+  treeOptions: TreeOption[];
 };
-type TreeOptions = TreeOption[];
-withDefaults(defineProps<propsType>(), {
+const props = withDefaults(defineProps<propsType>(), {
   control: true,
   line: false,
 });
@@ -24,56 +19,33 @@ const emits = defineEmits<{
   (e: 'change', value: number[]): void;
   (e: 'loading', value: boolean): void;
 }>();
-const expandAll = ref<boolean>(false);
-const treeData = ref<TreeOptions>([]);
-const defaultCheckedKeys = defineModel<number[]>({ default: [] });
+const expandAll = ref<boolean>(true);
+// 绑定给 Tree 的 checkedKeys（支持异步更新）
+const checkedKeys = ref<(number | string)[]>([]);
 
-onMounted(() => {
-  fetchPermissions();
-});
-
+// 父组件传的选中值变化时同步
+watch(
+  () => props.defaultCheckedKeys,
+  (val) => {
+    checkedKeys.value = val;
+  },
+  { immediate: true }
+);
 function updateCheckedKeys(keys: number[]) {
   emits('change', keys);
-}
-
-async function fetchPermissions() {
-  emits('loading', true);
-  const res = await allPermissionApi();
-  emits('loading', false);
-  treeData.value = convertMenuToTree(res);
-}
-
-function convertMenuToTree(menuList: SystemMenuApi.SystemMenu[]): TreeOptions {
-  return menuList.map((menu) => {
-    const routeMeta = menu.meta;
-
-    // 构建当前节点的TreeOptions
-    const treeNode: TreeOption = {
-      key: menu.id,
-      label: $t(routeMeta.title || ''),
-      prefix: () => h(VbenIcon, { icon: routeMeta.icon }),
-    };
-
-    // 递归处理子菜单（如果有children且是数组）
-    if (Array.isArray(menu.children) && menu.children.length > 0) {
-      treeNode.children = convertMenuToTree(menu.children);
-    }
-
-    return treeNode;
-  });
 }
 </script>
 
 <template>
   <div>
     <NSwitch v-model:value="expandAll">
-      <template #checked> 全部收起 </template>
-      <template #unchecked> 全部展开 </template>
+      <template #checked> 全部收起</template>
+      <template #unchecked> 全部展开</template>
     </NSwitch>
   </div>
   <NTree
-    :data="treeData"
-    :default-checked-keys="defaultCheckedKeys"
+    v-model:checked-keys="checkedKeys"
+    :data="treeOptions"
     :default-expand-all="expandAll"
     :selectable="false"
     :show-line="line"
