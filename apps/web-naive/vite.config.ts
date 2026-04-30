@@ -1,4 +1,4 @@
-import { defineConfig } from '@vben/vite-config';
+import {defineConfig} from '@vben/vite-config';
 
 export default defineConfig(async () => {
   return {
@@ -6,7 +6,7 @@ export default defineConfig(async () => {
     vite: {
       server: {
         proxy: {
-          '/api': {
+          '/admin-api': {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/api/, ''),
             // mock代理目标地址
