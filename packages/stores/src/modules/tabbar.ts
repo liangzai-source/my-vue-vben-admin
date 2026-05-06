@@ -1,4 +1,4 @@
-import type { ComputedRef, VNode } from 'vue';
+import type {ComputedRef, VNode} from 'vue';
 import type {
   RouteLocationNormalized,
   RouteLocationNormalizedLoaded,
@@ -7,20 +7,20 @@ import type {
   RouteRecordNormalized,
 } from 'vue-router';
 
-import type { TabDefinition } from '@vben-core/typings';
+import type {TabDefinition} from '@vben-core/typings';
 
-import { markRaw, toRaw } from 'vue';
+import {markRaw, toRaw} from 'vue';
 
-import { preferences } from '@vben-core/preferences';
+import {preferences} from '@vben-core/preferences';
 import {
   createStack,
-  openRouteInNewWindow,
+  openWindow,
   Stack,
   startProgress,
   stopProgress,
 } from '@vben-core/shared/utils';
 
-import { acceptHMRUpdate, defineStore } from 'pinia';
+import {acceptHMRUpdate, defineStore} from 'pinia';
 
 interface RouteCached {
   component: VNode;
@@ -97,7 +97,9 @@ export const useTabbarStore = defineStore('core-tabbar', {
         return;
       }
       const index = this.tabs.findIndex((item) => equalTab(item, tab));
-      index !== -1 && this.tabs.splice(index, 1);
+      if (index !== -1) {
+        this.tabs.splice(index, 1);
+      }
     },
     /**
      * @zh_CN 跳转到默认标签页
@@ -151,21 +153,25 @@ export const useTabbarStore = defineStore('core-tabbar', {
         // 获取到已经打开的动态路由数, 判断是否大于某一个值
         if (
           maxNumOfOpenTab > 0 &&
-          this.tabs.filter((tab) => tab.name === routeTab.name).length >=
+          this.tabs.filter((item) => item.name === routeTab.name).length >=
             maxNumOfOpenTab
         ) {
           // 关闭第一个
           const index = this.tabs.findIndex(
             (item) => item.name === routeTab.name,
           );
-          index !== -1 && this.tabs.splice(index, 1);
+          if (index !== -1) {
+            this.tabs.splice(index, 1);
+          }
         } else if (maxCount > 0 && this.tabs.length >= maxCount) {
           // 关闭第一个
           const index = this.tabs.findIndex(
             (item) =>
               !Reflect.has(item.meta, 'affixTab') || !item.meta.affixTab,
           );
-          index !== -1 && this.tabs.splice(index, 1);
+          if (index !== -1) {
+            this.tabs.splice(index, 1);
+          }
         }
         this.tabs.push(tab);
       } else {
@@ -371,8 +377,9 @@ export const useTabbarStore = defineStore('core-tabbar', {
      * @zh_CN 新窗口打开标签页
      * @param tab
      */
-    async openTabInNewWindow(tab: TabDefinition) {
-      openRouteInNewWindow(tab.fullPath || tab.path);
+    async openTabInNewWindow(tab: TabDefinition, router: Router) {
+      const href = router.resolve(tab.fullPath || tab.path).href;
+      openWindow(new URL(href, location.href).href, { target: '_blank' });
     },
 
     /**
@@ -390,7 +397,7 @@ export const useTabbarStore = defineStore('core-tabbar', {
       // this.addTab(tab);
       this.tabs.splice(index, 1, tab);
       // 过滤固定tabs，后面更改affixTabOrder的值的话可能会有问题，目前行464排序affixTabs没有设置值
-      const affixTabs = this.tabs.filter((tab) => isAffixTab(tab));
+      const affixTabs = this.tabs.filter((item) => isAffixTab(item));
       // 获得固定tabs的index
       const newIndex = affixTabs.findIndex((item) => equalTab(item, tab));
       // 交换位置重新排序
@@ -533,7 +540,7 @@ export const useTabbarStore = defineStore('core-tabbar', {
       // this.addTab(tab);
       this.tabs.splice(index, 1, tab);
       // 过滤固定tabs，后面更改affixTabOrder的值的话可能会有问题，目前行464排序affixTabs没有设置值
-      const affixTabs = this.tabs.filter((tab) => isAffixTab(tab));
+      const affixTabs = this.tabs.filter((item) => isAffixTab(item));
       // 获得固定tabs的index,使用固定tabs的下一个位置也就是活动tabs的第一个位置
       const newIndex = affixTabs.length;
       // 交换位置重新排序
