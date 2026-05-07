@@ -768,7 +768,7 @@ importers:
         version: 14.2.1(vue@3.5.33(typescript@6.0.3))
       antdv-next:
         specifier: 'catalog:'
-        version: 1.1.9(date-fns@4.1.0)(vue@3.5.32(typescript@6.0.2))
+        version: 1.2.1(date-fns@4.1.0)(vue@3.5.33(typescript@6.0.3))
       dayjs:
         specifier: 'catalog:'
         version: 1.11.20
@@ -973,7 +973,7 @@ importers:
         version: 3.0.4(typescript@6.0.3)(vue@3.5.33(typescript@6.0.3))
       tdesign-vue-next:
         specifier: 'catalog:'
-        version: 1.19.0(vue@3.5.32(typescript@6.0.2))
+        version: 1.19.1(vue@3.5.33(typescript@6.0.3))
       vue:
         specifier: ^3.5.32
         version: 3.5.33(typescript@6.0.3)
@@ -10965,11 +10965,11 @@ packages:
   vscode-uri@3.1.0:
     resolution: {integrity: sha512-/BpdSx+yCQGnCvecbyXdxHDkuk55/G3xwnC0GqY4gmQ3j+A+g8kzzgB4Nk/SINjqn6+waqw3EgbVF2QKExkRxQ==}
 
-  vue-component-type-helpers@2.2.12:
-    resolution: {integrity: sha512-YbGqHZ5/eW4SnkPNR44mKVc6ZKQoRs/Rux1sxC6rdwXb4qpbOSYfDr9DsTHolOTGmIKgM9j141mZbBeg05R1pw==}
-
   vue-component-type-helpers@3.2.6:
     resolution: {integrity: sha512-O02tnvIfOQVmnvoWwuSydwRoHjZVt8UEBR+2p4rT35p8GAy5VTlWP8o5qXfJR/GWCN0nVZoYWsVUvx2jwgdBmQ==}
+
+  vue-component-type-helpers@3.2.7:
+    resolution: {integrity: sha512-+gPp5YGmhfsj1IN+xUo7y0fb4clfnOiiUA39y07yW1VzCRjzVgwLbtmdWlghh7mXrPsEaYc7rrIir/HT6C8vYQ==}
 
   vue-demi@0.14.10:
     resolution: {integrity: sha512-nMZBOwuzabUO0nLgIcc6rycZEebF6eeUfaiQx9+WSk8e29IbLvPU9feI6tqW4kTo3hvoYAJkMh8n8D0fuISphg==}
@@ -14846,7 +14846,7 @@ snapshots:
   '@v-c/slick@1.0.2(vue@3.5.33(typescript@6.0.3))':
     dependencies:
       '@v-c/util': 1.0.19(vue@3.5.33(typescript@6.0.3))
-      es-toolkit: 1.45.1
+      es-toolkit: 1.46.0
       vue: 3.5.33(typescript@6.0.3)
 
   '@v-c/slider@1.0.10(vue@3.5.33(typescript@6.0.3))':
@@ -16484,7 +16484,7 @@ snapshots:
       lodash-unified: 1.0.3(@types/lodash-es@4.17.12)(lodash-es@4.18.1)(lodash@4.18.1)
       memoize-one: 6.0.0
       normalize-wheel-es: 1.2.0
-      vue: 3.5.32(typescript@6.0.2)
+      vue: 3.5.33(typescript@6.0.3)
       vue-component-type-helpers: 3.2.6
     transitivePeerDependencies:
       - typescript
@@ -20028,7 +20028,7 @@ snapshots:
       '@babel/runtime': 7.29.2
       vue: 3.5.33(typescript@6.0.3)
 
-  tdesign-vue-next@1.19.0(vue@3.5.32(typescript@6.0.2)):
+  tdesign-vue-next@1.19.1(vue@3.5.33(typescript@6.0.3)):
     dependencies:
       '@babel/runtime': 7.29.2
       '@popperjs/core': 2.11.8
@@ -20714,11 +20714,11 @@ snapshots:
 
   vscode-uri@3.1.0: {}
 
-  vue-component-type-helpers@3.2.7: {}
-
   vue-component-type-helpers@3.2.6: {}
 
-  vue-demi@0.14.10(vue@3.5.32(typescript@6.0.2)):
+  vue-component-type-helpers@3.2.7: {}
+
+  vue-demi@0.14.10(vue@3.5.33(typescript@6.0.3)):
     dependencies:
       vue: 3.5.33(typescript@6.0.3)
 

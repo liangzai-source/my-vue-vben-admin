@@ -1,4 +1,4 @@
-import { defineConfig } from '@vben/vite-config';
+import {defineConfig} from '@vben/vite-config';
 
 export default defineConfig(async () => {
   return {
@@ -8,8 +8,7 @@ export default defineConfig(async () => {
         proxy: {
           '/admin-api': {
             changeOrigin: true,
-            rewrite: (path) => path.replace(/^\/api/, ''),
-            // mock代理目标地址
+            rewrite: (path) => path.replace(/^\/admin-api/, ''),
             target: 'http://localhost:9090/admin-api',
             ws: true,
           },
