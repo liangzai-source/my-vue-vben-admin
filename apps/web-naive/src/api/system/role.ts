@@ -8,7 +8,7 @@ import type {
   UpdateStatusResponse,
 } from '#/types/common';
 
-import {requestClient} from '#/api/request';
+import { requestClient } from '#/api/request';
 
 export namespace SystemRoleApi {
   export interface SystemRole extends BaseData {
@@ -91,5 +91,8 @@ export async function systemRolePermissionsIdListApi(id: number) {
 export async function systemRolePermissionsApi(
   data: SystemRoleApi.SystemRolePermissions,
 ) {
-  return requestClient.post<MessageResponse>(`/system-role/set-permissions`, data);
+  return requestClient.post<MessageResponse>(
+    `/system-role/set-permissions`,
+    data,
+  );
 }
