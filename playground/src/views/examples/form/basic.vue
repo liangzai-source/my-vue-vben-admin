@@ -1,12 +1,12 @@
 <script lang="ts" setup>
-import type { UploadFile } from 'ant-design-vue';
+import type { UploadFile } from 'antdv-next';
 
 import { h, ref, toRaw } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
 import { useDebounceFn } from '@vueuse/core';
-import { Button, Card, message, Spin, Tag } from 'ant-design-vue';
+import { Button, Card, message, Spin, Tag } from 'antdv-next';
 import dayjs from 'dayjs';
 
 import { useVbenForm, z } from '#/adapter/form';
@@ -19,13 +19,15 @@ import DocButton from '../doc-button.vue';
 const keyword = ref('');
 const fetching = ref(false);
 // 模拟远程获取数据
-function fetchRemoteOptions({ keyword = '选项' }: Record<string, any>) {
+function fetchRemoteOptions({
+  keyword: searchKeyword = '选项',
+}: Record<string, any>) {
   fetching.value = true;
   return new Promise((resolve) => {
     setTimeout(() => {
       const options = Array.from({ length: 10 }).map((_, index) => ({
-        label: `${keyword}-${index}`,
-        value: `${keyword}-${index}`,
+        label: `${searchKeyword}-${index}`,
+        value: `${searchKeyword}-${index}`,
       }));
       resolve(options);
       fetching.value = false;

@@ -264,6 +264,7 @@ async function changePasswordSuccess() {
         :description="userStore.userInfo?.username"
         tag-text=""
         @logout="handleLogout"
+        @clear-preferences-and-logout="handleLogout"
       />
     </template>
     <!--    <template #notification>

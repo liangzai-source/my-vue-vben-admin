@@ -25,7 +25,7 @@ function handleSelectMenu(
       const title = item?.meta?.title || item.name;
       const resultItem: SystemMenuApi.SystemMenuSelect = {
         label: $t(title),
-        value: item.id,
+        value: String(item.id),
       };
       if (item?.children) {
         resultItem.children = handleSelectMenu(item.children);

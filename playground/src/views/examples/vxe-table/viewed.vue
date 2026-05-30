@@ -6,7 +6,7 @@ import { ref } from 'vue';
 import { Page, useVbenModal } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
-import { Button, message } from 'ant-design-vue';
+import { Button, message } from 'antdv-next';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import { getExampleTableApi } from '#/api';
@@ -124,7 +124,9 @@ const [Modal, modalApi] = useVbenModal({
   draggable: true,
   onConfirm: () => {
     modalApi.setState({ loading: true });
-    editRow.value && gridApi.markRowAsViewed(editRow.value);
+    if (editRow.value) {
+      gridApi.markRowAsViewed(editRow.value);
+    }
     modalApi.setState({ loading: false });
     modalApi.close();
   },

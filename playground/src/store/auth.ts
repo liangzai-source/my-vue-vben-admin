@@ -7,7 +7,7 @@ import { LOGIN_PATH } from '@vben/constants';
 import { preferences } from '@vben/preferences';
 import { resetAllStores, useAccessStore, useUserStore } from '@vben/stores';
 
-import { notification } from 'ant-design-vue';
+import { notification } from 'antdv-next';
 import { defineStore } from 'pinia';
 
 import { getAccessCodesApi, getUserInfoApi, loginApi, logoutApi } from '#/api';
@@ -53,19 +53,19 @@ export const useAuthStore = defineStore('auth', () => {
 
         if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
+        } else if (onSuccess) {
+          await onSuccess();
         } else {
-          onSuccess
-            ? await onSuccess?.()
-            : await router.push(
-                userInfo.homePath || preferences.app.defaultHomePath,
-              );
+          await router.push(
+            userInfo.homePath || preferences.app.defaultHomePath,
+          );
         }
 
         if (userInfo?.realName) {
           notification.success({
             description: `${$t('authentication.loginSuccessDesc')}:${userInfo?.realName}`,
             duration: 3,
-            message: $t('authentication.loginSuccess'),
+            title: $t('authentication.loginSuccess'),
           });
         }
       }

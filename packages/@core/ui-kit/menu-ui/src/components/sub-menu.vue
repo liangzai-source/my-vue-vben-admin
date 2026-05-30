@@ -138,7 +138,9 @@ function handleMouseenter(event: FocusEvent | MouseEvent, showTimeout = 300) {
     subMenu.mouseInChild.value = true;
   }
 
-  timer.value && window.clearTimeout(timer.value);
+  if (timer.value) {
+    window.clearTimeout(timer.value);
+  }
   timer.value = setTimeout(() => {
     rootMenu?.openMenu(props.path, parentPaths.value);
   }, showTimeout);
@@ -155,13 +157,17 @@ function handleMouseleave(deepDispatch = false) {
     return;
   }
 
-  timer.value && window.clearTimeout(timer.value);
+  if (timer.value) {
+    window.clearTimeout(timer.value);
+  }
 
   if (subMenu) {
     subMenu.mouseInChild.value = false;
   }
   timer.value = setTimeout(() => {
-    !mouseInChild.value && rootMenu?.closeMenu(props.path, parentPaths.value);
+    if (!mouseInChild.value) {
+      rootMenu?.closeMenu(props.path, parentPaths.value);
+    }
   }, 300);
 
   if (deepDispatch) {

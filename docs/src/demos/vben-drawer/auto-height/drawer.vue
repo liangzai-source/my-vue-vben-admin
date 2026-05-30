@@ -10,7 +10,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     drawerApi.close();
   },
   onConfirm() {
-    console.log('onConfirm');
+    drawerApi.close();
   },
   onOpenChange(isOpen) {
     if (isOpen) {

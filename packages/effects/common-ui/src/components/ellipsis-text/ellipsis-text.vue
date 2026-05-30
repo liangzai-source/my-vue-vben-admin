@@ -179,7 +179,9 @@ function onExpand() {
 }
 
 function handleExpand() {
-  props.expand && onExpand();
+  if (props.expand) {
+    onExpand();
+  }
 }
 </script>
 <template>

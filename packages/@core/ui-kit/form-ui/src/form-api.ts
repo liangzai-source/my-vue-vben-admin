@@ -403,8 +403,8 @@ export class FormApi {
       }
     });
 
-    currentSchema.forEach((schema, index) => {
-      const updatedData = updatedMap[schema.fieldName];
+    currentSchema.forEach((currentItem, index) => {
+      const updatedData = updatedMap[currentItem.fieldName];
       if (updatedData) {
         currentSchema[index] = mergeWithArrayOverride(
           updatedData,

@@ -135,7 +135,7 @@ function handleNoticeClear() {
 }
 
 function markRead(id: number | string) {
-  const item = notifications.value.find((item) => item.id === id);
+  const item = notifications.value.find((n) => n.id === id);
   if (item) {
     item.isRead = true;
   }
@@ -226,6 +226,7 @@ watch(
         description="ann.vben@gmail.com"
         tag-text="Pro"
         @logout="handleLogout"
+        @clear-preferences-and-logout="handleLogout"
       />
     </template>
     <template #notification>

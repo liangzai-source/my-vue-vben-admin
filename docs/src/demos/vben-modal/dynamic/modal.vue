@@ -7,7 +7,7 @@ const [Modal, modalApi] = useVbenModal({
     modalApi.close();
   },
   onConfirm() {
-    console.info('onConfirm');
+    modalApi.close();
   },
   title: '动态修改配置示例',
 });

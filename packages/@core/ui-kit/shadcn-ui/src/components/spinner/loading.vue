@@ -39,7 +39,9 @@ watch(
   (show) => {
     if (!show) {
       showSpinner.value = false;
-      timer && clearTimeout(timer);
+      if (timer) {
+        clearTimeout(timer);
+      }
       return;
     }
 

@@ -68,12 +68,13 @@ async function runNitroServer(rootDir: string, port: number, verbose: boolean) {
             if (diff.length === 0) {
               return;
             }
-            verbose &&
+            if (verbose) {
               consola.info(
                 `Nitro config updated:\n${diff
                   .map((entry) => `  ${entry.toString()}`)
                   .join('\n')}`,
               );
+            }
             await (diff.every((e) => hmrKeyRe.test(e.key))
               ? nitro.updateConfig(newConfig.config)
               : reload());
@@ -90,7 +91,7 @@ async function runNitroServer(rootDir: string, port: number, verbose: boolean) {
     await build(nitro);
 
     if (verbose) {
-      console.log('');
+      consola.log('');
       consola.success(colors.bold(colors.green('Nitro Mock Server started.')));
     }
   };
