@@ -1,8 +1,8 @@
 // 通用类型定义（适配大多数项目）
-import { $t } from '@vben/locales';
+import {$t} from '@vben/locales';
 
-import { message } from '#/adapter/naive';
-import { asyncConfirm, getByPath } from '#/utils/tools';
+import {message} from '#/adapter/naive';
+import {asyncConfirm, getByPath} from '#/utils/tools';
 
 type Recordable<T = any> = Record<string, T>;
 /**
@@ -49,8 +49,8 @@ export function useStatusChange<T = Recordable>(
    * 状态变更核心函数
    * @param newStatus - 目标状态（1/2/其他）
    * @param row - 当前行数据
-   * @param showConfirm
-   * @param showMessage
+   * @param showConfirm - 是否显示确认弹窗
+   * @param showMessage - 是否显示成功提示
    * @returns 操作是否成功
    */
   const statusChangeFunc = async (
