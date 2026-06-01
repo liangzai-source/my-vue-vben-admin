@@ -6,7 +6,7 @@ const [Drawer, drawerApi] = useVbenDrawer({
     drawerApi.close();
   },
   onConfirm() {
-    drawerApi.close();
+    console.info('onConfirm');
   },
   title: '动态修改配置示例',
 });

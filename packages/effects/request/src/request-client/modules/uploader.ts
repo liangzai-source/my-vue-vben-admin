@@ -20,14 +20,10 @@ class FileUploader {
     Object.entries(data).forEach(([key, value]) => {
       if (Array.isArray(value)) {
         value.forEach((item, index) => {
-          if (!isUndefined(item)) {
-            formData.append(`${key}[${index}]`, item);
-          }
+          !isUndefined(item) && formData.append(`${key}[${index}]`, item);
         });
       } else {
-        if (!isUndefined(value)) {
-          formData.append(key, value);
-        }
+        !isUndefined(value) && formData.append(key, value);
       }
     });
 

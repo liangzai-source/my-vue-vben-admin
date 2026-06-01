@@ -70,7 +70,7 @@ async function viteImportMapPlugin(
   if (options?.debug) {
     (async () => {
       for await (const { message, type } of generator.logStream()) {
-        consola.log(`${type}: ${message}`);
+        console.log(`${type}: ${message}`);
       }
     })();
   }
@@ -138,9 +138,7 @@ async function viteImportMapPlugin(
       buildEnd() {
         // 未生成importmap时，抛出错误，防止被turbo缓存
         if (!installed && !isSSR) {
-          if (installError) {
-            consola.error(installError);
-          }
+          installError && console.error(installError);
           throw new Error('Importmap installation failed.');
         }
       },

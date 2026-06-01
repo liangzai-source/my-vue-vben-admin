@@ -233,11 +233,7 @@ function drawPiece(
   ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
   ctx.stroke();
-  if (opr === canvasOpr.clip) {
-    ctx.clip();
-  } else {
-    ctx.fill();
-  }
+  opr === canvasOpr.clip ? ctx.clip() : ctx.fill();
   ctx.globalCompositeOperation = 'destination-over';
 }
 

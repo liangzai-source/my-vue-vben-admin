@@ -24,7 +24,6 @@ export const useAuthStore = defineStore('auth', () => {
    * 异步处理登录操作
    * Asynchronously handle the login process
    * @param params 登录表单数据
-   * @param onSuccess
    */
   async function authLogin(
     params: Recordable<any>,
@@ -53,11 +52,11 @@ export const useAuthStore = defineStore('auth', () => {
         if (accessStore.loginExpired) {
           accessStore.setLoginExpired(false);
         } else {
-          await (onSuccess
-            ? onSuccess?.()
-            : router.push(
+          onSuccess
+            ? await onSuccess?.()
+            : await router.push(
                 userInfo.homePath || preferences.app.defaultHomePath,
-              ));
+              );
         }
 
         if (userInfo?.realName) {

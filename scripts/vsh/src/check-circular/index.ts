@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { extname, join } from 'node:path';
 
-import { consola, execa, getStagedFiles } from '@vben/node-utils';
+import { execa, getStagedFiles } from '@vben/node-utils';
 
 const require = createRequire(import.meta.url);
 const circularScannerCli =
@@ -90,14 +90,14 @@ async function detectCircularDependencies({
  */
 function formatCircles(circles: CircularDependencyResult[]): void {
   if (circles.length === 0) {
-    consola.log('✅ No circular dependencies found');
+    console.log('✅ No circular dependencies found');
     return;
   }
 
-  consola.log('⚠️ Circular dependencies found:');
+  console.log('⚠️ Circular dependencies found:');
   circles.forEach((circle, index) => {
-    consola.log(`\nCircular dependency #${index + 1}:`);
-    circle.forEach((file) => consola.log(`  → ${file}`));
+    console.log(`\nCircular dependency #${index + 1}:`);
+    circle.forEach((file) => console.log(`  → ${file}`));
   });
 }
 
@@ -174,12 +174,12 @@ async function checkCircular({
 
     // 如果发现循环依赖，只输出警告信息
     if (results.length > 0) {
-      consola.log(
+      console.log(
         '\n⚠️ Warning: Circular dependencies found, please check and fix',
       );
     }
   } catch (error) {
-    consola.error(
+    console.error(
       '❌ Error checking circular dependencies:',
       error instanceof Error ? error.message : error,
     );

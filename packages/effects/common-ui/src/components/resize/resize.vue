@@ -362,14 +362,14 @@ const sideCorrectionByLimit = (
   return value;
 };
 
-const rectCorrectionByLimit = (rectData: {
+const rectCorrectionByLimit = (rect: {
   newBottom: number;
   newLeft: number;
   newRight: number;
   newTop: number;
 }) => {
   // const { limits } = this;
-  let { newRight, newLeft, newBottom, newTop } = rectData;
+  let { newRight, newLeft, newBottom, newTop } = rect;
 
   type RectRange = {
     max: number;

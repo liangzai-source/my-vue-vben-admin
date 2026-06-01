@@ -1,8 +1,8 @@
 // 通用类型定义（适配大多数项目）
-import {$t} from '@vben/locales';
+import { $t } from '@vben/locales';
 
-import {message} from '#/adapter/naive';
-import {asyncConfirm, getByPath} from '#/utils/tools';
+import { message } from '#/adapter/naive';
+import { asyncConfirm, getByPath } from '#/utils/tools';
 
 type Recordable<T = any> = Record<string, T>;
 /**

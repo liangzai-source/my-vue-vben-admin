@@ -16,7 +16,7 @@ export const vitePrintPlugin = (
         _printUrls();
 
         for (const [key, value] of Object.entries(infoMap)) {
-          consola.log(
+          console.log(
             `  ${colors.green('➜')}  ${colors.bold(key)}: ${colors.cyan(value)}`,
           );
         }

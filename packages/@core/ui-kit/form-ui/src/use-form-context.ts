@@ -23,37 +23,15 @@ export const [injectFormProps, provideFormProps] =
 export const [injectComponentRefMap, provideComponentRefMap] =
   createContext<Map<string, unknown>>('ComponentRefMap');
 
-function getCustomDefaultValue(rule: any): any {
-  if (rule instanceof ZodString) {
-    return '';
-  } else if (rule instanceof ZodNumber) {
-    return null;
-  } else if (rule instanceof ZodObject) {
-    const defaultValues: Record<string, any> = {};
-    for (const [key, valueSchema] of Object.entries(rule.shape)) {
-      defaultValues[key] = getCustomDefaultValue(valueSchema);
-    }
-    return defaultValues;
-  } else if (rule instanceof ZodIntersection) {
-    const leftDefaultValue = getCustomDefaultValue(rule._def.left);
-    const rightDefaultValue = getCustomDefaultValue(rule._def.right);
-
-    if (leftDefaultValue !== undefined && rightDefaultValue !== undefined) {
-      return { ...leftDefaultValue, ...rightDefaultValue };
-    }
-  }
-  return undefined;
-}
-
 export function useFormInitial(
   props: ComputedRef<VbenFormProps> | VbenFormProps,
 ) {
   const slots = useSlots();
   const initialValues = generateInitialValues();
 
-  const form = useForm(
-    Object.keys(initialValues).length > 0 ? { initialValues } : {},
-  );
+  const form = useForm({
+    ...(Object.keys(initialValues)?.length ? { initialValues } : {}),
+  });
 
   const delegatedSlots = computed(() => {
     const resultSlots: string[] = [];
@@ -90,6 +68,38 @@ export function useFormInitial(
       set(zodDefaults, key, schemaInitialValues[key]);
     }
     return mergeWithArrayOverride(initialValues, zodDefaults);
+  }
+  // 自定义默认值提取逻辑
+  function getCustomDefaultValue(rule: any): any {
+    if (rule instanceof ZodString) {
+      return ''; // 默认为空字符串
+    } else if (rule instanceof ZodNumber) {
+      return null; // 默认为 null（避免显示 0）
+    } else if (rule instanceof ZodObject) {
+      // 递归提取嵌套对象的默认值
+      const defaultValues: Record<string, any> = {};
+      for (const [key, valueSchema] of Object.entries(rule.shape)) {
+        defaultValues[key] = getCustomDefaultValue(valueSchema);
+      }
+      return defaultValues;
+    } else if (rule instanceof ZodIntersection) {
+      // 对于交集类型，从schema 提取默认值
+      const leftDefaultValue = getCustomDefaultValue(rule._def.left);
+      const rightDefaultValue = getCustomDefaultValue(rule._def.right);
+
+      // 如果左右两边都能提取默认值，合并它们
+      if (
+        typeof leftDefaultValue === 'object' &&
+        typeof rightDefaultValue === 'object'
+      ) {
+        return { ...leftDefaultValue, ...rightDefaultValue };
+      }
+
+      // 否则优先使用左边的默认值
+      return leftDefaultValue ?? rightDefaultValue;
+    } else {
+      return undefined; // 其他类型不提供默认值
+    }
   }
 
   return {

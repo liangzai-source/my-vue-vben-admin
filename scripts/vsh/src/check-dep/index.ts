@@ -5,7 +5,7 @@ import { createRequire } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { consola, execa } from '@vben/node-utils';
+import { execa } from '@vben/node-utils';
 
 const require = createRequire(import.meta.url);
 const knipMain = require.resolve('knip');
@@ -64,25 +64,25 @@ function formatResult(result: KnipResult): void {
     }
 
     hasIssues = true;
-    consola.log(`\n📦 ${issue.file}`);
+    console.log(`\n📦 ${issue.file}`);
 
     if (hasDeps) {
-      consola.log('⚠️ Unused dependencies:');
+      console.log('⚠️ Unused dependencies:');
       for (const dep of issue.dependencies) {
-        consola.log(`  - ${dep.name}`);
+        console.log(`  - ${dep.name}`);
       }
     }
 
     if (hasDevDeps) {
-      consola.log('⚠️ Unused devDependencies:');
+      console.log('⚠️ Unused devDependencies:');
       for (const dep of issue.devDependencies) {
-        consola.log(`  - ${dep.name}`);
+        console.log(`  - ${dep.name}`);
       }
     }
   }
 
   if (!hasIssues) {
-    consola.log('\n✅ Dependency check completed, no issues found');
+    console.log('\n✅ Dependency check completed, no issues found');
   }
 }
 
@@ -109,7 +109,7 @@ async function runKnipCheck(): Promise<void> {
     ];
 
     await execa(process.execPath, args, { cwd });
-    consola.log('\n✅ Dependency check completed, no issues found');
+    console.log('\n✅ Dependency check completed, no issues found');
   } catch (error: unknown) {
     const execaError = error as {
       exitCode?: number;

@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import type { TreeOption } from 'naive-ui/lib';
 
+import type { SystemRoleApi } from '#/api/system/role';
+
 import { h, ref } from 'vue';
 
 import { useVbenDrawer } from '@vben/common-ui';
@@ -11,7 +13,6 @@ import { VbenIcon } from '@vben-core/shadcn-ui';
 import { message } from '#/adapter/naive';
 import { allPermissionApi, SystemMenuApi } from '#/api/system/menu';
 import {
-  type SystemRoleApi,
   systemRolePermissionsApi,
   systemRolePermissionsIdListApi,
 } from '#/api/system/role';

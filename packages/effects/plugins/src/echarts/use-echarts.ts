@@ -34,11 +34,6 @@ type EchartsUIType = typeof EchartsUI | undefined;
 
 type EchartsThemeType = 'dark' | 'light' | null;
 
-const isElHidden = (el: HTMLElement | null): boolean => {
-  if (!el) return true;
-  return el.offsetHeight === 0 || el.offsetWidth === 0;
-};
-
 function useEcharts(chartRef: Ref<EchartsUIType>) {
   let chartInstance: echarts.ECharts | null = null;
   let cacheOptions: EChartsOption = {};
@@ -63,6 +58,11 @@ function useEcharts(chartRef: Ref<EchartsUIType>) {
   onActivated(() => (isActiveRef.value = true));
   onDeactivated(() => (isActiveRef.value = false));
   onBeforeUnmount(() => (isActiveRef.value = false));
+
+  const isElHidden = (el: HTMLElement | null): boolean => {
+    if (!el) return true;
+    return el.offsetHeight === 0 || el.offsetWidth === 0;
+  };
 
   const getOptions = computed((): EChartsOption => {
     if (!isDark.value) {
@@ -118,9 +118,7 @@ function useEcharts(chartRef: Ref<EchartsUIType>) {
             if (!instance) return;
             chartInstance = instance;
           }
-          if (clear) {
-            chartInstance?.clear();
-          }
+          clear && chartInstance?.clear();
           chartInstance?.setOption(currentOptions);
           resolve(chartInstance);
         }, 30);

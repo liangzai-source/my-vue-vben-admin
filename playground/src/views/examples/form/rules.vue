@@ -5,11 +5,6 @@ import { Button, Card, message } from 'antdv-next';
 
 import { useVbenForm, z } from '#/adapter/form';
 
-async function checkUsernameExists(usernameVal: string): Promise<boolean> {
-  await new Promise((resolve) => setTimeout(resolve, 1000));
-  return usernameVal === 'existingUser';
-}
-
 const [Form, formApi] = useVbenForm({
   // 所有表单项共用，可单独在表单内覆盖
   commonConfig: {
@@ -208,6 +203,13 @@ const [Form, formApi] = useVbenForm({
         .min(3, '用户名至少需要3个字符')
         .refine(
           async (username) => {
+            // 假设这是一个异步函数，模拟检查用户名是否已存在
+            const checkUsernameExists = async (
+              username: string,
+            ): Promise<boolean> => {
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+              return username === 'existingUser';
+            };
             const exists = await checkUsernameExists(username);
             return !exists;
           },

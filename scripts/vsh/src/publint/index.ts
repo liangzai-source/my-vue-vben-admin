@@ -168,9 +168,7 @@ function printResult(
         `${UNICODE.FAILURE} ${totalCount} problem (${errorCount} errors, ${warningCount} warnings, ${suggestionsCount} suggestions)`,
       ),
     );
-    if (!check) {
-      process.exit(1);
-    }
+    !check && process.exit(1);
   } else {
     consola.log(colors.green(`${UNICODE.SUCCESS} No problem`));
   }

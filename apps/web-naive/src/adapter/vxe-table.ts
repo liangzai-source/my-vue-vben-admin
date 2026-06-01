@@ -1,9 +1,13 @@
+import type { SwitchProps } from 'naive-ui';
+
+import type { VNodeProps } from 'vue';
+
 import type { VxeTableGridOptions } from '@vben/plugins/vxe-table';
 import type { Recordable } from '@vben/types';
 
 import type { ComponentPropsMap, ComponentType } from './component';
 
-import { h, type VNodeProps } from 'vue';
+import { h } from 'vue';
 
 import { $te } from '@vben/locales';
 import {
@@ -20,7 +24,6 @@ import {
   NButton,
   NPopconfirm as PopConfirm,
   NSwitch as Switch,
-  type SwitchProps,
   NTag as Tag,
 } from 'naive-ui';
 

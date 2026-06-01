@@ -97,9 +97,7 @@ export const useTabbarStore = defineStore('core-tabbar', {
         return;
       }
       const index = this.tabs.findIndex((item) => equalTab(item, tab));
-      if (index !== -1) {
-        this.tabs.splice(index, 1);
-      }
+      index !== -1 && this.tabs.splice(index, 1);
     },
     /**
      * @zh_CN 跳转到默认标签页
@@ -153,25 +151,21 @@ export const useTabbarStore = defineStore('core-tabbar', {
         // 获取到已经打开的动态路由数, 判断是否大于某一个值
         if (
           maxNumOfOpenTab > 0 &&
-          this.tabs.filter((item) => item.name === routeTab.name).length >=
+          this.tabs.filter((tab) => tab.name === routeTab.name).length >=
             maxNumOfOpenTab
         ) {
           // 关闭第一个
           const index = this.tabs.findIndex(
             (item) => item.name === routeTab.name,
           );
-          if (index !== -1) {
-            this.tabs.splice(index, 1);
-          }
+          index !== -1 && this.tabs.splice(index, 1);
         } else if (maxCount > 0 && this.tabs.length >= maxCount) {
           // 关闭第一个
           const index = this.tabs.findIndex(
             (item) =>
               !Reflect.has(item.meta, 'affixTab') || !item.meta.affixTab,
           );
-          if (index !== -1) {
-            this.tabs.splice(index, 1);
-          }
+          index !== -1 && this.tabs.splice(index, 1);
         }
         this.tabs.push(tab);
       } else {
@@ -397,7 +391,7 @@ export const useTabbarStore = defineStore('core-tabbar', {
       // this.addTab(tab);
       this.tabs.splice(index, 1, tab);
       // 过滤固定tabs，后面更改affixTabOrder的值的话可能会有问题，目前行464排序affixTabs没有设置值
-      const affixTabs = this.tabs.filter((item) => isAffixTab(item));
+      const affixTabs = this.tabs.filter((tab) => isAffixTab(tab));
       // 获得固定tabs的index
       const newIndex = affixTabs.findIndex((item) => equalTab(item, tab));
       // 交换位置重新排序
@@ -540,7 +534,7 @@ export const useTabbarStore = defineStore('core-tabbar', {
       // this.addTab(tab);
       this.tabs.splice(index, 1, tab);
       // 过滤固定tabs，后面更改affixTabOrder的值的话可能会有问题，目前行464排序affixTabs没有设置值
-      const affixTabs = this.tabs.filter((item) => isAffixTab(item));
+      const affixTabs = this.tabs.filter((tab) => isAffixTab(tab));
       // 获得固定tabs的index,使用固定tabs的下一个位置也就是活动tabs的第一个位置
       const newIndex = affixTabs.length;
       // 交换位置重新排序

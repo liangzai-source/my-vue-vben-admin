@@ -184,9 +184,7 @@ function calcSliceIndex() {
 function debounce(fn: () => void, wait = 33.34) {
   let timer: null | ReturnType<typeof setTimeout>;
   return () => {
-    if (timer) {
-      clearTimeout(timer);
-    }
+    timer && clearTimeout(timer);
     timer = setTimeout(() => {
       fn();
     }, wait);
@@ -205,11 +203,8 @@ function handleResize() {
     });
   };
   callback();
-  if (isFirstTimeRender) {
-    callback();
-  } else {
-    debounce(callback)();
-  }
+  // // execute callback directly when first time resize to avoid shaking
+  isFirstTimeRender ? callback() : debounce(callback)();
   isFirstTimeRender = false;
 }
 
@@ -235,9 +230,7 @@ function initMenu() {
   // expand all subMenus of the menu item
   parentPaths.forEach((path) => {
     const subMenu = subMenus.value[path];
-    if (subMenu) {
-      openMenu(path, subMenu.parentPaths);
-    }
+    subMenu && openMenu(path, subMenu.parentPaths);
   });
 }
 

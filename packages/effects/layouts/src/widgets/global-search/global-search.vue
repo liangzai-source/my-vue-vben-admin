@@ -82,11 +82,7 @@ const toggleKeydownListener = () => {
 };
 
 const toggleOpen = () => {
-  if (open.value) {
-    modalApi.close();
-  } else {
-    modalApi.open();
-  }
+  open.value ? modalApi.close() : modalApi.open();
 };
 
 watch(() => props.enableShortcutKey, toggleKeydownListener);

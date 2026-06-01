@@ -19,15 +19,13 @@ import DocButton from '../doc-button.vue';
 const keyword = ref('');
 const fetching = ref(false);
 // 模拟远程获取数据
-function fetchRemoteOptions({
-  keyword: searchKeyword = '选项',
-}: Record<string, any>) {
+function fetchRemoteOptions({ keyword = '选项' }: Record<string, any>) {
   fetching.value = true;
   return new Promise((resolve) => {
     setTimeout(() => {
       const options = Array.from({ length: 10 }).map((_, index) => ({
-        label: `${searchKeyword}-${index}`,
-        value: `${searchKeyword}-${index}`,
+        label: `${keyword}-${index}`,
+        value: `${keyword}-${index}`,
       }));
       resolve(options);
       fetching.value = false;

@@ -20,13 +20,11 @@ async function getStagedFiles(): Promise<string[]> {
       '-z',
     ]);
 
-    const changedList = stdout
-      ? stdout
-          .split('\0')
-          .filter(Boolean)
-          .map((item) => path.resolve(process.cwd(), item))
-      : [];
-    return [...new Set(changedList)];
+    let changedList = stdout ? stdout.replace(/\0$/, '').split('\0') : [];
+    changedList = changedList.map((item) => path.resolve(process.cwd(), item));
+    const changedSet = new Set(changedList);
+    changedSet.delete('');
+    return [...changedSet];
   } catch (error) {
     console.error('Failed to get staged files:', error);
     return [];

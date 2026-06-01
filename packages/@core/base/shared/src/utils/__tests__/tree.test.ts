@@ -109,7 +109,7 @@ describe('filterTree', () => {
   });
 
   it('should return nodes with "leaf" in their name', () => {
-    const leafTree = [
+    const tree = [
       {
         name: 'root',
         children: [
@@ -123,7 +123,7 @@ describe('filterTree', () => {
       },
     ];
     const result = filterTree(
-      leafTree,
+      tree,
       (node) => node.name.includes('leaf') || node.name === 'root',
     );
     expect(result).toEqual([

@@ -29,7 +29,7 @@ async function processItem(currentDir, item, targets, _depth) {
     if (targets.includes(item)) {
       // 匹配到目标目录或文件时直接删除
       await fs.rm(itemPath, { force: true, recursive: true });
-      process.stdout.write(`✅ Deleted: ${itemPath}\n`);
+      console.log(`✅ Deleted: ${itemPath}`);
       return false; // 已删除，无需递归
     }
 
@@ -41,10 +41,10 @@ async function processItem(currentDir, item, targets, _depth) {
       // 文件不存在，可能已被删除，这是正常情况
       return false;
     } else if (error.code === 'EPERM' || error.code === 'EACCES') {
-      process.stderr.write(`❌ Permission denied: ${item} in ${currentDir}\n`);
+      console.error(`❌ Permission denied: ${item} in ${currentDir}`);
     } else {
-      process.stderr.write(
-        `❌ Error handling item ${item} in ${currentDir}: ${error.message}\n`,
+      console.error(
+        `❌ Error handling item ${item} in ${currentDir}: ${error.message}`,
       );
     }
     return false;
@@ -60,7 +60,7 @@ async function processItem(currentDir, item, targets, _depth) {
 async function cleanTargetsRecursively(currentDir, targets, depth = 0) {
   // 限制递归深度，避免无限递归
   if (depth > 10) {
-    process.stderr.write(`Max recursion depth reached at: ${currentDir}\n`);
+    console.warn(`Max recursion depth reached at: ${currentDir}`);
     return;
   }
 
@@ -70,9 +70,7 @@ async function cleanTargetsRecursively(currentDir, targets, depth = 0) {
     dirents = await fs.readdir(currentDir, { withFileTypes: true });
   } catch (error) {
     // 如果无法读取目录，可能已被删除或权限不足
-    process.stderr.write(
-      `Cannot read directory ${currentDir}: ${error.message}\n`,
-    );
+    console.warn(`Cannot read directory ${currentDir}: ${error.message}`);
     return;
   }
 
@@ -101,8 +99,8 @@ async function cleanTargetsRecursively(currentDir, targets, depth = 0) {
       (result) => result.status === 'rejected',
     );
     if (failedTasks.length > 0) {
-      process.stderr.write(
-        `${failedTasks.length} tasks failed in batch starting at index ${i} in directory: ${currentDir}\n`,
+      console.warn(
+        `${failedTasks.length} tasks failed in batch starting at index ${i} in directory: ${currentDir}`,
       );
     }
   }
@@ -118,27 +116,26 @@ async function cleanTargetsRecursively(currentDir, targets, depth = 0) {
     cleanupTargets.push('pnpm-lock.yaml');
   }
 
-  process.stdout.write(
-    `🚀 Starting cleanup of targets: ${cleanupTargets.join(', ')} from root: ${rootDir}\n`,
+  console.log(
+    `🚀 Starting cleanup of targets: ${cleanupTargets.join(', ')} from root: ${rootDir}`,
   );
 
   const startTime = Date.now();
 
   try {
-    process.stdout.write('📊 Scanning for cleanup targets...\n');
+    // 先统计要删除的目标数量
+    console.log('📊 Scanning for cleanup targets...');
 
     await cleanTargetsRecursively(rootDir, cleanupTargets);
 
     const endTime = Date.now();
     const duration = (endTime - startTime) / 1000;
 
-    process.stdout.write(
-      `✨ Cleanup process completed successfully in ${duration.toFixed(2)}s\n`,
+    console.log(
+      `✨ Cleanup process completed successfully in ${duration.toFixed(2)}s`,
     );
   } catch (error) {
-    process.stderr.write(
-      `💥 Unexpected error during cleanup: ${error.message}\n`,
-    );
+    console.error(`💥 Unexpected error during cleanup: ${error.message}`);
     process.exit(1);
   }
 })();

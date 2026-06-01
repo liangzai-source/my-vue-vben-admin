@@ -30,8 +30,7 @@ export const viteArchiverPlugin = (
 
           try {
             await zipFolder(folderToZip, zipOutputPath);
-
-            consola.log(`Folder has been zipped to: ${zipOutputPath}`);
+            console.log(`Folder has been zipped to: ${zipOutputPath}`);
           } catch (error) {
             console.error('Error zipping folder:', error);
           }
@@ -55,7 +54,7 @@ async function zipFolder(
     });
 
     output.on('close', () => {
-      consola.log(
+      console.log(
         `ZIP file created: ${outputPath} (${archive.pointer()} total bytes)`,
       );
       resolve();

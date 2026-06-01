@@ -10,7 +10,7 @@ const [Modal, modalApi] = useVbenModal({
     modalApi.close();
   },
   onConfirm() {
-    modalApi.close();
+    console.log('onConfirm');
   },
   onOpenChange(isOpen) {
     if (isOpen) {

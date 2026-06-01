@@ -64,8 +64,8 @@ let currentTimezone = getSystemTimezone();
  * 设置默认时区
  * @param timezone
  */
-export const setCurrentTimezone = (tz?: string) => {
-  currentTimezone = tz || getSystemTimezone();
+export const setCurrentTimezone = (timezone?: string) => {
+  currentTimezone = timezone || getSystemTimezone();
   dayjs.tz.setDefault(currentTimezone);
 };
 

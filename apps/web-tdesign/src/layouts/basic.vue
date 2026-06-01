@@ -135,7 +135,7 @@ function handleNoticeClear() {
 }
 
 function markRead(id: number | string) {
-  const item = notifications.value.find((n) => n.id === id);
+  const item = notifications.value.find((item) => item.id === id);
   if (item) {
     item.isRead = true;
   }
