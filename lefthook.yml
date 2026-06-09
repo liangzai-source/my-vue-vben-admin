@@ -42,8 +42,10 @@
 #       runner: go run
 
 pre-commit:
-  parallel: true
+  parallel: false
   commands:
+    format:
+      run: pnpm format && git add .
     lint:
       run: pnpm lint
     checkType:
