@@ -34,10 +34,12 @@ const [Drawer, drawerApi] = useVbenDrawer({
       formData.value.role_id = data.id;
     }
     if (isOpen) {
+      loading.value = true;
       const [menuList, checkedIds] = await Promise.all([
         allPermissionApi(),
         systemRolePermissionsIdListApi(data.id),
       ]);
+      loading.value = false;
       treeOptions.value = convertMenuToTree(menuList);
       hasPermissions.value = checkedIds;
     }
