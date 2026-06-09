@@ -26,6 +26,11 @@ export namespace SystemUserApi {
     oldPassword: string;
     newPassword: string;
   }
+
+  export interface SystemUserPermissions {
+    role_id: number;
+    menu_ids: number[];
+  }
 }
 
 /**
@@ -87,6 +92,27 @@ export async function systemUserChangePasswordApi(
 ) {
   return requestClient.post<UpdateResponse>(
     `/system-user/change-password`,
+    data,
+  );
+}
+
+/**
+ * 获取对应用户的所有权限id
+ * @param id
+ */
+export async function systemUserPermissionsIdListApi(id: number) {
+  return requestClient.post<number[]>(`/system-user/permissions-id/${id}`);
+}
+
+/**
+ * 设置用户权限
+ * @param data
+ */
+export async function systemUserPermissionsApi(
+  data: SystemUserApi.SystemUserPermissions,
+) {
+  return requestClient.post<UpdateResponse>(
+    `/system-user/set-permissions`,
     data,
   );
 }
