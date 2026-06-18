@@ -9,8 +9,8 @@ import { allMenuApi, SystemMenuApi } from '#/api/system/menu';
 
 const loading = ref(false);
 const selectList = ref<SystemMenuApi.SystemMenuSelect[]>([]);
-const modelValue = defineModel<number | string>('value', {
-  default: '',
+const modelValue = defineModel<number>('value', {
+  default: 0,
 });
 
 /**
@@ -25,7 +25,7 @@ function handleSelectMenu(
       const title = item?.meta?.title || item.name;
       const resultItem: SystemMenuApi.SystemMenuSelect = {
         label: $t(title),
-        value: String(item.id),
+        value: Number(item.id),
       };
       if (item?.children) {
         resultItem.children = handleSelectMenu(item.children);
@@ -49,7 +49,7 @@ async function fetchData() {
  * 设置值
  * @param value
  */
-function valueChange(value: number | string): void {
+function valueChange(value: number): void {
   modelValue.value = value;
 }
 

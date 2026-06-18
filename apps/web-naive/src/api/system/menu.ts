@@ -24,7 +24,7 @@ export namespace SystemMenuApi {
 
   export interface SystemMenuSelect {
     label: string;
-    value: string;
+    value: number;
     children?: SystemMenuSelect[];
   }
 

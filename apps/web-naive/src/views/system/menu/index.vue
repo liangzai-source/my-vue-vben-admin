@@ -1,8 +1,6 @@
 <script lang="ts" setup>
 import type { CSSProperties } from 'vue';
 
-import type { OnActionClickParams } from '#/adapter/vxe-table';
-
 import { computed, ref } from 'vue';
 
 import { Page, useVbenDrawer } from '@vben/common-ui';
@@ -20,6 +18,7 @@ import {
 } from '#/api/system/menu';
 import IconButton from '#/components/common/IconButton.vue';
 import { useStatusChange } from '#/hooks/statusConfirm';
+import { useTableAction } from '#/hooks/tableAction';
 import { refreshMenu } from '#/utils/tools';
 import { useMenuColumns } from '#/views/system/menu/hooks';
 
@@ -29,28 +28,13 @@ const { statusChangeFunc } = useStatusChange<SystemMenuApi.SystemMenu>(
   updateMenuStatusApi,
   refreshMenu,
 );
-function onActionClick({
-  code,
-  row,
-}: OnActionClickParams<SystemMenuApi.SystemMenu>) {
-  switch (code) {
-    case 'append': {
-      onAppend(row);
-      break;
-    }
-    case 'delete': {
-      onDelete(row);
-      break;
-    }
-    case 'update': {
-      onUpdate(row);
-      break;
-    }
-    default: {
-      break;
-    }
-  }
-}
+
+const { onActionClick } = useTableAction<SystemMenuApi.SystemMenu>({
+  append: onAppend,
+  delete: onDelete,
+  update: onUpdate,
+});
+
 const statusChangeFun = async (
   newStatus: any,
   row: SystemMenuApi.SystemMenu,
