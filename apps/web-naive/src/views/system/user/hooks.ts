@@ -5,7 +5,7 @@ import type { SystemUserApi } from '#/api/system/user';
 
 import { $t } from '@vben/locales';
 
-import { useDefaultOperation } from '#/utils/tools';
+import { processTableActions } from '#/utils/access';
 
 export function useSystemUserColumns<T = SystemUserApi.SystemUser>(
   onActionClick: OnActionClickFn<T>,
@@ -47,7 +47,22 @@ export function useSystemUserColumns<T = SystemUserApi.SystemUser>(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: useDefaultOperation('sys:user:update', 'sys:user:delete'),
+        options: processTableActions([
+          {
+            code: 'permission',
+            btnText: $t('system.user.setPermission'),
+            icon: 'material-symbols:manage-accounts-outline',
+            perCode: 'sys:user:permission',
+          },
+          {
+            code: 'update',
+            perCode: 'sys:user:update',
+          },
+          {
+            code: 'delete',
+            perCode: 'sys:user:delete',
+          },
+        ]),
       },
       field: 'operation',
       fixed: 'right',

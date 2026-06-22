@@ -47,6 +47,7 @@ function updateCheckedKeys(keys: number[]) {
     v-model:checked-keys="checkedKeys"
     :data="treeOptions"
     :default-expand-all="expandAll"
+    check-strategy="all"
     :selectable="false"
     :show-line="line"
     block-line

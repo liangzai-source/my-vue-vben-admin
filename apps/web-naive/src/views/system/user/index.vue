@@ -5,6 +5,7 @@ import type { SystemUserApi } from '#/api/system/user';
 import { Page, useVbenDrawer } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
+import { message } from '#/adapter/naive';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   systemUserDeleteApi,
@@ -18,6 +19,7 @@ import { useTableAction } from '#/hooks/tableAction';
 
 import { useSystemUserColumns } from './hooks';
 import Form from './modules/form.vue';
+import Permission from './modules/permission.vue';
 
 const { statusChangeFunc } = useStatusChange<SystemUserApi.SystemUser>(
   systemUserUpdateStatusApi,
@@ -28,9 +30,15 @@ const [FormDrawer, formDrawerApi] = useVbenDrawer({
   destroyOnClose: true,
 });
 
+const [PermissionDrawer, permissionDrawerApi] = useVbenDrawer({
+  connectedComponent: Permission,
+  destroyOnClose: true,
+});
+
 const { onActionClick } = useTableAction<SystemUserApi.SystemUser>({
   update: onUpdate,
   delete: onDelete,
+  permission: onPermission,
 });
 
 const statusChangeFun = async (
@@ -64,6 +72,14 @@ function onCreate() {
   formDrawerApi.setData({}).open();
 }
 
+function onPermission(row: SystemUserApi.SystemUser) {
+  if (row.is_administrator === 1) {
+    message.error($t('system.user.superNotOperation'));
+  } else {
+    permissionDrawerApi.setData(row).open();
+  }
+}
+
 function onRefresh() {
   gridApi.query();
 }
@@ -72,6 +88,7 @@ function onRefresh() {
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
+    <PermissionDrawer />
     <Grid :table-title="$t('system.user.list')">
       <template #toolbar-tools>
         <IconButton

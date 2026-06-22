@@ -214,7 +214,12 @@ setupVbenVxeTable({
             });
             return optBtn;
           })
-          .filter((opt) => opt.show !== false);
+          .filter((opt) => {
+            if (typeof opt.show === 'function') {
+              return opt.show(row) !== false;
+            }
+            return true;
+          });
 
         function renderBtn(opt: Recordable<any>, listen = true) {
           // 兜底按钮文本，避免空文本

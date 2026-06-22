@@ -51,7 +51,10 @@
     "account": "账号",
     "password": "密码",
     "list": "管理员列表",
+    "permission": "权限",
+    "setPermission": "设置权限",
     "nickname": "昵称",
+    "superNotOperation": "超级管理员不支持操作",
     "isAdministrator": "是否超级管理员"
   },
   "role": {

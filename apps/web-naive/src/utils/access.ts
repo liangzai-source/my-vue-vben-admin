@@ -2,7 +2,7 @@ import type { Recordable } from '@vben/types';
 
 import { useAccess } from '@vben/access';
 
-import { getTableDefaultOperation } from '#/utils/tools';
+import { getTableDefaultOperation } from '#/utils/tools'; // 初始化权限校验方法
 
 // 初始化权限校验方法
 const { hasAccessByCodes } = useAccess();
@@ -44,7 +44,7 @@ export function processTableActions(
 
   // 使用 forEach 替代 reduce，满足 ESLint 规则
   rawActions.forEach((item) => {
-    // 规则1：原始项是字符串，直接推入结果
+    // 原始项是字符串，直接推入结果
     if (typeof item === 'string') {
       result.push(item);
       return;
@@ -59,18 +59,18 @@ export function processTableActions(
       return;
     }
 
-    // 规则2：对象无perCode，直接保留清理后的对象
+    // 对象无perCode，直接保留清理后的对象
     if (!perCode) {
       result.push(cleanItem);
       return;
     }
 
-    // 规则3：权限校验不通过，直接跳过
+    // 权限校验不通过，直接跳过
     if (!checkPermission(perCode)) {
       return;
     }
 
-    // 规则4：校验通过，判断是否在默认列表中
+    // 校验通过，判断是否在默认列表中
     if (DEFAULT_KEYS.includes(code)) {
       // 在默认列表：转为字符串
       result.push(code);
