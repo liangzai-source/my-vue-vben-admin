@@ -1,4 +1,4 @@
-import { defineOverridesPreferences } from '@vben/preferences';
+import { appCopyrightPreferences, defineOverridesPreferences } from '@vben/preferences';
 
 /**
  * @description 项目配置文件
@@ -19,4 +19,5 @@ export const overridesPreferences = defineOverridesPreferences({
     colorWarning: '#faad14',
     colorDestructive: '#cf1322',
   },
+  copyright: appCopyrightPreferences,
 });
