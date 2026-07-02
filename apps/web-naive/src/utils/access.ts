@@ -25,7 +25,7 @@ export type ActionItem =
  * 统一权限校验工具
  * @param codes 权限码/权限码数组
  */
-function checkPermission(codes: string | string[]): boolean {
+export function checkPermission(codes: string | string[]): boolean {
   const permCodes = Array.isArray(codes) ? codes : [codes];
   return hasAccessByCodes(permCodes);
 }

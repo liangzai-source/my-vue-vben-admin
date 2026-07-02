@@ -4,7 +4,7 @@ import type { SelectOptions } from '#/types/common';
 import { $t } from '@vben/locales';
 
 import { SystemMenuApi } from '#/api/system/menu';
-import { processTableActions } from '#/utils/access';
+import { checkPermission, processTableActions } from '#/utils/access';
 
 export function getMenuTypeOptions() {
   return [
@@ -96,6 +96,7 @@ export function useMenuColumns<T = SystemMenuApi.SystemMenu>(
         name: 'CellSwitch',
         attrs: { beforeChange: onStatusChange },
       },
+      visible: checkPermission('sys:menu:status'),
       field: 'status',
       title: $t('system.menu.status'),
       width: 100,
@@ -126,6 +127,11 @@ export function useMenuColumns<T = SystemMenuApi.SystemMenu>(
           },
         ]),
       },
+      visible: checkPermission([
+        'sys:menu:create',
+        'sys:menu:update',
+        'sys:menu:delete',
+      ]),
       field: 'operation',
       fixed: 'right',
       headerAlign: 'center',

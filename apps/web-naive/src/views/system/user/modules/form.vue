@@ -19,9 +19,9 @@ const emit = defineEmits<{
 }>();
 const formRef = useTemplateRef<FormInst>('form');
 const defaultFormData: SystemUserApi.SystemUserSave = {
-  creatorId: 0,
+  creator_id: 0,
   id: 0,
-  isAdministrator: 0,
+  is_administrator: 0,
   account: '',
   password: '',
   nickname: '',

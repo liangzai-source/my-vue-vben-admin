@@ -5,7 +5,7 @@ import type { SystemUserApi } from '#/api/system/user';
 
 import { $t } from '@vben/locales';
 
-import { processTableActions } from '#/utils/access';
+import { checkPermission, processTableActions } from '#/utils/access';
 
 export function useSystemUserColumns<T = SystemUserApi.SystemUser>(
   onActionClick: OnActionClickFn<T>,
@@ -34,6 +34,7 @@ export function useSystemUserColumns<T = SystemUserApi.SystemUser>(
         name: 'CellSwitch',
         attrs: { beforeChange: onStatusChange },
       },
+      visible: checkPermission('sys:user:status'),
       field: 'status',
       title: $t('common.status'),
       width: 100,
@@ -64,6 +65,11 @@ export function useSystemUserColumns<T = SystemUserApi.SystemUser>(
           },
         ]),
       },
+      visible: checkPermission([
+        'sys:user:permission',
+        'sys:user:update',
+        'sys:user:delete',
+      ]),
       field: 'operation',
       fixed: 'right',
       headerAlign: 'center',

@@ -5,7 +5,7 @@ import type { SystemRoleApi } from '#/api/system/role';
 
 import { $t } from '@vben/locales';
 
-import { processTableActions } from '#/utils/access';
+import { checkPermission, processTableActions } from '#/utils/access';
 
 export function useSystemRoleColumns<T = SystemRoleApi.SystemRole>(
   onActionClick: OnActionClickFn<T>,
@@ -23,6 +23,7 @@ export function useSystemRoleColumns<T = SystemRoleApi.SystemRole>(
         attrs: { beforeChange: onStatusChange },
       },
       field: 'status',
+      visible: checkPermission('sys:role:status'),
       title: $t('common.status'),
       width: 200,
     },
@@ -55,6 +56,11 @@ export function useSystemRoleColumns<T = SystemRoleApi.SystemRole>(
           },
         ]),
       },
+      visible: checkPermission([
+        'sys:role:permission',
+        'sys:role:update',
+        'sys:role:delete',
+      ]),
       field: 'operation',
       fixed: 'right',
       headerAlign: 'center',
