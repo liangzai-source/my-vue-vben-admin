@@ -21,7 +21,7 @@ const formRef = useTemplateRef<FormInst>('form');
 const defaultFormData: SystemUserApi.SystemUserSave = {
   creator_id: 0,
   id: 0,
-  is_administrator: 0,
+  isAdministrator: 0,
   account: '',
   password: '',
   nickname: '',

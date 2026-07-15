@@ -73,7 +73,7 @@ function onCreate() {
 }
 
 function onPermission(row: SystemUserApi.SystemUser) {
-  if (row.is_administrator === 1) {
+  if (row.isAdministrator === 1) {
     message.error($t('system.user.superNotOperation'));
   } else {
     permissionDrawerApi.setData(row).open();
