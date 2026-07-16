@@ -151,8 +151,6 @@ setupVbenVxeTable({
             console.error('Switch change error:', error);
           });
         }
-
-        // 3. 组合最终 props，明确 onUpdate:value 类型
         const finallyProps = {
           ...baseSwitchProps,
           'onUpdate:value': onChange,

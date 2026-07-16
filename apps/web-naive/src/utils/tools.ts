@@ -235,7 +235,7 @@ export function asyncConfirm(options?: ConfirmOptions): Promise<boolean> {
  * @param updateAuthCode
  * @param deleteAuthCode
  */
-export function useDefaultOperation(
+export function getDefaultOperation(
   updateAuthCode: string = '',
   deleteAuthCode: string = '',
 ) {
