@@ -1,9 +1,9 @@
 // 数据基础字段
 export interface BaseData {
   id: number;
-  createdAt?: string;
-  updatedAt?: string;
-  deletedAt?: string;
+  created_at?: string;
+  updated_at?: string;
+  deleted_at?: string;
 }
 // 下拉框options
 export type SelectOptions = {

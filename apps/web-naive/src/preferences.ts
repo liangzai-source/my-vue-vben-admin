@@ -17,10 +17,20 @@ export const overridesPreferences = defineOverridesPreferences({
   theme: {
     mode: 'light',
     builtinType: 'custom',
-    colorPrimary: 'hsl(215 100% 54%)',
+    colorPrimary: '#1677ff',
     colorSuccess: '#389e0d',
     colorWarning: '#faad14',
     colorDestructive: '#cf1322',
   },
   copyright: appCopyrightPreferences,
+  widget: {
+    fullscreen: true,
+    globalSearch: true,
+    languageToggle: true,
+    lockScreen: true,
+    notification: false,
+    refresh: true,
+    sidebarToggle: true,
+    themeToggle: true,
+  },
 });
