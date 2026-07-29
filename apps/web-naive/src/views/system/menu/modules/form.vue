@@ -75,13 +75,15 @@ const baseRules: FormRules = {
             $t('ui.formRules.maxLength', [$t('system.menu.menuName'), 30]),
           )
           .refine(
-            async (val) => !(await isMenuNameExists(val, formData.value?.id)),
-            (val) => ({
-              message: $t('ui.formRules.alreadyExists', [
-                $t('system.menu.menuName'),
-                val,
-              ]),
-            }),
+            async (val: string) =>
+              !(await isMenuNameExists(val, formData.value?.id)),
+            {
+              error: (ctx) =>
+                $t('ui.formRules.alreadyExists', [
+                  $t('system.menu.menuName'),
+                  ctx.input as string,
+                ]),
+            },
           );
 
         const result = await nameSchema.safeParseAsync(value);
