@@ -5,7 +5,7 @@ import type { SystemRoleApi } from '#/api/system/role';
 
 import { computed, ref, useTemplateRef } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import { useVbenModal } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
 import { NForm, NFormItem, NInput } from 'naive-ui';
@@ -34,10 +34,10 @@ const rules: FormRules = {
     },
   ],
 };
-const [Drawer, drawerApi] = useVbenDrawer({
+const [Modal, modalApi] = useVbenModal({
   onConfirm: formConfirm,
   onOpenChange: (isOpen) => {
-    const data = drawerApi.getData<SystemRoleApi.SystemRole>();
+    const data = modalApi.getData<SystemRoleApi.SystemRole>();
     if (isOpen && !isEmpty(data)) {
       formData.value = data;
     }
@@ -52,7 +52,7 @@ function formConfirm() {
       await (formData.value?.id
         ? systemRoleUpdateApi(formData.value.id, formData.value)
         : systemRoleCreateApi(formData.value));
-      await drawerApi.close();
+      await modalApi.close();
       emits('success');
       loading.value = false;
       showFormMessage(formData.value?.id);
@@ -63,7 +63,7 @@ function formConfirm() {
     });
 }
 
-const getDrawerTitle = computed(() =>
+const getModalTitle = computed(() =>
   formData.value?.id
     ? $t('common.update', [$t('system.role.createName')])
     : $t('common.create', [$t('system.role.createName')]),
@@ -71,11 +71,7 @@ const getDrawerTitle = computed(() =>
 </script>
 
 <template>
-  <Drawer
-    :title="getDrawerTitle"
-    :loading="loading"
-    class="w-full max-w-[800px]"
-  >
+  <Modal :title="getModalTitle" :loading="loading" class="w-full max-w-[800px]">
     <NForm
       label-placement="left"
       label-width="100px"
@@ -98,7 +94,7 @@ const getDrawerTitle = computed(() =>
         />
       </NFormItem>
     </NForm>
-  </Drawer>
+  </Modal>
 </template>
 
 <style scoped></style>

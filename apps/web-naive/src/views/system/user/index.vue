@@ -2,7 +2,7 @@
 import type { VxeTableGridOptions } from '#/adapter/vxe-table';
 import type { SystemUserApi } from '#/api/system/user';
 
-import { Page, useVbenDrawer } from '@vben/common-ui';
+import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
 import { message } from '#/adapter/naive';
@@ -25,7 +25,7 @@ const { statusChangeFunc } = useStatusChange<SystemUserApi.SystemUser>(
   systemUserUpdateStatusApi,
 );
 
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
+const [FormModal, formModalApi] = useVbenModal({
   connectedComponent: Form,
   destroyOnClose: true,
 });
@@ -65,11 +65,11 @@ function onDelete(row: SystemUserApi.SystemUser) {
 }
 
 function onUpdate(row: SystemUserApi.SystemUser) {
-  formDrawerApi.setData(row).open();
+  formModalApi.setData(row).open();
 }
 
 function onCreate() {
-  formDrawerApi.setData({}).open();
+  formModalApi.setData({}).open();
 }
 
 function onPermission(row: SystemUserApi.SystemUser) {
@@ -87,7 +87,7 @@ function onRefresh() {
 
 <template>
   <Page auto-content-height>
-    <FormDrawer @success="onRefresh" />
+    <FormModal @success="onRefresh" />
     <PermissionDrawer />
     <Grid :table-title="$t('system.user.list')">
       <template #toolbar-tools>

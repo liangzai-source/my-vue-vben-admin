@@ -5,7 +5,7 @@ import type { SystemUserApi } from '#/api/system/user';
 
 import { computed, ref, useTemplateRef } from 'vue';
 
-import { useVbenDrawer } from '@vben/common-ui';
+import { useVbenModal } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
 import { NForm, NFormItem, NInput } from 'naive-ui';
@@ -27,10 +27,10 @@ const defaultFormData: SystemUserApi.SystemUserSave = {
   nickname: '',
   status: 1,
 };
-const [Drawer, drawerApi] = useVbenDrawer({
+const [Modal, modalApi] = useVbenModal({
   onConfirm: formConfirm,
   onOpenChange: (isOpen) => {
-    const data = drawerApi.getData<SystemUserApi.SystemUserSave>();
+    const data = modalApi.getData<SystemUserApi.SystemUserSave>();
     if (isOpen && !isEmpty(data)) {
       if (isEmpty(data.status)) {
         data.status = 1;
@@ -62,7 +62,7 @@ const formRules = computed<FormRules>(() => {
     ],
   };
 });
-const getDrawerTitle = computed(() =>
+const getModalTitle = computed(() =>
   formData.value?.id
     ? $t('common.update', [$t('system.user.name')])
     : $t('common.create', [$t('system.user.name')]),
@@ -76,7 +76,7 @@ function formConfirm() {
       await (formData.value?.id
         ? systemUserUpdateApi(formData.value.id, formData.value)
         : systemUserCreateApi(formData.value));
-      await drawerApi.close();
+      await modalApi.close();
       emit('success');
       loading.value = false;
       showFormMessage(formData.value?.id);
@@ -89,11 +89,7 @@ function formConfirm() {
 </script>
 
 <template>
-  <Drawer
-    :title="getDrawerTitle"
-    :loading="loading"
-    class="w-full max-w-[800px]"
-  >
+  <Modal :title="getModalTitle" :loading="loading" class="w-full max-w-[800px]">
     <NForm
       label-placement="left"
       label-width="100px"
@@ -119,7 +115,7 @@ function formConfirm() {
         <StatusRadios v-model:status="formData.status" />
       </NFormItem>
     </NForm>
-  </Drawer>
+  </Modal>
 </template>
 
 <style scoped></style>

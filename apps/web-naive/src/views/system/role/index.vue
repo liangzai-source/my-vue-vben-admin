@@ -3,7 +3,7 @@ import type { VxeTableGridOptions } from '@vben/plugins/vxe-table';
 
 import type { SystemRoleApi } from '#/api/system/role';
 
-import { Page, useVbenDrawer } from '@vben/common-ui';
+import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -23,7 +23,7 @@ const { statusChangeFunc } = useStatusChange<SystemRoleApi.SystemRole>(
   systemRoleUpdateStatusApi,
 );
 
-const [FormDrawer, formDrawerApi] = useVbenDrawer({
+const [FormModal, formModalApi] = useVbenModal({
   connectedComponent: Form,
   destroyOnClose: true,
 });
@@ -63,11 +63,11 @@ function onDelete(row: SystemRoleApi.SystemRole) {
 }
 
 function onUpdate(row: SystemRoleApi.SystemRole) {
-  formDrawerApi.setData(row).open();
+  formModalApi.setData(row).open();
 }
 
 function onCreate() {
-  formDrawerApi.setData({}).open();
+  formModalApi.setData({}).open();
 }
 
 function onPermission(row: SystemRoleApi.SystemRole) {
@@ -81,7 +81,7 @@ function onRefresh() {
 
 <template>
   <Page auto-content-height>
-    <FormDrawer @success="onRefresh" />
+    <FormModal @success="onRefresh" />
     <PermissionDrawer />
     <Grid :table-title="$t('system.role.list')">
       <template #toolbar-tools>
