@@ -9,6 +9,8 @@ import { $t } from '@vben/locales';
 import { MenuBadge } from '@vben-core/menu-ui';
 import { VbenIcon } from '@vben-core/shadcn-ui';
 
+import cloneDeep from 'lodash.clonedeep';
+
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   allMenuApi,
@@ -108,7 +110,7 @@ function onRefresh() {
 }
 
 function onUpdate(row: SystemMenuApi.SystemMenu) {
-  formDrawerApi.setData(row).open();
+  formDrawerApi.setData(cloneDeep(row)).open();
 }
 
 function onAppend(row: SystemMenuApi.SystemMenu) {

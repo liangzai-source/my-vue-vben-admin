@@ -5,6 +5,8 @@ import type { SystemUserApi } from '#/api/system/user';
 import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
+import cloneDeep from 'lodash.clonedeep';
+
 import { message } from '#/adapter/naive';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
@@ -65,7 +67,7 @@ function onDelete(row: SystemUserApi.SystemUser) {
 }
 
 function onUpdate(row: SystemUserApi.SystemUser) {
-  formModalApi.setData(row).open();
+  formModalApi.setData(cloneDeep(row)).open();
 }
 
 function onCreate() {

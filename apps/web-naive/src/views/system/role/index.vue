@@ -5,6 +5,8 @@ import type { SystemRoleApi } from '#/api/system/role';
 
 import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
+import cloneDeep from 'lodash.clonedeep';
+
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   systemRoleDeleteApi,
@@ -63,7 +65,7 @@ function onDelete(row: SystemRoleApi.SystemRole) {
 }
 
 function onUpdate(row: SystemRoleApi.SystemRole) {
-  formModalApi.setData(row).open();
+  formModalApi.setData(cloneDeep(row)).open();
 }
 
 function onCreate() {
