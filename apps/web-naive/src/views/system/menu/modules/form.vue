@@ -162,10 +162,10 @@ async function formConfirm() {
     });
 }
 
-const [Drawer, drawerApi] = useVbenDrawer({
+const [Drawer, drawerApi] = useVbenDrawer<SystemMenuApi.SystemMenu>({
   onConfirm: formConfirm,
   onOpenChange: (isOpen) => {
-    const data = drawerApi.getData<SystemMenuApi.SystemMenu>();
+    const data = drawerApi.getData();
     if (isOpen) {
       if (data?.type === 3) {
         data.linkSrc = data.meta?.link;

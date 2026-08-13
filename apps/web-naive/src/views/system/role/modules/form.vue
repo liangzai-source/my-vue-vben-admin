@@ -34,10 +34,10 @@ const rules: FormRules = {
     },
   ],
 };
-const [Modal, modalApi] = useVbenModal({
+const [Modal, modalApi] = useVbenModal<SystemRoleApi.SystemRole>({
   onConfirm: formConfirm,
   onOpenChange: (isOpen) => {
-    const data = modalApi.getData<SystemRoleApi.SystemRole>();
+    const data = modalApi.getData();
     if (isOpen && !isEmpty(data)) {
       formData.value = data;
     }

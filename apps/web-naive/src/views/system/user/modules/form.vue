@@ -27,10 +27,10 @@ const defaultFormData: SystemUserApi.SystemUserSave = {
   nickname: '',
   status: 1,
 };
-const [Modal, modalApi] = useVbenModal({
+const [Modal, modalApi] = useVbenModal<SystemUserApi.SystemUserSave>({
   onConfirm: formConfirm,
   onOpenChange: (isOpen) => {
-    const data = modalApi.getData<SystemUserApi.SystemUserSave>();
+    const data = modalApi.getData();
     if (isOpen && !isEmpty(data)) {
       if (isEmpty(data.status)) {
         data.status = 1;

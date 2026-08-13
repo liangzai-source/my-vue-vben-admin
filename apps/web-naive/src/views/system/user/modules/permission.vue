@@ -26,18 +26,18 @@ const formData = ref<SystemUserApi.SystemUserPermissions>({
 });
 const treeOptions = ref<TreeOption[]>([]);
 const hasPermissions = ref<number[] | string[]>([]);
-const [Drawer, drawerApi] = useVbenDrawer({
+const [Drawer, drawerApi] = useVbenDrawer<SystemUserApi.SystemUser>({
   onConfirm: formConfirm,
   onOpenChange: async (isOpen) => {
-    const data = drawerApi.getData<SystemUserApi.SystemUser>();
-    if (isOpen && !isEmpty(data.id)) {
+    const data = drawerApi.getData();
+    if (isOpen && !isEmpty(data)) {
       formData.value.user_id = data.id;
     }
     if (isOpen) {
       loading.value = true;
       const [menuList, checkedIds] = await Promise.all([
         allPermissionApi(),
-        systemUserPermissionsIdListApi(data.id),
+        systemUserPermissionsIdListApi(data?.id || 0),
       ]);
       loading.value = false;
       treeOptions.value = convertMenuToTree(menuList);
