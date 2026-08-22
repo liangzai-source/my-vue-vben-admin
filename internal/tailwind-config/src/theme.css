@@ -313,6 +313,8 @@
   }
 
   html {
+    --vben-viewport-height: 100vh;
+
     @apply bg-background font-sans text-foreground;
 
     scroll-behavior: smooth;
@@ -323,6 +325,10 @@
     text-rendering: optimizelegibility;
     text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
+
+    @supports (height: 1dvh) {
+      --vben-viewport-height: 100dvh;
+    }
   }
 
   #app,
