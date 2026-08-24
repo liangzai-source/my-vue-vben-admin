@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { Recordable } from '@vben/types';
 
-import { useQuery } from '@tanstack/vue-query';
+import { useQuery, useQueryClient } from '@tanstack/vue-query';
 
 import { useVbenForm } from '#/adapter/form';
 import { getMenuList } from '#/api';
@@ -9,20 +9,23 @@ import { getMenuList } from '#/api';
 const queryKey = ['demo', 'api', 'options'];
 const count = 4;
 
-const { dataUpdatedAt, promise: fetchDataFn } = useQuery({
-  // 在组件渲染期间预取数据
-  experimental_prefetchInRender: true,
-  // 获取接口数据的函数
+const queryClient = useQueryClient();
+
+const { dataUpdatedAt } = useQuery({
+  // ✅ 移除了 experimental_prefetchInRender（v5 已删除，useQuery 默认就会在 setup 时发起请求）
   queryFn: getMenuList,
   queryKey,
-  // 每次组件挂载时都重新获取数据。如果不需要每次都重新获取就不要设置为always
   refetchOnMount: 'always',
-  // 缓存时间
   staleTime: 1000 * 60 * 5,
 });
 
+// ✅ 用 ensureQueryData 替代原来的 promise.value
+// 多个 ApiSelect 同时调用时，会复用同一个请求 Promise（并发去重）
 async function fetchOptions() {
-  return await fetchDataFn.value;
+  return queryClient.ensureQueryData({
+    queryKey,
+    queryFn: getMenuList,
+  });
 }
 
 const schema = [];
@@ -50,6 +53,7 @@ const [Form] = useVbenForm({
   showDefaultActions: false,
 });
 </script>
+
 <template>
   <div>
     <div class="mb-2 flex gap-2">
