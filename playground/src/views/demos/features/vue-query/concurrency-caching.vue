@@ -1,31 +1,36 @@
 <script lang="ts" setup>
 import type { Recordable } from '@vben/types';
 
-import { useQuery, useQueryClient } from '@tanstack/vue-query';
+import { queryOptions, useQuery, useQueryClient } from '@tanstack/vue-query';
 
 import { useVbenForm } from '#/adapter/form';
 import { getMenuList } from '#/api';
 
-const queryKey = ['demo', 'api', 'options'];
 const count = 4;
+// 缓存时间
+const staleTime = 1000 * 60 * 5;
+
+// 公共查询配置：useQuery 与 fetchQuery 共用
+const menuQueryOptions = queryOptions({
+  // 获取接口数据的函数
+  queryFn: getMenuList,
+  queryKey: ['demo', 'api', 'options'],
+  staleTime,
+});
 
 const queryClient = useQueryClient();
 
-const { dataUpdatedAt } = useQuery({
-  // ✅ 移除了 experimental_prefetchInRender（v5 已删除，useQuery 默认就会在 setup 时发起请求）
-  queryFn: getMenuList,
-  queryKey,
-  refetchOnMount: 'always',
-  staleTime: 1000 * 60 * 5,
-});
+const { dataUpdatedAt } = useQuery(menuQueryOptions);
 
-// ✅ 用 ensureQueryData 替代原来的 promise.value
-// 多个 ApiSelect 同时调用时，会复用同一个请求 Promise（并发去重）
 async function fetchOptions() {
-  return queryClient.ensureQueryData({
-    queryKey,
-    queryFn: getMenuList,
-  });
+  // 并发调用时 fetchQuery 会合并相同 queryKey 的请求，只发一次；
+  // 失败时显式记录日志并回退为空列表，避免未处理的 rejection
+  try {
+    return await queryClient.fetchQuery(menuQueryOptions);
+  } catch (error) {
+    console.error('Failed to fetch menu options:', error);
+    return [];
+  }
 }
 
 const schema = [];
@@ -53,7 +58,6 @@ const [Form] = useVbenForm({
   showDefaultActions: false,
 });
 </script>
-
 <template>
   <div>
     <div class="mb-2 flex gap-2">
