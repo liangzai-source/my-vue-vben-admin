@@ -41,7 +41,7 @@ export async function refreshTokenApi() {
  * 退出登录
  */
 export async function logoutApi() {
-  return requestClient.post('/auth/logout', {
+  return baseRequestClient.post('/auth/logout', undefined, {
     withCredentials: true,
   });
 }
@@ -50,5 +50,5 @@ export async function logoutApi() {
  * 获取用户权限码
  */
 export async function getAccessCodesApi() {
-  return requestClient.post('/auth/auth-code');
+  return requestClient.post<string[]>('/auth/auth-code');
 }
