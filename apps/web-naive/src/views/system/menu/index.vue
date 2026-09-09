@@ -29,6 +29,9 @@ import Form from './modules/form.vue';
 const { statusChangeFunc } = useStatusChange<SystemMenuApi.SystemMenu>(
   updateMenuStatusApi,
   refreshMenu,
+  {
+    rowNameField: 'meta.title',
+  },
 );
 
 const { onActionClick } = useTableAction<SystemMenuApi.SystemMenu>({
