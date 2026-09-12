@@ -11,11 +11,8 @@ const [Drawer, drawerApi] = useVbenDrawer<DevCrudApi.DevCrud>({
   onConfirm: formConfirm,
   onOpenChange: (isOpen) => {
     const data = drawerApi.getData();
-    if (isOpen) {
-      // oxlint-disable-next-line unicorn/no-lonely-if
-      if (data?.name === '标题1') {
-        data.name = '不是标题1';
-      }
+    if (isOpen && data?.name === '标题1') {
+      data.name = '不是标题1';
     }
     formData.value = data;
   },
