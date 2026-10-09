@@ -1,6 +1,8 @@
 {
   "auth": {
     "login": "登录",
+    "logout": "退出登录",
+    "confirmLogout": "确定退出登录吗?",
     "register": "注册",
     "codeLogin": "验证码登录",
     "qrcodeLogin": "二维码登录",

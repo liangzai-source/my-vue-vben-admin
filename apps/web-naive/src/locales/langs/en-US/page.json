@@ -1,6 +1,8 @@
 {
   "auth": {
     "login": "Login",
+    "logout": "Logout",
+    "confirmLogout": "Are you sure you want to log out?",
     "register": "Register",
     "codeLogin": "Code Login",
     "qrcodeLogin": "Qr Code Login",

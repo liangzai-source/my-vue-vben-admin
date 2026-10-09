@@ -52,7 +52,7 @@ function onCreate() {
 <template>
   <Page auto-content-height>
     <FormDrawer @success="onRefresh" />
-    <Grid :table-title="$t('system.user.list')">
+    <Grid :table-title="$t('dev.crud.title')">
       <template #toolbar-tools>
         <IconButton
           icon="ic:outline-plus"

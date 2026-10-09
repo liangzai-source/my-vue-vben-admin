@@ -33,5 +33,6 @@ export const overridesPreferences = defineOverridesPreferences({
     refresh: true,
     sidebarToggle: true,
     themeToggle: true,
+    logoutButtonPosition: 'none',
   },
 });

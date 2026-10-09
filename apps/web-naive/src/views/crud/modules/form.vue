@@ -24,7 +24,7 @@ function formConfirm() {
 </script>
 
 <template>
-  <Drawer>
+  <Drawer class="w-[90vw] max-w-[1500px]">
     <h1>抽屉</h1>
   </Drawer>
 </template>

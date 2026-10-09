@@ -11,6 +11,7 @@ import { useAccessStore, useUserStore } from '@vben/stores';
 import { message } from '#/adapter/naive';
 import ChangePassword from '#/components/common/ChangePassword.vue';
 import { useAuthStore } from '#/store';
+import { asyncConfirm } from '#/utils/tools';
 import LoginForm from '#/views/_core/authentication/login.vue';
 
 const userStore = useUserStore();
@@ -31,7 +32,23 @@ const menus = computed(() => [
     icon: 'mdi:password-reset',
     text: $t('page.auth.changePassword'),
   },
+  {
+    handler: () => {
+      logout();
+    },
+    icon: 'mdi:logout',
+    text: $t('page.auth.logout'),
+  },
 ]);
+
+const logout = async () => {
+  const isConfirm = await asyncConfirm({
+    title: $t('common.tip'),
+    content: $t('page.auth.confirmLogout'),
+  });
+  if (!isConfirm) return;
+  await handleLogout();
+};
 
 const avatar = computed(() => {
   return userStore.userInfo?.avatar ?? preferences.app.defaultAvatar;
@@ -94,7 +111,6 @@ async function changePasswordSuccess() {
     :avatar
     :text="userStore.userInfo?.realName"
     @clear-preferences-and-logout="handleLogout"
-    @logout="handleLogout"
   >
     <template #user-dropdown>
       <UserDropdown

@@ -217,6 +217,8 @@ export function asyncConfirm(options?: ConfirmOptions): Promise<boolean> {
       positiveText: dialogOptions.confirmText,
       negativeText: dialogOptions.cancelText,
       draggable: dialogOptions.draggable,
+      maskClosable: false,
+      transformOrigin: 'center',
       onPositiveClick: () => {
         resolve(true);
       },
