@@ -84,8 +84,8 @@ export interface Field extends OptionSource {
 }
 
 export interface Schema {
-  BasicConfig: Basic;
-  RouteConfig: Route;
-  FieldsConfig: Field[];
-  PageConfig: Page;
+  basicConfig: Basic;
+  routeConfig: Route;
+  fieldsConfig: Field[];
+  pageConfig: Page;
 }
