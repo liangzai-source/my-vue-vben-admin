@@ -1,5 +1,69 @@
 {
   "label": {
-    "moduleName": "功能名称"
+    "basic": {
+      "moduleName": "功能名称",
+      "tableName": "表名",
+      "hasTable": "已有数据表",
+      "selectTable": "选择数据表",
+      "pkField": "主键名称",
+      "genPath": "生成目录",
+      "modelName": "模型",
+      "repoName": "仓库",
+      "serviceName": "服务",
+      "handlerName": "控制器",
+      "hasCreatedAndUpdated": "创建时间&编辑时间",
+      "listShowCreated": "列表显示创建时间",
+      "listShowUpdated": "列表显示创建时间",
+      "softDelete": "软删除",
+      "comment": "备注",
+      "hasDetail": "显示详情"
+    },
+    "field": {
+      "optionType": "选项类型",
+      "optionData": "固定选项",
+      "compOptions": "远程数据源",
+      "compLabelField": "显示字段",
+      "compValueField": "值字段",
+      "type": "类型",
+      "symbol": "搜索符号",
+      "component": "搜索组件",
+      "label": "搜索标签",
+      "name": "字段名",
+      "value": "固定搜索值",
+
+      "goType": "Go字段类型",
+      "gormType": "Gorm类型",
+      "jsonTag": "JsonTag",
+      "comment": "字段注释",
+      "indexable": "索引",
+      "nullable": "允许空",
+      "tsName": "TS字段名",
+      "tsType": "TS类型",
+      "listComp": "表格组件",
+      "listable": "表格显示",
+      "width": "表格列宽",
+      "sortable": "允许排序",
+      "searchType": "搜索配置",
+      "editable": "可编辑",
+      "FormComp": "表单组件",
+      "default": "默认值",
+      "showInDetail": "详情页显示",
+      "detailComp": "详情页组件"
+    },
+    "route": {
+      "createMenu": "创建菜单",
+      "createRoute": "创建路由",
+      "routeName": "路由名称",
+      "menuName": "菜单名称",
+      "parentMenu": "上级菜单",
+      "menuIcon": "菜单图标",
+      "apiPath": "API接口",
+      "pagePath": "页面路径"
+    },
+    "page": {
+      "formType": "表单类型",
+      "dialogSize": "弹窗类型",
+      "operation": "操作按钮"
+    }
   }
 }

@@ -5,7 +5,6 @@ import type { Basic, Field, Page, Route, Schema } from './types';
 export const createDefaultBasic = (): Basic => ({
   moduleName: '',
   tableName: '',
-  hasTable: false,
   pkField: '',
   pkType: 1, // 默认自增
   genPath: '',

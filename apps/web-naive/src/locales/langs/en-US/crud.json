@@ -1,5 +1,68 @@
 {
   "label": {
-    "moduleName": "moduleName"
+    "basic": {
+      "moduleName": "Module Name",
+      "tableName": "Table Name",
+      "hasTable": "Existing Table",
+      "pkField": "Primary Key Field",
+      "genPath": "Generation Path",
+      "modelName": "Model",
+      "repoName": "Repository",
+      "serviceName": "Service",
+      "handlerName": "Controller",
+      "hasCreatedAndUpdated": "Created & Updated Time",
+      "listShowCreated": "Show Created in List",
+      "listShowUpdated": "Show Updated in List",
+      "softDelete": "Soft Delete",
+      "comment": "Comment",
+      "hasDetail": "Show Detail"
+    },
+    "field": {
+      "optionType": "Option Type",
+      "optionData": "Fixed Options",
+      "compOptions": "Remote Data Source",
+      "compLabelField": "Display Field",
+      "compValueField": "Value Field",
+      "type": "Type",
+      "symbol": "Search Symbol",
+      "component": "Search Component",
+      "label": "Search Label",
+      "name": "Field Name",
+      "value": "Fixed Search Value",
+
+      "goType": "Go Field Type",
+      "gormType": "GORM Type",
+      "jsonTag": "JSON Tag",
+      "comment": "Comment",
+      "indexable": "Index",
+      "nullable": "Nullable",
+      "tsName": "TS Field Name",
+      "tsType": "TS Type",
+      "listComp": "Table Component",
+      "listable": "Show in Table",
+      "width": "Column Width",
+      "sortable": "Sortable",
+      "searchType": "Search Config",
+      "editable": "Editable",
+      "FormComp": "Form Component",
+      "default": "Default Value",
+      "showInDetail": "Show in Detail",
+      "detailComp": "Detail Component"
+    },
+    "route": {
+      "createMenu": "Create Menu",
+      "createRoute": "Create Route",
+      "routeName": "Route Name",
+      "menuName": "Menu Name",
+      "parentMenu": "Parent Menu",
+      "menuIcon": "Menu Icon",
+      "apiPath": "API Path",
+      "pagePath": "Page Path"
+    },
+    "page": {
+      "formType": "Form Type",
+      "dialogSize": "Dialog Type",
+      "operation": "Action Buttons"
+    }
   }
 }

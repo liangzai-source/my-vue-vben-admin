@@ -1,7 +1,6 @@
 export interface Basic {
   moduleName: string; // 模块名称
   tableName: string; // 数据库表名
-  hasTable: boolean; // 是否已有数据表
   pkField: string; // 主键名称
   pkType: number; // 主键类型  1  自增   2  uuid
   genPath: string; // 生成目录
@@ -18,20 +17,20 @@ export interface Basic {
 }
 
 export interface Route {
-  createMenu: boolean;
-  createRoute: boolean;
-  routeName: string;
-  menuName: string;
-  parentMenu: number;
-  menuIcon: string;
-  apiPath: string;
-  pagePath: string;
+  createMenu: boolean; // 创建菜单
+  createRoute: boolean; // 创建路由
+  routeName: string; // 路由名称
+  menuName: string; // 菜单名称
+  parentMenu: number; // 上级菜单
+  menuIcon: string; // 菜单图标
+  apiPath: string; // api接口
+  pagePath: string; // 页面路径
 }
 
 export interface Page {
-  formType: string;
-  dialogSize: string;
-  operation: string[];
+  formType: string; // 表单类型
+  dialogSize: string; // 弹窗类型
+  operation: string[]; // 操作按钮
 }
 
 export interface Enum {
