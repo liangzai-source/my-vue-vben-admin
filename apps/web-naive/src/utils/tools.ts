@@ -1,6 +1,8 @@
 import type { FormValidationError } from 'naive-ui';
 import type { SelectMixedOption } from 'naive-ui/es/select/src/interface';
 
+import type { ModelRef } from 'vue';
+
 import type { Recordable } from '@vben/types';
 
 import { $t } from '@vben/locales';
@@ -280,4 +282,37 @@ export function getApiMethodList(): SelectMixedOption[] {
     { label: 'HEAD', value: 'HEAD' },
     { label: 'OPTIONS', value: 'OPTIONS' },
   ];
+}
+/**
+ * 把 defineModel 返回的 ref 包装成 Proxy。
+ * - 读：直接透传 model.value[key]，保留响应式追踪
+ * - 写：整体替换 model.value，触发 defineModel 的 emit（单向数据流）
+ *
+ * 仅适用于对象结构（flat object）。
+ */
+export function useModelProxy<T extends object>(model: ModelRef<T>): T {
+  return new Proxy({} as T, {
+    get(_, key: PropertyKey) {
+      return (model.value as Record<PropertyKey, unknown>)[key];
+    },
+    set(_, key: PropertyKey, value) {
+      model.value = { ...model.value, [key]: value } as T;
+      return true;
+    },
+    has(_, key) {
+      return key in model.value;
+    },
+    ownKeys() {
+      return Reflect.ownKeys(model.value);
+    },
+    getOwnPropertyDescriptor(_, key) {
+      return Reflect.getOwnPropertyDescriptor(model.value, key);
+    },
+    deleteProperty(_, key) {
+      const next = { ...model.value } as Record<PropertyKey, unknown>;
+      Reflect.deleteProperty(next, key);
+      model.value = next as T;
+      return true;
+    },
+  });
 }
