@@ -8,8 +8,7 @@ export default defineConfig(async () => {
         proxy: {
           '/admin-api': {
             changeOrigin: true,
-            rewrite: (path) => path.replace(/^\/admin-api/, ''),
-            target: 'http://localhost:9090/admin-api',
+            target: 'http://localhost:9090',
             ws: true,
           },
         },

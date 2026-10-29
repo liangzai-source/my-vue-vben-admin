@@ -1,4 +1,4 @@
-<script lang="ts" setup>
+﻿<script lang="ts" setup>
 import type {
   FormInst,
   FormItemRule,
@@ -301,14 +301,14 @@ const getDrawerTitle = computed(() =>
         <NFormItemGi
           :label="`${$t('system.menu.requestRoute')}`"
           :span="12"
-          path="apiPath"
+          path="api_path"
         >
           <NInput v-model:value="formData.api_path" />
         </NFormItemGi>
         <NFormItemGi
           :label="`${$t('system.menu.requestMethod')}`"
           :span="12"
-          path="apiMethod"
+          path="api_method"
         >
           <NSelect
             v-model:value="formData.api_method"

@@ -34,6 +34,7 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
     const accessStore = useAccessStore();
     const authStore = useAuthStore();
     accessStore.setAccessToken(null);
+    accessStore.setRefreshToken(null);
     if (
       preferences.app.loginExpiredMode === 'modal' &&
       accessStore.isAccessChecked
@@ -49,9 +50,13 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
    */
   async function doRefreshToken() {
     const accessStore = useAccessStore();
-    const resp = await refreshTokenApi();
-    const newToken = resp.data;
+    const resp = await refreshTokenApi(accessStore.refreshToken ?? '');
+    const loginResult = resp?.data;
+    const newToken = loginResult?.accessToken ?? '';
     accessStore.setAccessToken(newToken);
+    if (loginResult?.refreshToken) {
+      accessStore.setRefreshToken(loginResult.refreshToken);
+    }
     return newToken;
   }
 
