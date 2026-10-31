@@ -1,41 +1,116 @@
 <script setup lang="ts">
-import type { Basic } from '#/crud/types';
-import type { SelectOptions } from '#/types/common';
+import type { SelectOption } from 'naive-ui';
+
+import type { Basic, Schema } from '#/crud/types';
+
+import { onMounted, ref } from 'vue';
 
 import { $t } from '@vben/locales';
 
-import { NCard, NForm, NFormItemGi, NGrid, NInput, NSelect } from 'naive-ui';
+import {
+  NCard,
+  NForm,
+  NFormItemGi,
+  NGrid,
+  NInput,
+  NSelect,
+  NSwitch,
+  NTooltip,
+} from 'naive-ui';
 
+import { message } from '#/adapter/naive';
+import { devCrudTablesApi, devCrudTableSchemaApi } from '#/api/dev/crud';
 import { useModelProxy } from '#/utils/tools';
+
+const emit = defineEmits<{
+  (e: 'tableLoaded', schema: Schema): void;
+}>();
+
 const modelValue = defineModel<Basic>({ required: true });
 const formData = useModelProxy<Basic>(modelValue);
 
-const hasTableOptions: SelectOptions[] = [
-  { label: 'y-admin', value: 'y-admin' },
-];
+const hasTableOptions = ref<SelectOption[]>([]);
+const loadingTables = ref(false);
+
+async function fetchTables() {
+  loadingTables.value = true;
+  try {
+    const list = await devCrudTablesApi();
+    hasTableOptions.value = list.map((item) => ({
+      label: item.label,
+      value: item.value,
+    }));
+  } catch (error: any) {
+    message.error(error?.message || '获取数据库表列表失败');
+  } finally {
+    loadingTables.value = false;
+  }
+}
+
+async function onSelectTable(tableName: null | string) {
+  if (!tableName) return;
+  loadingTables.value = true;
+  try {
+    const fullSchema = await devCrudTableSchemaApi(tableName);
+    emit('tableLoaded', fullSchema);
+    message.success(
+      `已解析数据表 [${tableName}]，共加载 ${fullSchema.fieldsConfig.length} 个字段`,
+    );
+  } catch (error: any) {
+    message.error(error?.message || '解析数据表结构失败');
+  } finally {
+    loadingTables.value = false;
+  }
+}
+
+onMounted(() => {
+  fetchTables();
+});
 </script>
 
 <template>
   <NCard>
     <NForm :model="formData" label-placement="left" label-width="auto">
       <NGrid :cols="24" :x-gap="24">
-        <NFormItemGi :span="24" :label="$t('crud.label.basic.moduleName')">
-          <NInput v-model:value="formData.moduleName" />
-        </NFormItemGi>
-        <NFormItemGi :span="12" :label="$t('crud.label.basic.tableName')">
-          <NInput v-model:value="formData.tableName" />
-        </NFormItemGi>
         <NFormItemGi :span="12" :label="$t('crud.label.basic.hasTable')">
           <NSelect
-            v-model:value="formData.tableName"
+            :value="formData.tableName || null"
             filterable
             clearable
+            :loading="loadingTables"
             :placeholder="$t('crud.label.basic.hasTable')"
             :options="hasTableOptions"
+            @update:value="onSelectTable"
           />
         </NFormItemGi>
-        <NFormItemGi :span="24" :label="$t('crud.label.basic.pkField')">
-          <NInput v-model:value="formData.pkField" />
+        <NFormItemGi :span="12" :label="$t('crud.label.basic.tableName')">
+          <NInput v-model:value="formData.tableName" placeholder="数据库表名" />
+        </NFormItemGi>
+        <NFormItemGi :span="12" :label="$t('crud.label.basic.moduleName')">
+          <NInput
+            v-model:value="formData.moduleName"
+            placeholder="例如：goods 或 sys_user"
+          />
+        </NFormItemGi>
+        <NFormItemGi :span="12" :label="$t('crud.label.basic.pkField')">
+          <NInput
+            v-model:value="formData.pkField"
+            placeholder="主键名称，默认 id"
+          />
+        </NFormItemGi>
+        <NFormItemGi :span="8" label="继承CRUD基类">
+          <NTooltip trigger="hover">
+            <template #trigger>
+              <NSwitch v-model:value="formData.inheritBase" />
+            </template>
+            开启后继承通用泛型基类（BaseCrud），代码极简；关闭后展开标准独立代码，方便二开。
+          </NTooltip>
+        </NFormItemGi>
+        <NFormItemGi :span="8" label="软删除">
+          <NSwitch v-model:value="formData.softDelete" />
+        </NFormItemGi>
+        <NFormItemGi :span="8" label="创建/更新时间">
+          <NSwitch v-model:value="formData.hasCreatedAndUpdated" />
         </NFormItemGi>
       </NGrid>
     </NForm>

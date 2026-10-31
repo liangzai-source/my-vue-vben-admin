@@ -8,6 +8,7 @@ export interface Basic {
   repoName: string; // 仓库名称
   serviceName: string; // 服务名称
   handlerName: string; // 控制器名称
+  inheritBase: boolean; // 是否继承通用CRUD基类
   hasCreatedAndUpdated: boolean; // 是否拥有创建和编辑时间
   listShowCreated: boolean; // 列表显示创建时间
   listShowUpdated: boolean; // 列表显示编辑时间
@@ -28,8 +29,10 @@ export interface Route {
 }
 
 export interface Page {
-  formType: string; // 表单类型
-  dialogSize: string; // 弹窗类型
+  tableType: string; // 表格类型: vxe-table / naive
+  formType: string; // 表单类型: naive / vben
+  dialogType: string; // 弹窗类型: drawer / modal
+  dialogSize: string; // 弹窗尺寸: small / medium / large
   operation: string[]; // 操作按钮
 }
 
@@ -72,10 +75,10 @@ export interface Field extends OptionSource {
   listable: boolean; // 表格是否显示
   width: number; // 表格列宽
   sortable: boolean; // 允许排序
-  searchType: SearchOption[]; // 搜索配置
+  searchData: SearchOption[]; // 搜索配置
   // 表单
   editable: boolean; // form 显示
-  FormComp: string; // 表单组件
+  formComp: string; // 表单组件
   default: any; // 默认值
   // 详情
   showInDetail: boolean; // 是否在详情页显示

@@ -12,9 +12,10 @@ export const createDefaultBasic = (): Basic => ({
   repoName: '',
   serviceName: '',
   handlerName: '',
-  hasCreatedAndUpdated: false,
-  listShowCreated: false,
-  listShowUpdated: false,
+  inheritBase: true, // 默认继承基类
+  hasCreatedAndUpdated: true,
+  listShowCreated: true,
+  listShowUpdated: true,
   softDelete: false,
   comment: '',
   hasDetail: false,
@@ -22,8 +23,8 @@ export const createDefaultBasic = (): Basic => ({
 
 // Route 默认值
 export const createDefaultRoute = (): Route => ({
-  createMenu: false,
-  createRoute: false,
+  createMenu: true,
+  createRoute: true,
   routeName: '',
   menuName: '',
   parentMenu: 0,
@@ -34,33 +35,35 @@ export const createDefaultRoute = (): Route => ({
 
 // Page 默认值
 export const createDefaultPage = (): Page => ({
-  formType: '',
-  dialogSize: '',
-  operation: [], // 操作按钮默认空数组
+  tableType: 'vxe-table', // 默认 VXE-Table
+  formType: 'naive', // 默认 Naive 原生表单
+  dialogType: 'drawer', // 默认 抽屉模式
+  dialogSize: 'medium',
+  operation: ['create', 'update', 'delete'], // 默认操作按钮
 });
 
 // Field 默认值（当需要向 FieldsConfig 添加新字段时使用）
 export const createDefaultField = (): Field => ({
   name: '',
-  goType: '',
-  gormType: '',
+  goType: 'string',
+  gormType: 'varchar(255)',
   jsonTag: '',
   comment: '',
   indexable: '',
   nullable: false,
   tsName: '',
-  tsType: '',
+  tsType: 'string',
   label: '',
-  listComp: '',
-  listable: false,
-  width: 0,
+  listComp: 'NText',
+  listable: true,
+  width: 150,
   sortable: false,
-  searchType: [],
-  editable: false,
-  FormComp: '',
+  searchData: [],
+  editable: true,
+  formComp: 'NInput',
   default: null,
   showInDetail: false,
-  detailComp: '',
+  detailComp: 'NText',
   optionType: 0,
   optionData: [],
   compOptions: '',
@@ -72,6 +75,6 @@ export const createDefaultField = (): Field => ({
 export const createDefaultSchema = (): Schema => ({
   basicConfig: createDefaultBasic(),
   routeConfig: createDefaultRoute(),
-  fieldsConfig: [], // 初始没有字段
+  fieldsConfig: [],
   pageConfig: createDefaultPage(),
 });
