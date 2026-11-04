@@ -84,12 +84,15 @@ onMounted(() => {
           />
         </NFormItemGi>
         <NFormItemGi :span="12" :label="$t('crud.label.basic.tableName')">
-          <NInput v-model:value="formData.tableName" placeholder="数据库表名" />
+          <NInput
+            v-model:value="formData.tableName"
+            placeholder="数据库表名（如 y_region）"
+          />
         </NFormItemGi>
         <NFormItemGi :span="12" :label="$t('crud.label.basic.moduleName')">
           <NInput
             v-model:value="formData.moduleName"
-            placeholder="例如：goods 或 sys_user"
+            placeholder="模块名称（如 region，后端自动剔除配置的表前缀）"
           />
         </NFormItemGi>
         <NFormItemGi :span="12" :label="$t('crud.label.basic.pkField')">

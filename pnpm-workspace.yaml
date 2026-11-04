@@ -147,6 +147,7 @@ catalog:
   lodash.clonedeep: ^4.5.0
   medium-zoom: ^1.1.0
   naive-ui: ^2.45.2
+  highlight.js: ^11.11.1
   nitropack: ^2.13.4
   nprogress: ^0.2.0
   ora: ^9.4.1

@@ -43,6 +43,7 @@
     "@vben/types": "workspace:*",
     "@vben/utils": "workspace:*",
     "@vueuse/core": "catalog:",
+    "highlight.js": "catalog:",
     "lodash.clonedeep": "catalog:",
     "naive-ui": "catalog:",
     "pinia": "catalog:",
