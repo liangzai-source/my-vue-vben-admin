@@ -78,9 +78,7 @@ const leftMaxWidth = ref(props.leftMaxWidth || 100);
             :max="props.leftMaxWidth - 1"
             :min="1"
             class="w-25"
-            @after-change="
-              (value: number) => (props.leftMinWidth = value as number)
-            "
+            @after-change="(value) => (props.leftMinWidth = value as number)"
           />
           <span>左侧最大宽度百分比：</span>
           <Slider
@@ -88,9 +86,7 @@ const leftMaxWidth = ref(props.leftMaxWidth || 100);
             :max="100"
             :min="leftMaxWidth + 1"
             class="w-25"
-            @after-change="
-              (value: number) => (props.leftMaxWidth = value as number)
-            "
+            @after-change="(value) => (props.leftMaxWidth = value as number)"
           />
         </div>
         <Alert title="实验性的组件" show-icon type="warning">

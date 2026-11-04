@@ -56,7 +56,6 @@ const [Form, formApi] = useVbenForm({
     },
     labelClass: 'w-2/6',
   },
-  fieldMappingTime: [['field4', ['phoneType', 'phoneNumber'], null]],
   // 提交函数
   handleSubmit: onSubmit,
   // 垂直布局，label和input在不同行，值为vertical
