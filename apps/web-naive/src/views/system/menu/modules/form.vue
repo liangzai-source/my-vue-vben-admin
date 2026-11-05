@@ -1,4 +1,4 @@
-﻿<script lang="ts" setup>
+<script lang="ts" setup>
 import type {
   FormInst,
   FormItemRule,
@@ -57,7 +57,7 @@ const loading = ref<boolean>(false);
 const defaultFormValue = {
   type: 1,
   status: 1,
-  api_method: 'POST',
+  apiMethod: 'POST',
   meta: {},
 } as SystemMenuApi.SystemMenu;
 const formData = ref<SystemMenuApi.SystemMenu>(defaultFormValue);
@@ -182,8 +182,8 @@ const [Drawer, drawerApi] = useVbenDrawer<SystemMenuApi.SystemMenu>({
         if (isEmpty(data.status)) {
           data.status = 1;
         }
-        if (isEmpty(data.api_method)) {
-          data.api_method = 'POST';
+        if (isEmpty(data.apiMethod)) {
+          data.apiMethod = 'POST';
         }
         formData.value = data;
       }
@@ -301,17 +301,17 @@ const getDrawerTitle = computed(() =>
         <NFormItemGi
           :label="`${$t('system.menu.requestRoute')}`"
           :span="12"
-          path="api_path"
+          path="apiPath"
         >
-          <NInput v-model:value="formData.api_path" />
+          <NInput v-model:value="formData.apiPath" />
         </NFormItemGi>
         <NFormItemGi
           :label="`${$t('system.menu.requestMethod')}`"
           :span="12"
-          path="api_method"
+          path="apiMethod"
         >
           <NSelect
-            v-model:value="formData.api_method"
+            v-model:value="formData.apiMethod"
             :options="getApiMethodList()"
           />
         </NFormItemGi>

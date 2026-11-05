@@ -18,8 +18,8 @@ export namespace SystemRoleApi {
   }
 
   export interface SystemRolePermissions {
-    role_id: number;
-    menu_ids: number[];
+    roleId: number;
+    menuIds: number[];
   }
 }
 

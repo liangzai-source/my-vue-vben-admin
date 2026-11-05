@@ -21,8 +21,8 @@ import { isEmpty } from '#/utils/tools';
 
 const loading = ref(false);
 const formData = ref<SystemRoleApi.SystemRolePermissions>({
-  role_id: 0,
-  menu_ids: [],
+  roleId: 0,
+  menuIds: [],
 });
 const treeOptions = ref<TreeOption[]>([]);
 const hasPermissions = ref<number[] | string[]>([]);
@@ -31,7 +31,7 @@ const [Drawer, drawerApi] = useVbenDrawer<SystemRoleApi.SystemRole>({
   onOpenChange: async (isOpen) => {
     const data = drawerApi.getData();
     if (isOpen && !isEmpty(data)) {
-      formData.value.role_id = data.id;
+      formData.value.roleId = data.id;
     }
     if (isOpen) {
       loading.value = true;
@@ -85,7 +85,7 @@ function handleLoading(e: boolean) {
 }
 
 function handleChange(e: number[]) {
-  formData.value.menu_ids = e;
+  formData.value.menuIds = e;
 }
 </script>
 

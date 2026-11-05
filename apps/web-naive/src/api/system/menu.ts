@@ -97,9 +97,9 @@ export namespace SystemMenuApi {
     /** 菜单排序 */
     sort: number;
     /** 接口路径 */
-    api_path: string;
+    apiPath: string;
     /** 接口请求方法 */
-    api_method: string;
+    apiMethod: string;
 
     [key: string]: any;
   }

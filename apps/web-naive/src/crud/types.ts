@@ -61,6 +61,7 @@ export interface SearchOption extends OptionSource {
 export interface Field extends OptionSource {
   // 基础
   name: string; // 字段名
+  columnName?: string; // 数据库物理列名
   goType: string; // go字段类型
   gormType: string; // gorm类型 varchar(64) / tinyint
   jsonTag: string; // jsonTag

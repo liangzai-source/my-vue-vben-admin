@@ -14,9 +14,8 @@ export namespace SystemUserApi {
     account: string;
     nickname: string;
     status: number;
-    creator_id: number;
+    creatorId: number;
     isAdministrator?: number;
-    is_administrator?: number;
   }
 
   export interface SystemUserSave extends SystemUser {
@@ -29,8 +28,8 @@ export namespace SystemUserApi {
   }
 
   export interface SystemUserPermissions {
-    user_id: number;
-    menu_ids: number[];
+    userId: number;
+    menuIds: number[];
   }
 }
 

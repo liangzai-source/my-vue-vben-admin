@@ -9,7 +9,7 @@ export namespace AuthApi {
     password?: string;
     captcha?: boolean;
     username?: string;
-    remember_me?: boolean;
+    rememberMe?: boolean;
   }
 
   /** 登录/刷新 Token 接口返回值 */
@@ -42,7 +42,7 @@ export async function refreshTokenApi(refreshToken?: string) {
   return baseRequestClient.post<AuthApi.RefreshTokenResult>(
     '/auth/refresh-token',
     {
-      refresh_token: refreshToken,
+      refreshToken,
     },
   );
 }
