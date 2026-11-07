@@ -14,6 +14,7 @@ export interface Basic {
   listShowUpdated: boolean; // 列表显示编辑时间
   softDelete: boolean; // 是否软删除
   comment: string; // 备注
+  commentEn?: string; // 英文备注
   hasDetail: boolean; // 是否展示详情
 }
 
@@ -29,11 +30,16 @@ export interface Route {
 }
 
 export interface Page {
-  tableType: string; // 表格类型: vxe-table / naive
+  tableType: string; // 表格类型: 固定为 vxe-table
   formType: string; // 表单类型: naive / vben
   dialogType: string; // 弹窗类型: drawer / modal
   dialogSize: string; // 弹窗尺寸: small / medium / large
   operation: string[]; // 操作按钮
+  isTree?: boolean; // 是否开启树形表格
+  treeLazy?: boolean; // 是否远程异步加载子节点
+  treeParentField?: string; // 父级关联字段
+  treeNodeColumn?: string; // 树折叠节点所在列名
+  hasChildField?: string; // 拥有子节点标记字段
 }
 
 export interface Enum {
@@ -71,6 +77,7 @@ export interface Field extends OptionSource {
   tsName: string; // 字段名
   tsType: string; // 字段类型
   label: string; // label
+  labelEn?: string; // 英文 label
   // 表格
   listComp: string; // 表格组件
   listable: boolean; // 表格是否显示
@@ -84,6 +91,17 @@ export interface Field extends OptionSource {
   // 详情
   showInDetail: boolean; // 是否在详情页显示
   detailComp: string; // 详情页组件
+  // 模型与存储
+  isFile?: boolean; // 是否是文件/图片字段
+  // 表关联配置
+  relation?: RelationConfig;
+}
+
+export interface RelationConfig {
+  enable: boolean;
+  targetTable: string;
+  valueField: string;
+  labelField: string;
 }
 
 export interface Schema {

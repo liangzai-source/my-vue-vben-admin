@@ -2,6 +2,7 @@
 import type { GlobalThemeOverrides } from 'naive-ui';
 
 import type { DevCrudApi } from '#/api/dev/crud';
+import type { Schema } from '#/crud/types';
 
 import { computed, ref } from 'vue';
 
@@ -30,8 +31,13 @@ import {
 } from 'naive-ui';
 
 import { message } from '#/adapter/naive';
+import { devCrudGenerateApi } from '#/api/dev/crud';
 
 import 'highlight.js/styles/atom-one-dark.css';
+
+const emit = defineEmits<{
+  (e: 'success'): void;
+}>();
 
 // 注册所需语言语法高亮支持
 hljs.registerLanguage('go', go);
@@ -55,7 +61,9 @@ const darkCodeThemeOverrides: GlobalThemeOverrides = {
 };
 
 const previews = ref<DevCrudApi.FilePreview[]>([]);
+const currentSchema = ref<null | Schema>(null);
 const activeTab = ref<string>('');
+const writing = ref(false);
 
 const activeFile = computed(() => {
   return (
@@ -65,14 +73,31 @@ const activeFile = computed(() => {
 
 const { copy, isSupported } = useClipboard();
 
-const [Modal, modalApi] = useVbenModal<DevCrudApi.FilePreview[]>({
+const [Modal, modalApi] = useVbenModal<{
+  previews?: DevCrudApi.FilePreview[];
+  schema?: Schema;
+}>({
+  confirmText: '确认生成并写入磁盘',
+  onConfirm: onWriteToDisk,
   onOpenChange: (isOpen) => {
     if (isOpen) {
-      const data = modalApi.getData();
-      if (Array.isArray(data) && data.length > 0) {
+      const data = modalApi.getData() as any;
+      if (Array.isArray(data)) {
         previews.value = data;
-        activeTab.value = data[0]?.path ?? '';
+        currentSchema.value = null;
+      } else if (data?.previews) {
+        previews.value = data.previews;
+        currentSchema.value = data.schema || null;
+      } else {
+        previews.value = [];
+        currentSchema.value = null;
       }
+      if (previews.value.length > 0) {
+        activeTab.value = previews.value[0]?.path ?? '';
+      }
+      modalApi.setState({
+        showConfirmButton: !!currentSchema.value,
+      });
     }
   },
 });
@@ -110,13 +135,32 @@ async function onCopyPath() {
   await copy(activeFile.value.path);
   message.success('已复制目标文件相对路径');
 }
+
+// 在预览窗口中点击一键直接写入磁盘
+async function onWriteToDisk() {
+  if (!currentSchema.value) return;
+  modalApi.lock();
+  try {
+    await devCrudGenerateApi(currentSchema.value);
+    message.success(
+      `模块 [${currentSchema.value.basicConfig.moduleName}] 代码已成功写入磁盘！`,
+    );
+    emit('success');
+    modalApi.close();
+  } catch (error: any) {
+    message.error(error.message || '文件直写失败');
+  } finally {
+    modalApi.unlock();
+  }
+}
 </script>
 
 <template>
   <Modal
     class="w-[90vw] max-w-[1300px]"
     title="代码生成预览"
-    :show-confirm-button="false"
+    :show-confirm-button="!!currentSchema"
+    confirm-text="确认生成并写入磁盘"
     cancel-text="关闭"
   >
     <div v-if="previews.length === 0" class="py-12">
@@ -162,13 +206,22 @@ async function onCopyPath() {
           <NButton size="tiny" secondary @click="onCopyPath">
             复制路径
           </NButton>
-          <NButton size="tiny" type="primary" @click="onCopyCode">
+          <NButton size="tiny" type="primary" secondary @click="onCopyCode">
             复制代码
+          </NButton>
+          <NButton
+            v-if="currentSchema"
+            size="tiny"
+            type="primary"
+            :loading="writing"
+            @click="onWriteToDisk"
+          >
+            直接写入磁盘
           </NButton>
         </NSpace>
       </div>
 
-      <!-- 代码高亮查看区域（配置暗黑主题 Provider 与高对比度样式） -->
+      <!-- 代码高亮查看区域 -->
       <div
         v-if="activeFile"
         class="overflow-hidden rounded border border-neutral-700 bg-[#282c34]"

@@ -11,6 +11,10 @@ export default defineConfig(async () => {
             target: 'http://localhost:9090',
             ws: true,
           },
+          '/preview': {
+            changeOrigin: true,
+            target: 'http://localhost:9090',
+          },
         },
       },
     },

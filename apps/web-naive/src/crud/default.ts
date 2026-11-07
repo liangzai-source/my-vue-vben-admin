@@ -35,11 +35,16 @@ export const createDefaultRoute = (): Route => ({
 
 // Page 默认值
 export const createDefaultPage = (): Page => ({
-  tableType: 'vxe-table', // 默认 VXE-Table
+  tableType: 'vxe-table', // 统一使用 VXE-Table
   formType: 'naive', // 默认 Naive 原生表单
   dialogType: 'drawer', // 默认 抽屉模式
   dialogSize: 'medium',
   operation: ['create', 'update', 'delete'], // 默认操作按钮
+  isTree: false,
+  treeLazy: true,
+  treeParentField: 'parent_id',
+  treeNodeColumn: '',
+  hasChildField: 'hasChildren',
 });
 
 // Field 默认值（当需要向 FieldsConfig 添加新字段时使用）
@@ -64,6 +69,13 @@ export const createDefaultField = (): Field => ({
   default: null,
   showInDetail: false,
   detailComp: 'NText',
+  isFile: false,
+  relation: {
+    enable: false,
+    targetTable: '',
+    valueField: 'id',
+    labelField: 'name',
+  },
   optionType: 0,
   optionData: [],
   compOptions: '',

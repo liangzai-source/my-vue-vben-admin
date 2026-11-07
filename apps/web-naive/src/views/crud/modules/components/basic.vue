@@ -95,6 +95,15 @@ onMounted(() => {
             placeholder="模块名称（如 region，后端自动剔除配置的表前缀）"
           />
         </NFormItemGi>
+        <NFormItemGi :span="12" label="功能名称 (中文)">
+          <NInput v-model:value="formData.comment" placeholder="如 区域管理" />
+        </NFormItemGi>
+        <NFormItemGi :span="12" label="功能名称 (英文)">
+          <NInput
+            v-model:value="formData.commentEn"
+            placeholder="如 Region Management"
+          />
+        </NFormItemGi>
         <NFormItemGi :span="12" :label="$t('crud.label.basic.pkField')">
           <NInput
             v-model:value="formData.pkField"

@@ -8,6 +8,7 @@
   "enableStatus": "启用",
   "disableStatus": "禁用",
   "create": "添加{0}",
+  "createChild": "添加子项",
   "update": "编辑{0}",
   "updateStatus": "修改状态",
   "delete": "删除",

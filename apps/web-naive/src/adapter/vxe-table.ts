@@ -28,6 +28,7 @@ import {
   NTag as Tag,
 } from 'naive-ui';
 
+import { getFileUrl } from '#/api/system/upload';
 import { $t } from '#/locales';
 import { getByPath, getTableDefaultOperation } from '#/utils/tools';
 
@@ -79,7 +80,15 @@ setupVbenVxeTable({
       renderTableDefault(renderOpts, params) {
         const { props } = renderOpts;
         const { column, row } = params;
-        return h(Image, { src: row[column.field], ...props });
+        const val = row[column.field];
+        if (!val) return '';
+        return h(Image, {
+          src: getFileUrl(val),
+          width: 40,
+          height: 40,
+          objectFit: 'cover',
+          ...props,
+        });
       },
     });
 
