@@ -3,14 +3,14 @@ import type { PrimitiveProps } from 'reka-ui';
 
 import type { HTMLAttributes } from 'vue';
 
-import type { BadgeVariants } from '.';
+import type { BadgeVariants } from './badge';
 
 import { cn } from '@vben-core/shared/utils';
 
 import { reactiveOmit } from '@vueuse/core';
 import { Primitive } from 'reka-ui';
 
-import { badgeVariants } from '.';
+import { badgeVariants } from './badge';
 
 const props = defineProps<
   PrimitiveProps & {
@@ -28,6 +28,6 @@ const delegatedProps = reactiveOmit(props, 'class');
     :class="cn(badgeVariants({ variant }), props.class)"
     v-bind="delegatedProps"
   >
-    <slot></slot>
+    <slot />
   </Primitive>
 </template>
