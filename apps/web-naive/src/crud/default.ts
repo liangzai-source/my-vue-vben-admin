@@ -36,9 +36,11 @@ export const createDefaultRoute = (): Route => ({
 // Page 默认值
 export const createDefaultPage = (): Page => ({
   tableType: 'vxe-table', // 统一使用 VXE-Table
-  formType: 'naive', // 默认 Naive 原生表单
+  formType: 'naive', // 统一使用 Naive 原生表单
   dialogType: 'drawer', // 默认 抽屉模式
   dialogSize: 'medium',
+  dialogWidth: '',
+  dialogHeight: '',
   operation: ['create', 'update', 'delete'], // 默认操作按钮
   isTree: false,
   treeLazy: true,
@@ -63,6 +65,7 @@ export const createDefaultField = (): Field => ({
   listable: true,
   width: 150,
   sortable: false,
+  switchConfirm: true,
   searchData: [],
   editable: true,
   formComp: 'NInput',

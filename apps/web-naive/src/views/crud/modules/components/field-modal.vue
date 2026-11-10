@@ -10,12 +10,14 @@ import { useVbenModal } from '@vben/common-ui';
 import cloneDeep from 'lodash.clonedeep';
 import {
   NAlert,
+  NButton,
   NForm,
   NFormItemGi,
   NGrid,
   NInput,
   NInputNumber,
   NSelect,
+  NSpace,
   NSwitch,
   NTabPane,
   NTabs,
@@ -23,6 +25,7 @@ import {
 
 import { devCrudTablesApi, devCrudTableSchemaApi } from '#/api/dev/crud';
 import { createDefaultField } from '#/crud/default';
+import { parseCommentOptions, smartInferField } from '#/crud/smartInference';
 
 const emit = defineEmits<{
   (e: 'save', field: Field, index: number): void;
@@ -46,12 +49,17 @@ const goTypeOptions: SelectOption[] = [
 const formCompOptions: SelectOption[] = [
   { label: 'NInput (单行文本输入)', value: 'NInput' },
   { label: 'NInputNumber (数字输入)', value: 'NInputNumber' },
-  { label: 'NSelect (下拉选择)', value: 'NSelect' },
+  { label: 'NInputTextArea (多行文本域)', value: 'NInputTextArea' },
+  { label: 'NSelect (下拉选择 - 单选)', value: 'NSelect' },
+  { label: 'NSelectMultiple (下拉选择 - 多选)', value: 'NSelectMultiple' },
   { label: 'RelationSelect (自适应表关联下拉)', value: 'RelationSelect' },
   { label: 'NSwitch (开关)', value: 'NSwitch' },
   { label: 'NDatePicker (日期时间选择)', value: 'NDatePicker' },
+  { label: 'NDate (仅日期选择)', value: 'NDate' },
   { label: 'NRadioGroup (单选框组)', value: 'NRadioGroup' },
-  { label: 'NUpload (文件/图片上传)', value: 'NUpload' },
+  { label: 'FileUpload (附件/图片选择器)', value: 'FileUpload' },
+  { label: 'VbenTiptap (富文本编辑器)', value: 'VbenTiptap' },
+  { label: 'NHidden (隐藏表单项)', value: 'NHidden' },
 ];
 
 const dbTables = ref<SelectOption[]>([]);
@@ -133,9 +141,15 @@ function handleRelationEnableChange(val: boolean) {
 // 表格组件选项
 const listCompOptions: SelectOption[] = [
   { label: 'NText (常规文本)', value: 'NText' },
+  { label: 'CellInput (可修改文本框)', value: 'CellInput' },
+  { label: 'CellInputNumber (可修改数字框)', value: 'CellInputNumber' },
+  { label: 'CellLink (链接展示)', value: 'CellLink' },
+  { label: 'CellDateTime (日期时间 - 本地时区)', value: 'CellDateTime' },
+  { label: 'CellDate (仅日期 - 本地时区)', value: 'CellDate' },
+  { label: 'CellAttachment (附件/多媒体预览)', value: 'CellAttachment' },
+  { label: 'CellImage (图片预览)', value: 'CellImage' },
   { label: 'CellSwitch (状态开关切换)', value: 'CellSwitch' },
   { label: 'NTag (徽标/标签)', value: 'NTag' },
-  { label: 'NImage (图片预览)', value: 'NImage' },
 ];
 
 // 数据库索引选项
@@ -251,12 +265,18 @@ function onGoTypeChange(val: string) {
       currentField.value.tsType = 'Date';
       currentField.value.gormType = 'datetime';
       currentField.value.formComp = 'NDatePicker';
+      currentField.value.listComp = 'CellDateTime';
       break;
     }
   }
 }
 
-// 字段名输入联动驼峰
+// 字段智能推导规则（根据字段语义自动匹配最合理的表格/表单组件与属性）
+function applySmartInference() {
+  currentField.value = smartInferField(currentField.value);
+}
+
+// 字段名输入联动驼峰与智能推导
 function onNameChange(val: string) {
   currentField.value.name = val;
   if (!currentField.value.tsName && val) {
@@ -264,6 +284,122 @@ function onNameChange(val: string) {
   }
   if (!currentField.value.jsonTag && currentField.value.tsName) {
     currentField.value.jsonTag = currentField.value.tsName;
+  }
+  // 若仍处于默认初始组件，则自动智能推导
+  if (
+    currentField.value.formComp === 'NInput' &&
+    currentField.value.listComp === 'NText'
+  ) {
+    applySmartInference();
+  }
+}
+
+// 字段注释输入与枚举选项智能解析 (如 '1-启用 2-禁用')
+function onCommentChange(val: string) {
+  currentField.value.comment = val;
+  if (!val) return;
+  const options = parseCommentOptions(val);
+  if (
+    options.length >= 2 &&
+    (!currentField.value.optionData ||
+      currentField.value.optionData.length === 0)
+  ) {
+    currentField.value.optionType = 1;
+    currentField.value.optionData = options;
+    if (currentField.value.formComp === 'NInput') {
+      currentField.value.formComp =
+        options.length <= 4 ? 'NRadioGroup' : 'NSelect';
+    }
+    if (currentField.value.listComp === 'NText') {
+      currentField.value.listComp = 'CellTag';
+    }
+  }
+}
+
+// 表单录入组件联动
+function onFormCompChange(val: string) {
+  currentField.value.formComp = val;
+  if (val === 'FileUpload') {
+    currentField.value.isFile = true;
+    currentField.value.listComp = 'CellAttachment';
+  } else if (val === 'NSwitch') {
+    currentField.value.listComp = 'CellSwitch';
+  }
+}
+
+// 附件/文件标识联动
+function onIsFileChange(val: boolean) {
+  currentField.value.isFile = val;
+  if (val) {
+    currentField.value.formComp = 'FileUpload';
+    currentField.value.listComp = 'CellAttachment';
+  }
+}
+
+// 是否需要配置固定选项 (单选框组、普通下拉等)
+const needOptions = computed(() => {
+  return (
+    (currentField.value.formComp === 'NRadioGroup' ||
+      currentField.value.formComp === 'NSelect' ||
+      currentField.value.formComp === 'NSelectMultiple') &&
+    !currentField.value.relation?.enable
+  );
+});
+
+function addOption() {
+  if (!Array.isArray(currentField.value.optionData)) {
+    currentField.value.optionData = [];
+  }
+  const isString = currentField.value.goType === 'string';
+  const nextVal = isString
+    ? String(currentField.value.optionData.length + 1)
+    : currentField.value.optionData.length + 1;
+  currentField.value.optionData.push({
+    label: '',
+    value: nextVal,
+  });
+}
+
+function removeOption(index: number) {
+  if (Array.isArray(currentField.value.optionData)) {
+    currentField.value.optionData.splice(index, 1);
+  }
+}
+
+function onOptionValueChange(index: number, val: string) {
+  if (!currentField.value.optionData || !currentField.value.optionData[index])
+    return;
+  const goType = currentField.value.goType;
+  if (goType === 'int' || goType === 'int64') {
+    const num = Number(val);
+    currentField.value.optionData[index].value = Number.isNaN(num) ? val : num;
+  } else if (goType === 'bool') {
+    currentField.value.optionData[index].value = val === 'true' || val === '1';
+  } else {
+    currentField.value.optionData[index].value = val;
+  }
+}
+
+function applyPresetOptions(type: 'gender' | 'status' | 'yesno') {
+  if (!Array.isArray(currentField.value.optionData)) {
+    currentField.value.optionData = [];
+  }
+  const isString = currentField.value.goType === 'string';
+  if (type === 'status') {
+    currentField.value.optionData = [
+      { label: '启用', value: isString ? '1' : 1 },
+      { label: '禁用', value: isString ? '0' : 0 },
+    ];
+  } else if (type === 'gender') {
+    currentField.value.optionData = [
+      { label: '男', value: isString ? '1' : 1 },
+      { label: '女', value: isString ? '2' : 2 },
+    ];
+  } else if (type === 'yesno') {
+    currentField.value.optionData = [
+      { label: '是', value: isString ? '1' : 1 },
+      { label: '否', value: isString ? '0' : 0 },
+    ];
   }
 }
 
@@ -278,7 +414,22 @@ const [Modal, modalApi] = useVbenModal<{ field: Field; index: number }>({
       const payload = modalApi.getData();
       if (payload && payload.field) {
         currentField.value = cloneDeep(payload.field);
+        if (!Array.isArray(currentField.value.optionData)) {
+          currentField.value.optionData = [];
+        }
+        currentField.value.isFile = Boolean(currentField.value.isFile);
         editingIndex.value = payload.index;
+        // 若当前字段为默认未定制状态 (NText + NInput/NInputNumber)，自动执行一次智能推导
+        if (
+          currentField.value.listComp === 'NText' &&
+          (currentField.value.formComp === 'NInput' ||
+            currentField.value.formComp === 'NInputNumber')
+        ) {
+          currentField.value = smartInferField(currentField.value);
+        }
+        if (currentField.value.switchConfirm === undefined) {
+          currentField.value.switchConfirm = true;
+        }
         if (currentField.value.relation?.enable) {
           loadDbTables();
           if (currentField.value.relation.targetTable) {
@@ -295,16 +446,28 @@ const [Modal, modalApi] = useVbenModal<{ field: Field; index: number }>({
   <Modal title="字段详细属性配置" class="w-[880px] max-w-[92vw]">
     <div class="px-2 py-1">
       <NTabs v-model:value="activeTab" type="line" animated>
-        <!-- Tab 1: 基础信息 -->
-        <NTabPane name="basic" tab="1. 基础信息">
+        <!-- 基础信息 -->
+        <NTabPane name="basic" tab="基础信息">
           <NForm label-placement="left" label-width="120" class="pt-2">
             <NGrid :cols="24" :x-gap="16">
               <NFormItemGi :span="12" label="Go 字段名 (Name)">
-                <NInput
-                  :value="currentField.name"
-                  placeholder="如 UserName (PascalCase)"
-                  @update:value="onNameChange"
-                />
+                <div class="flex items-center gap-2">
+                  <NInput
+                    :value="currentField.name"
+                    class="flex-1"
+                    placeholder="如 UserName (PascalCase)"
+                    @update:value="onNameChange"
+                  />
+                  <NButton
+                    size="tiny"
+                    type="primary"
+                    secondary
+                    title="根据字段语义自动推导组件与属性"
+                    @click="applySmartInference"
+                  >
+                    智能推导
+                  </NButton>
+                </div>
               </NFormItemGi>
 
               <NFormItemGi :span="12" label="TS 字段名 (tsName)">
@@ -375,20 +538,33 @@ const [Modal, modalApi] = useVbenModal<{ field: Field; index: number }>({
                 <NSwitch v-model:value="currentField.nullable" />
               </NFormItemGi>
 
+              <NFormItemGi :span="12" label="是否为附件 (isFile)">
+                <div class="flex items-center gap-2">
+                  <NSwitch
+                    :value="Boolean(currentField.isFile)"
+                    @update:value="onIsFileChange"
+                  />
+                  <span class="text-xs text-muted-foreground">
+                    联动上传组件与表格预览
+                  </span>
+                </div>
+              </NFormItemGi>
+
               <NFormItemGi :span="24" label="字段注释说明">
                 <NInput
-                  v-model:value="currentField.comment"
-                  type="textarea"
+                  :value="currentField.comment"
+                  placeholder="数据库字段注释 (若包含如 '1-启用 2-禁用' 将自动解析并填充选项)"
                   :rows="2"
-                  placeholder="数据库字段注释"
+                  type="textarea"
+                  @update:value="onCommentChange"
                 />
               </NFormItemGi>
             </NGrid>
           </NForm>
         </NTabPane>
 
-        <!-- Tab 2: 列表组件 (表格配置) -->
-        <NTabPane name="table" tab="2. 列表组件">
+        <!-- 列表组件 (表格配置) -->
+        <NTabPane name="table" tab="列表组件">
           <NForm label-placement="left" label-width="120" class="pt-2">
             <NGrid :cols="24" :x-gap="16">
               <NFormItemGi :span="12" label="在表格中显示">
@@ -415,12 +591,28 @@ const [Modal, modalApi] = useVbenModal<{ field: Field; index: number }>({
                   placeholder="列宽，默认 150"
                 />
               </NFormItemGi>
+
+              <NFormItemGi
+                v-if="currentField.listComp === 'CellSwitch'"
+                :span="12"
+                label="切换二次确认"
+              >
+                <div class="flex items-center gap-2">
+                  <NSwitch
+                    :value="currentField.switchConfirm !== false"
+                    @update:value="(val) => (currentField.switchConfirm = val)"
+                  />
+                  <span class="text-xs text-muted-foreground">
+                    点击开关防误触确认弹窗 (基于 useStatusChange，默认开启)
+                  </span>
+                </div>
+              </NFormItemGi>
             </NGrid>
           </NForm>
         </NTabPane>
 
-        <!-- Tab 3: 搜索组件 (SearchData) -->
-        <NTabPane name="search" tab="3. 搜索组件">
+        <!-- 搜索组件 (SearchData) -->
+        <NTabPane name="search" tab="搜索组件">
           <NForm label-placement="left" label-width="120" class="pt-2">
             <NGrid :cols="24" :x-gap="16">
               <NFormItemGi :span="24" label="开启字段搜索">
@@ -466,8 +658,8 @@ const [Modal, modalApi] = useVbenModal<{ field: Field; index: number }>({
           </NForm>
         </NTabPane>
 
-        <!-- Tab 4: 表单组件 (新增/编辑) -->
-        <NTabPane name="form" tab="4. 表单组件">
+        <!-- 表单组件 (新增/编辑) -->
+        <NTabPane name="form" tab="表单组件">
           <NForm label-placement="left" label-width="120" class="pt-2">
             <NGrid :cols="24" :x-gap="16">
               <NFormItemGi :span="12" label="在表单中编辑">
@@ -476,8 +668,9 @@ const [Modal, modalApi] = useVbenModal<{ field: Field; index: number }>({
 
               <NFormItemGi :span="12" label="表单录入组件">
                 <NSelect
-                  v-model:value="currentField.formComp"
+                  :value="currentField.formComp"
                   :options="formCompOptions"
+                  @update:value="onFormCompChange"
                 />
               </NFormItemGi>
 
@@ -487,34 +680,109 @@ const [Modal, modalApi] = useVbenModal<{ field: Field; index: number }>({
                   placeholder="未填写时为 null / 空"
                 />
               </NFormItemGi>
+
+              <!-- 固定选项配置 (单选框组、普通下拉选择等) -->
+              <NFormItemGi v-if="needOptions" :span="24">
+                <div class="flex flex-col gap-2 w-full pt-1">
+                  <div class="flex items-center justify-between border-b pb-2">
+                    <div class="flex items-center gap-2">
+                      <span class="text-sm font-medium">
+                        选项数据配置 (Options)
+                      </span>
+                      <span class="text-xs text-muted-foreground">
+                        配置单选或下拉的选项条目
+                      </span>
+                    </div>
+                    <NSpace size="small">
+                      <NButton
+                        size="tiny"
+                        quaternary
+                        type="primary"
+                        @click="applyPresetOptions('status')"
+                      >
+                        预设: 状态(1/0)
+                      </NButton>
+                      <NButton
+                        size="tiny"
+                        quaternary
+                        type="primary"
+                        @click="applyPresetOptions('gender')"
+                      >
+                        预设: 性别(1/2)
+                      </NButton>
+                      <NButton
+                        size="tiny"
+                        quaternary
+                        type="primary"
+                        @click="applyPresetOptions('yesno')"
+                      >
+                        预设: 是/否(1/0)
+                      </NButton>
+                      <NButton
+                        size="tiny"
+                        dashed
+                        type="primary"
+                        @click="addOption"
+                      >
+                        + 添加选项
+                      </NButton>
+                    </NSpace>
+                  </div>
+
+                  <div
+                    v-if="
+                      !currentField.optionData ||
+                      currentField.optionData.length === 0
+                    "
+                    class="py-4 text-center text-xs text-muted-foreground"
+                  >
+                    暂未配置选项数据，点击右上角快速添加或选择常用预设
+                  </div>
+
+                  <div v-else class="flex flex-col gap-2 mt-1">
+                    <div
+                      v-for="(opt, optIdx) in currentField.optionData"
+                      :key="optIdx"
+                      class="flex items-center gap-2 rounded border border-border/70 p-2 bg-muted/20"
+                    >
+                      <span
+                        class="text-xs font-mono text-muted-foreground w-6 text-center"
+                      >
+                        #{{ optIdx + 1 }}
+                      </span>
+                      <div class="flex-1 flex items-center gap-2">
+                        <NInput
+                          v-model:value="opt.label"
+                          size="small"
+                          placeholder="选项标签 (Label)，如 启用"
+                        />
+                        <NInput
+                          :value="String(opt.value ?? '')"
+                          size="small"
+                          placeholder="存储值 (Value)，如 1"
+                          @update:value="
+                            (val) => onOptionValueChange(optIdx, val)
+                          "
+                        />
+                      </div>
+                      <NButton
+                        size="tiny"
+                        quaternary
+                        type="error"
+                        @click="removeOption(optIdx)"
+                      >
+                        ✕
+                      </NButton>
+                    </div>
+                  </div>
+                </div>
+              </NFormItemGi>
             </NGrid>
           </NForm>
         </NTabPane>
 
-        <!-- Tab 5: 模型配置 (文件与扩展) -->
-        <NTabPane name="model" tab="5. 模型配置">
-          <div class="py-2">
-            <NAlert type="info" title="模型特性扩展" class="mb-4">
-              用于配置 GORM Model 层的字段衍生特性，如文件/图片字段域名补全等。
-            </NAlert>
-
-            <NForm label-placement="left" label-width="160">
-              <NGrid :cols="24" :x-gap="16">
-                <NFormItemGi :span="24" label="是否为文件/图片字段">
-                  <div class="flex items-center gap-3">
-                    <NSwitch v-model:value="currentField.isFile" />
-                    <span class="text-xs text-muted-foreground">
-                      开启后，当模型返回数据时将自动拼接文件服务基础访问域名
-                    </span>
-                  </div>
-                </NFormItemGi>
-              </NGrid>
-            </NForm>
-          </div>
-        </NTabPane>
-
-        <!-- Tab 6: 表关联配置 (自适应外键下拉) -->
-        <NTabPane name="relation" tab="6. 表关联配置">
+        <!-- 表关联配置 (自适应外键下拉) -->
+        <NTabPane name="relation" tab="表关联配置">
           <div class="py-2">
             <NAlert type="info" title="自适应外键关联" class="mb-4">
               用于 xxx_id 外键关联目标表。自适应策略：目标表数据量 ≤ 1000

@@ -57,6 +57,23 @@
     "superNotOperation": "超级管理员不支持操作",
     "isAdministrator": "是否超级管理员"
   },
+  "attachment": {
+    "title": "附件管理",
+    "description": "管理系统已上传的多媒体文件、图片及文档",
+    "all": "全部",
+    "image": "图片",
+    "video": "视频",
+    "audio": "音频",
+    "document": "文档",
+    "searchPlaceholder": "搜索文件名称...",
+    "upload": "上传文件",
+    "batchUpload": "批量上传",
+    "copySuccess": "外链地址已复制到剪贴板",
+    "copyFailed": "复制失败",
+    "deleteConfirmTitle": "确认删除附件",
+    "deleteConfirmContent": "确定要删除该附件吗？此操作无法撤销。",
+    "deleteSuccess": "附件删除成功"
+  },
   "role": {
     "title": "角色管理",
     "createName": "角色",

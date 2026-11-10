@@ -296,7 +296,7 @@ export function useModelProxy<T extends object>(model: ModelRef<T>): T {
       return (model.value as Record<PropertyKey, unknown>)[key];
     },
     set(_, key: PropertyKey, value) {
-      model.value = { ...model.value, [key]: value } as T;
+      model.value = { ...model.value, [key]: value };
       return true;
     },
     has(_, key) {

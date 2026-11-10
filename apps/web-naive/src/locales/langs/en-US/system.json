@@ -51,5 +51,22 @@
     "list": "Administrator List",
     "nickname": "Nickname",
     "isAdministrator": "Is Super Administrator"
+  },
+  "attachment": {
+    "title": "Attachment Management",
+    "description": "Manage uploaded media files, images, and documents",
+    "all": "All",
+    "image": "Images",
+    "video": "Videos",
+    "audio": "Audios",
+    "document": "Documents",
+    "searchPlaceholder": "Search file name...",
+    "upload": "Upload File",
+    "batchUpload": "Batch Upload",
+    "copySuccess": "URL copied to clipboard",
+    "copyFailed": "Copy failed",
+    "deleteConfirmTitle": "Confirm Delete",
+    "deleteConfirmContent": "Are you sure to delete this file? This cannot be undone.",
+    "deleteSuccess": "Deleted successfully"
   }
 }

@@ -15,14 +15,24 @@ import {
   setupVbenVxeTable,
   useVbenVxeGrid as useGrid,
 } from '@vben/plugins/vxe-table';
-import { get, isFunction, isString } from '@vben/utils';
+import {
+  formatDate,
+  formatDateTime,
+  get,
+  isFunction,
+  isString,
+} from '@vben/utils';
 
 import { VbenIcon } from '@vben-core/shadcn-ui';
 
 import { objectOmit } from '@vueuse/core';
 import {
   NImage as Image,
+  NImageGroup as ImageGroup,
   NButton,
+  NInput,
+  NInputNumber,
+  NSpin,
   NPopconfirm as PopConfirm,
   NSwitch as Switch,
   NTag as Tag,
@@ -82,24 +92,400 @@ setupVbenVxeTable({
         const { column, row } = params;
         const val = row[column.field];
         if (!val) return '';
+        const url = getFileUrl(val);
         return h(Image, {
-          src: getFileUrl(val),
-          width: 40,
           height: 40,
+          imgProps: {
+            style: {
+              cursor: 'pointer',
+              display: 'block',
+              height: '40px',
+              objectFit: 'cover',
+              width: '40px',
+            },
+          },
           objectFit: 'cover',
+          previewSrc: url,
+          src: url,
+          style: {
+            borderRadius: '4px',
+            cursor: 'pointer',
+            verticalAlign: 'middle',
+          },
+          width: 40,
           ...props,
         });
       },
     });
 
-    // 表格配置项可以用 cellRender: { name: 'CellLink' },
+    // 表格配置项：CellAttachment 专属附件/多媒体预览
+    vxeUI.renderer.add('CellAttachment', {
+      renderTableDefault(_renderOpts, params) {
+        const { column, row } = params;
+        const rawVal = row[column.field];
+        if (!rawVal) return '-';
+
+        let list: string[] = [];
+        if (Array.isArray(rawVal)) {
+          list = rawVal.map(String).filter(Boolean);
+        } else if (typeof rawVal === 'string') {
+          const trimmed = rawVal.trim();
+          if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+            try {
+              const parsed = JSON.parse(trimmed);
+              if (Array.isArray(parsed)) {
+                list = parsed.map(String).filter(Boolean);
+              }
+            } catch {
+              list = [trimmed];
+            }
+          } else if (trimmed.includes(',')) {
+            list = trimmed
+              .split(',')
+              .map((s) => s.trim())
+              .filter(Boolean);
+          } else {
+            list = [trimmed];
+          }
+        }
+
+        if (list.length === 0) return '-';
+
+        const isDoc = (p: string) => {
+          const l = p.toLowerCase();
+          return (
+            l.endsWith('.pdf') ||
+            l.endsWith('.doc') ||
+            l.endsWith('.docx') ||
+            l.endsWith('.xls') ||
+            l.endsWith('.xlsx') ||
+            l.endsWith('.zip') ||
+            l.endsWith('.rar') ||
+            l.endsWith('.tar') ||
+            l.endsWith('.gz') ||
+            l.endsWith('.txt')
+          );
+        };
+
+        const first = list[0] ?? '';
+        if (isDoc(first)) {
+          const ext = first.split('.').pop()?.toUpperCase() || 'FILE';
+          return h(
+            Tag,
+            {
+              bordered: false,
+              round: true,
+              size: 'small',
+              style: { cursor: 'pointer' },
+              type: 'info',
+              onClick: (e: MouseEvent) => {
+                e.stopPropagation();
+                window.open(getFileUrl(first), '_blank');
+              },
+            },
+            { default: () => `📄 ${ext}` },
+          );
+        }
+
+        const imagesNodes = list.map((path, idx) => {
+          const url = getFileUrl(path);
+          return h(Image, {
+            height: 36,
+            imgProps: {
+              style: {
+                cursor: 'pointer',
+                display: 'block',
+                height: '36px',
+                objectFit: 'cover',
+                width: '36px',
+              },
+            },
+            key: idx,
+            objectFit: 'cover',
+            previewSrc: url,
+            src: url,
+            style: {
+              borderRadius: '4px',
+              cursor: 'pointer',
+              display: idx === 0 ? 'inline-block' : 'none',
+              verticalAlign: 'middle',
+            },
+            width: 36,
+          });
+        });
+
+        if (list.length > 1) {
+          return h(
+            ImageGroup,
+            {},
+            {
+              default: () => [
+                h(
+                  'div',
+                  {
+                    style: {
+                      alignItems: 'center',
+                      display: 'inline-flex',
+                      gap: '4px',
+                    },
+                  },
+                  [
+                    ...imagesNodes,
+                    h(
+                      Tag,
+                      { round: true, size: 'tiny', type: 'primary' },
+                      { default: () => `+${list.length}` },
+                    ),
+                  ],
+                ),
+              ],
+            },
+          );
+        }
+
+        return imagesNodes[0] || '-';
+      },
+    });
+
+    // 表格配置项：CellLink 链接展示 (URL在新窗口打开，文本则展示为可点击按钮)
     vxeUI.renderer.add('CellLink', {
-      renderTableDefault(renderOpts) {
-        const { props } = renderOpts;
+      renderTableDefault({ props }, { column, row }) {
+        const val = row[column.field];
+        if (val === undefined || val === null || val === '') return '-';
+        const text = props?.text || String(val);
+        const href =
+          isString(val) &&
+          (val.startsWith('http://') ||
+            val.startsWith('https://') ||
+            val.startsWith('/'))
+            ? val
+            : undefined;
+
+        if (href) {
+          return h(
+            'a',
+            {
+              class:
+                'text-primary hover:underline underline-offset-4 inline-flex items-center gap-1 cursor-pointer',
+              href,
+              onClick: (e: MouseEvent) => {
+                e.stopPropagation();
+              },
+              rel: 'noopener noreferrer',
+              target: '_blank',
+            },
+            [
+              text,
+              h(VbenIcon, {
+                class: 'size-3.5 opacity-70 shrink-0',
+                icon: 'lucide:external-link',
+              }),
+            ],
+          );
+        }
+
         return h(
           NButton,
           { size: 'small', type: 'primary', quaternary: true },
-          { default: () => props?.text },
+          { default: () => text },
+        );
+      },
+    });
+
+    // 表格配置项：CellDateTime 日期时间 (根据前端浏览器本地时区自动格式化)
+    vxeUI.renderer.add('CellDateTime', {
+      renderTableDefault(_renderOpts, { column, row }) {
+        const val = row[column.field];
+        if (
+          !val ||
+          val === '0001-01-01T00:00:00Z' ||
+          val === '1970-01-01T00:00:00Z'
+        ) {
+          return '-';
+        }
+        return formatDateTime(val) || '-';
+      },
+    });
+
+    // 表格配置项：CellInput 可修改文本框 (移入显现编辑图标，点击即改)
+    vxeUI.renderer.add('CellInput', {
+      renderTableDefault({ attrs }, { column, row }) {
+        const isEditKey = `__isEdit_${column.field}`;
+        const loadingKey = `__loading_${column.field}`;
+        const editValKey = `__editVal_${column.field}`;
+
+        const isEditing = Boolean(row[isEditKey]);
+        const isLoading = Boolean(row[loadingKey]);
+
+        const submitChange = async () => {
+          if (!row[isEditKey]) return;
+          row[isEditKey] = false;
+          const oldVal = row[column.field] ?? '';
+          const newVal = row[editValKey] ?? '';
+          if (newVal === oldVal) return;
+
+          row[loadingKey] = true;
+          try {
+            const res = await attrs?.beforeChange?.(newVal, row, column.field);
+            if (res !== false) {
+              row[column.field] = newVal;
+            }
+          } catch (error) {
+            console.error('CellInput save failed:', error);
+          } finally {
+            row[loadingKey] = false;
+          }
+        };
+
+        if (isEditing) {
+          return h(NInput, {
+            autofocus: true,
+            class: 'w-full',
+            defaultValue: row[editValKey],
+            onBlur: () => {
+              void submitChange();
+            },
+            onKeydown: (e: KeyboardEvent) => {
+              if (e.key === 'Enter') {
+                void submitChange();
+              } else if (e.key === 'Escape') {
+                row[isEditKey] = false;
+              }
+            },
+            'onUpdate:value': (val: string) => {
+              row[editValKey] = val;
+            },
+            size: 'small',
+          });
+        }
+
+        return h(
+          'div',
+          {
+            class:
+              'group inline-flex items-center justify-center gap-1.5 min-h-[28px] max-w-full px-2 py-0.5 rounded cursor-pointer hover:bg-muted/40 transition-colors',
+            onClick: () => {
+              row[editValKey] = row[column.field] ?? '';
+              row[isEditKey] = true;
+            },
+            title: '点击可快捷修改',
+          },
+          [
+            isLoading
+              ? h(NSpin, { size: 14 })
+              : h(
+                  'span',
+                  { class: 'truncate select-none' },
+                  row[column.field] !== undefined &&
+                    row[column.field] !== null &&
+                    row[column.field] !== ''
+                    ? String(row[column.field])
+                    : '-',
+                ),
+            h(VbenIcon, {
+              class:
+                'size-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0 cursor-pointer',
+              icon: 'basil:edit-alt-outline',
+            }),
+          ],
+        );
+      },
+    });
+
+    // 表格配置项：CellDate 仅日期 (根据前端浏览器本地时区自动格式化)
+    vxeUI.renderer.add('CellDate', {
+      renderTableDefault(_renderOpts, { column, row }) {
+        const val = row[column.field];
+        if (
+          !val ||
+          val === '0001-01-01T00:00:00Z' ||
+          val === '1970-01-01T00:00:00Z'
+        ) {
+          return '-';
+        }
+        return formatDate(val, 'YYYY-MM-DD') || '-';
+      },
+    });
+
+    // 表格配置项：CellInputNumber 可修改数字框 (移入显现编辑图标，点击即改)
+    vxeUI.renderer.add('CellInputNumber', {
+      renderTableDefault({ attrs }, { column, row }) {
+        const isEditKey = `__isEdit_${column.field}`;
+        const loadingKey = `__loading_${column.field}`;
+        const editValKey = `__editVal_${column.field}`;
+
+        const isEditing = Boolean(row[isEditKey]);
+        const isLoading = Boolean(row[loadingKey]);
+
+        const submitChange = async () => {
+          if (!row[isEditKey]) return;
+          row[isEditKey] = false;
+          const oldVal = row[column.field];
+          const newVal = row[editValKey];
+          if (newVal === oldVal) return;
+
+          row[loadingKey] = true;
+          try {
+            const res = await attrs?.beforeChange?.(newVal, row, column.field);
+            if (res !== false) {
+              row[column.field] = newVal;
+            }
+          } catch (error) {
+            console.error('CellInputNumber save failed:', error);
+          } finally {
+            row[loadingKey] = false;
+          }
+        };
+
+        if (isEditing) {
+          return h(NInputNumber, {
+            autofocus: true,
+            class: 'w-full',
+            defaultValue: row[editValKey],
+            onBlur: () => {
+              void submitChange();
+            },
+            onKeydown: (e: KeyboardEvent) => {
+              if (e.key === 'Enter') {
+                void submitChange();
+              } else if (e.key === 'Escape') {
+                row[isEditKey] = false;
+              }
+            },
+            'onUpdate:value': (val: null | number) => {
+              row[editValKey] = val;
+            },
+            size: 'small',
+          });
+        }
+
+        return h(
+          'div',
+          {
+            class:
+              'group inline-flex items-center justify-center gap-1.5 min-h-[28px] max-w-full px-2 py-0.5 rounded cursor-pointer hover:bg-muted/40 transition-colors',
+            onClick: () => {
+              row[editValKey] = row[column.field] ?? 0;
+              row[isEditKey] = true;
+            },
+            title: '点击可快捷修改',
+          },
+          [
+            isLoading
+              ? h(NSpin, { size: 14 })
+              : h(
+                  'span',
+                  { class: 'truncate select-none' },
+                  row[column.field] !== undefined && row[column.field] !== null
+                    ? String(row[column.field])
+                    : '-',
+                ),
+            h(VbenIcon, {
+              class:
+                'size-4 text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0 cursor-pointer',
+              icon: 'basil:edit-alt-outline',
+            }),
+          ],
         );
       },
     });
@@ -129,9 +515,20 @@ setupVbenVxeTable({
     vxeUI.renderer.add('CellSwitch', {
       renderTableDefault({ attrs, props }, { column, row }) {
         const loadingKey = `__loading_${column.field}`;
+        const val = row[column.field];
+        let defaultUncheckedValue: boolean | number | string = 2;
+        let defaultCheckedValue: boolean | number | string = 1;
+        if (typeof val === 'boolean') {
+          defaultCheckedValue = true;
+          defaultUncheckedValue = false;
+        } else if (val === 0 || val === '0') {
+          defaultUncheckedValue = typeof val === 'number' ? 0 : '0';
+          defaultCheckedValue = typeof val === 'number' ? 1 : '1';
+        }
+
         const baseSwitchProps: SwitchProps = {
-          checkedValue: 1,
-          uncheckedValue: 2,
+          checkedValue: defaultCheckedValue,
+          uncheckedValue: defaultUncheckedValue,
           rubberBand: false,
           loading: row[loadingKey] ?? false,
           value: row[column.field],
@@ -145,7 +542,11 @@ setupVbenVxeTable({
           const handleChange = async () => {
             row[loadingKey] = true;
             try {
-              const result = await attrs?.beforeChange?.(newVal, row);
+              const result = await attrs?.beforeChange?.(
+                newVal,
+                row,
+                column.field,
+              );
               if (result !== false) {
                 row[column.field] = newVal;
               }

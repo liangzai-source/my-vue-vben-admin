@@ -25,6 +25,7 @@ type StatusOptions = {
  * @param options - 可选：配置项（字段名/状态文案/弹窗标题）
  * @returns 状态变更核心函数
  */
+/* oxlint-disable typescript/no-unnecessary-type-parameters */
 export function useStatusChange<T = Recordable>(
   // 必传：状态更新接口（id=行ID，newStatus=目标状态）
   updateStatusApi: (id: number, newStatus: any) => Promise<any>,
@@ -32,10 +33,18 @@ export function useStatusChange<T = Recordable>(
   afterSuccess?: () => Promise<void> | void,
   // 可选：自定义配置项（改为字段名配置）
   options?: StatusOptions,
-) {
+): {
+  statusChangeFunc: (
+    newStatus: any,
+    row: T,
+    showConfirm?: boolean,
+    showMessage?: boolean,
+  ) => Promise<boolean>;
+} {
   // 默认配置（字段名默认值：id/name）
   const defaultConfig = {
     statusTextMap: {
+      0: $t('common.disableStatus'), // 禁用
       1: $t('common.enableStatus'), // 启用
       2: $t('common.disableStatus'), // 禁用
     },

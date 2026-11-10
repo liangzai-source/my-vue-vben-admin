@@ -80,6 +80,13 @@ function handleSearch() {
   loadFiles();
 }
 
+// 清空搜索框并重新加载
+function handleClear() {
+  keyword.value = '';
+  page.value = 1;
+  loadFiles();
+}
+
 // 翻页
 function handlePageChange(p: number) {
   page.value = p;
@@ -209,8 +216,8 @@ const [Modal, modalApi] = useVbenModal<{
             size="small"
             clearable
             class="w-52"
+            @clear="handleClear"
             @keyup.enter="handleSearch"
-            @clear="handleSearch"
           />
           <NButton size="small" type="primary" secondary @click="handleSearch">
             搜索

@@ -235,15 +235,30 @@ function onDragEnd() {
             关联: {{ item.relation.targetTable || '表' }}
           </NTag>
           <NTag
+            v-if="item.optionData && item.optionData.length > 0"
+            size="tiny"
+            :bordered="false"
+            type="warning"
+          >
+            选项({{ item.optionData.length }})
+          </NTag>
+          <NTag
             v-if="item.listable"
             size="tiny"
             :bordered="false"
             type="success"
+            :title="`表格组件: ${item.listComp || 'NText'}`"
           >
-            表格
+            表格: {{ item.listComp || 'NText' }}
           </NTag>
-          <NTag v-if="item.editable" size="tiny" :bordered="false" type="info">
-            表单
+          <NTag
+            v-if="item.editable"
+            size="tiny"
+            :bordered="false"
+            type="info"
+            :title="`表单组件: ${item.formComp || 'NInput'}`"
+          >
+            表单: {{ item.formComp || 'NInput' }}
           </NTag>
           <NTag
             v-if="item.searchData && item.searchData.length > 0"

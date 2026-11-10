@@ -5,7 +5,7 @@ import type { ListResponse } from '#/types/common';
 export function useDefaultGridOptions<T>(
   columns: VxeTableGridOptions<T>['columns'],
   queryFunc: (params: any) => Promise<ListResponse<T>>,
-  toolbarConfig: VxeTableGridOptions<T>['toolbarConfig'] = undefined,
+  toolbarConfig?: VxeTableGridOptions<T>['toolbarConfig'],
 ): VxeTableGridOptions<T> {
   if (!toolbarConfig) {
     toolbarConfig = {

@@ -31,9 +31,11 @@ export interface Route {
 
 export interface Page {
   tableType: string; // 表格类型: 固定为 vxe-table
-  formType: string; // 表单类型: naive / vben
+  formType: string; // 表单类型: 固定为 naive
   dialogType: string; // 弹窗类型: drawer / modal
-  dialogSize: string; // 弹窗尺寸: small / medium / large
+  dialogSize: string; // 弹窗尺寸: small / medium / large / custom
+  dialogWidth?: string; // 自定义弹窗/抽屉宽度
+  dialogHeight?: string; // 自定义弹窗高度
   operation: string[]; // 操作按钮
   isTree?: boolean; // 是否开启树形表格
   treeLazy?: boolean; // 是否远程异步加载子节点
@@ -83,6 +85,7 @@ export interface Field extends OptionSource {
   listable: boolean; // 表格是否显示
   width: number; // 表格列宽
   sortable: boolean; // 允许排序
+  switchConfirm?: boolean; // 开关切换是否二次确认 (仅 listComp 为 CellSwitch 时有效，默认 true)
   searchData: SearchOption[]; // 搜索配置
   // 表单
   editable: boolean; // form 显示

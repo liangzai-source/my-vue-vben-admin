@@ -10,6 +10,7 @@ import { NButton, NPopconfirm, NSpace, NTabPane, NTabs } from 'naive-ui';
 import { message } from '#/adapter/naive';
 import { devCrudGenerateApi, devCrudPreviewApi } from '#/api/dev/crud';
 import { createDefaultSchema } from '#/crud/default';
+import { smartInferSchema } from '#/crud/smartInference';
 import { isEmpty } from '#/utils/tools';
 
 import BasicForm from './components/basic.vue';
@@ -45,7 +46,7 @@ const [Drawer, drawerApi] = useVbenDrawer<Schema>({
 });
 
 function onTableLoaded(loadedSchema: Schema) {
-  formData.value = loadedSchema;
+  formData.value = smartInferSchema(loadedSchema);
 }
 
 // 预览代码
