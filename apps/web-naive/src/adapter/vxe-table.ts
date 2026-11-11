@@ -735,7 +735,7 @@ setupVbenVxeTable({
         return h(
           'div',
           {
-            class: 'flex table-operations',
+            class: 'flex flex-wrap items-center gap-1 table-operations',
             style: { justifyContent: align },
           },
           btns,

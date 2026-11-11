@@ -120,7 +120,7 @@ export function useDevCrudColumns<T = DevCrudApi.DevCrud>(
       headerAlign: 'center',
       showOverflow: false,
       title: $t('common.operation'),
-      width: 350,
+      width: 480,
     },
   ];
 }
