@@ -413,6 +413,7 @@ onMounted(() => {
                   </NTooltip>
 
                   <NPopconfirm
+                    v-access:code="'sys:attachment:delete'"
                     :title="$t('system.attachment.deleteConfirmTitle')"
                     @positive-click="handleDelete(item)"
                   >
@@ -580,6 +581,7 @@ onMounted(() => {
                       下载
                     </NButton>
                     <NPopconfirm
+                      v-access:code="'sys:attachment:delete'"
                       :title="$t('system.attachment.deleteConfirmTitle')"
                       @positive-click="handleDelete(item)"
                     >

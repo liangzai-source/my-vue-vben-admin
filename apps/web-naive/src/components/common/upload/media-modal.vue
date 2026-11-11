@@ -20,12 +20,7 @@ import {
   useMessage,
 } from 'naive-ui';
 
-import {
-  deleteFileApi,
-  getFileListApi,
-  getFileUrl,
-  uploadFileApi,
-} from '#/api/system/upload';
+import { getFileListApi, getFileUrl, uploadFileApi } from '#/api/system/upload';
 
 const emit = defineEmits<{
   (e: 'select', items: UploadItem[]): void;
@@ -139,19 +134,6 @@ async function handleDirectUpload(options: UploadCustomRequestOptions) {
     message.error(error.message || '上传失败');
   } finally {
     uploading.value = false;
-  }
-}
-
-// 删除文件记录
-async function handleDelete(item: UploadItem, e: MouseEvent) {
-  e.stopPropagation();
-  try {
-    await deleteFileApi(item.id);
-    message.success('删除成功');
-    selectedIds.value = selectedIds.value.filter((id) => id !== item.id);
-    await loadFiles();
-  } catch (error: any) {
-    message.error(error.message || '删除失败');
   }
 }
 
@@ -276,16 +258,6 @@ const [Modal, modalApi] = useVbenModal<{
               >
                 ✓
               </div>
-
-              <!-- 悬停删除小按钮 -->
-              <button
-                type="button"
-                class="absolute left-1 top-1 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white text-xs hover:scale-110"
-                title="删除记录"
-                @click="handleDelete(item, $event)"
-              >
-                ×
-              </button>
             </div>
 
             <!-- 文件信息摘要 -->
