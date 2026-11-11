@@ -1,30 +1,27 @@
 <script setup lang="ts">
 import type { SelectOption } from 'naive-ui';
 
+import type { RelationOptionsApi } from '#/types/common';
+
 import { onMounted, ref, watch } from 'vue';
 
 import { useDebounceFn } from '@vueuse/core';
 import { NSelect, NSpin } from 'naive-ui';
 
-import { devCrudRelationOptionsApi } from '#/api/dev/crud';
-
 interface Props {
+  api?: RelationOptionsApi;
   clearable?: boolean;
   disabled?: boolean;
-  labelField?: string;
   placeholder?: string;
-  targetTable: string;
   value?: any;
-  valueField?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  api: undefined,
   clearable: true,
   disabled: false,
-  labelField: 'name',
   placeholder: '请选择',
   value: undefined,
-  valueField: 'id',
 });
 
 const emit = defineEmits<{
@@ -38,14 +35,11 @@ const totalCount = ref(0);
 const lastKeyword = ref('');
 
 async function loadOptions(keyword = '') {
-  if (!props.targetTable) return;
+  if (!props.api) return;
   loading.value = true;
   lastKeyword.value = keyword;
   try {
-    const res = await devCrudRelationOptionsApi({
-      tableName: props.targetTable,
-      valueField: props.valueField,
-      labelField: props.labelField,
+    const res = await props.api({
       keyword,
       currentValue: props.value,
     });
@@ -82,9 +76,9 @@ function handleUpdateValue(val: any) {
 }
 
 watch(
-  () => props.targetTable,
-  (newTable) => {
-    if (newTable) {
+  () => props.api,
+  (newApi) => {
+    if (newApi) {
       loadOptions();
     }
   },

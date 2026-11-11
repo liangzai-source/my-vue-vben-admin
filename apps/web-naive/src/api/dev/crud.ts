@@ -1,5 +1,11 @@
 import type { Schema } from '#/crud/types';
-import type { BaseData, DeleteResponse, ListResponse } from '#/types/common';
+import type {
+  BaseData,
+  DeleteResponse,
+  ListResponse,
+  RelationOptionsParams,
+  RelationOptionsResult,
+} from '#/types/common';
 
 import { requestClient } from '#/api/request';
 
@@ -117,24 +123,18 @@ export async function devCrudTableSchemaApi(tableName: string) {
   return requestClient.post<Schema>('/crud/table-schema', { tableName });
 }
 
-export interface RelationOptionsParams {
+export interface DevCrudRelationOptionsParams extends RelationOptionsParams {
   tableName: string;
   valueField?: string;
   labelField?: string;
-  keyword?: string;
-  currentValue?: any;
-}
-
-export interface RelationOptionsResult {
-  total: number;
-  isLarge: boolean;
-  options: Array<{ label: any; value: any }>;
 }
 
 /**
  * 获取表关联动态选项 (自适应 <=1000全量 与 >1000远程搜索)
  */
-export async function devCrudRelationOptionsApi(params: RelationOptionsParams) {
+export async function devCrudRelationOptionsApi(
+  params: DevCrudRelationOptionsParams,
+) {
   return requestClient.post<RelationOptionsResult>(
     '/crud/relation-options',
     params,

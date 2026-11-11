@@ -27,3 +27,18 @@ export type UpdateStatusResponse = Record<string, never>;
 export type DeleteResponse = Record<string, never>;
 // 信息返回数据
 export type MessageResponse = Record<string, never>;
+// 表关联下拉选项请求参数
+export interface RelationOptionsParams {
+  keyword?: string;
+  currentValue?: any;
+}
+// 表关联下拉选项返回结果
+export interface RelationOptionsResult {
+  total: number;
+  isLarge: boolean;
+  options: Array<{ label: any; value: any }>;
+}
+// 表关联下拉选项接口函数类型
+export type RelationOptionsApi = (
+  params: RelationOptionsParams,
+) => Promise<RelationOptionsResult>;

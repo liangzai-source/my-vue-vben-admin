@@ -28,6 +28,8 @@ import type {
 } from '@vben/common-ui';
 import type { Recordable } from '@vben/types';
 
+import type { RelationOptionsApi } from '#/types/common';
+
 import { defineAsyncComponent, defineComponent, h, ref } from 'vue';
 
 import { ApiComponent, globalShareState, IconPicker } from '@vben/common-ui';
@@ -155,12 +157,10 @@ export interface ComponentPropsMap {
   InputNumber: InputNumberProps;
   RadioGroup: RadioGroupProps;
   RelationSelect: {
+    api?: RelationOptionsApi;
     clearable?: boolean;
     disabled?: boolean;
-    labelField?: string;
     placeholder?: string;
-    targetTable: string;
-    valueField?: string;
   };
   Select: SelectProps;
   Space: SpaceProps;
