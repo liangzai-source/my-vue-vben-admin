@@ -25,7 +25,11 @@ import {
 
 import { devCrudTablesApi, devCrudTableSchemaApi } from '#/api/dev/crud';
 import { createDefaultField } from '#/crud/default';
-import { parseCommentOptions, smartInferField } from '#/crud/smartInference';
+import {
+  isSelfParentFieldName,
+  parseCommentOptions,
+  smartInferField,
+} from '#/crud/smartInference';
 
 const emit = defineEmits<{
   (e: 'save', field: Field, index: number): void;
@@ -34,6 +38,8 @@ const emit = defineEmits<{
 const currentField = ref<Field>(createDefaultField());
 const editingIndex = ref<number>(-1);
 const activeTab = ref<string>('basic');
+const currentTableName = ref<string>('');
+const currentLabelField = ref<string>('name');
 
 // Go 数据类型选项
 const goTypeOptions: SelectOption[] = [
@@ -315,7 +321,10 @@ function onGoTypeChange(val: string) {
 
 // 字段智能推导规则（根据字段语义自动匹配最合理的表格/表单组件与属性）
 function applySmartInference() {
-  currentField.value = smartInferField(currentField.value);
+  currentField.value = smartInferField(currentField.value, {
+    tableName: currentTableName.value,
+    labelField: currentLabelField.value,
+  });
 }
 
 // 字段名输入联动驼峰与智能推导
@@ -521,7 +530,12 @@ function onSearchCompChange(val: string) {
   }
 }
 
-const [Modal, modalApi] = useVbenModal<{ field: Field; index: number }>({
+const [Modal, modalApi] = useVbenModal<{
+  field: Field;
+  index: number;
+  labelField?: string;
+  tableName?: string;
+}>({
   onConfirm: () => {
     emit('save', cloneDeep(currentField.value), editingIndex.value);
     modalApi.close();
@@ -530,6 +544,8 @@ const [Modal, modalApi] = useVbenModal<{ field: Field; index: number }>({
     if (isOpen) {
       activeTab.value = 'basic';
       const payload = modalApi.getData();
+      currentTableName.value = payload?.tableName || '';
+      currentLabelField.value = payload?.labelField || 'name';
       if (payload && payload.field) {
         currentField.value = cloneDeep(payload.field);
         if (!Array.isArray(currentField.value.optionData)) {
@@ -537,13 +553,23 @@ const [Modal, modalApi] = useVbenModal<{ field: Field; index: number }>({
         }
         currentField.value.isFile = Boolean(currentField.value.isFile);
         editingIndex.value = payload.index;
-        // 若当前字段为默认未定制状态 (NText + NInput/NInputNumber)，自动执行一次智能推导
+        const colName =
+          currentField.value.columnName ||
+          currentField.value.name ||
+          currentField.value.tsName;
+        // 若为未定制状态，或历史残留的 y_parent 自关联错配，自动纠正推导
         if (
-          currentField.value.listComp === 'NText' &&
-          (currentField.value.formComp === 'NInput' ||
-            currentField.value.formComp === 'NInputNumber')
+          (currentField.value.listComp === 'NText' &&
+            (currentField.value.formComp === 'NInput' ||
+              currentField.value.formComp === 'NInputNumber')) ||
+          (isSelfParentFieldName(colName) &&
+            currentTableName.value &&
+            currentField.value.relation?.targetTable === 'y_parent')
         ) {
-          currentField.value = smartInferField(currentField.value);
+          currentField.value = smartInferField(currentField.value, {
+            tableName: currentTableName.value,
+            labelField: currentLabelField.value,
+          });
         }
         if (currentField.value.switchConfirm === undefined) {
           currentField.value.switchConfirm = true;

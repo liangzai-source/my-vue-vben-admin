@@ -8,8 +8,13 @@ import { useVbenModal } from '@vben/common-ui';
 import { NButton, NCard, NEmpty, NPopconfirm, NTag, NTooltip } from 'naive-ui';
 
 import { createDefaultField } from '#/crud/default';
+import { inferSelfLabelField } from '#/crud/smartInference';
 
 import FieldModalComponent from './field-modal.vue';
+
+const props = defineProps<{
+  tableName?: string;
+}>();
 
 const fields = defineModel<Field[]>({ default: () => [] });
 
@@ -34,7 +39,14 @@ function onRemoveField(index: number) {
 }
 
 function onEditField(field: Field, index: number) {
-  fieldModalApi.setData({ field, index }).open();
+  fieldModalApi
+    .setData({
+      field,
+      index,
+      tableName: props.tableName,
+      labelField: inferSelfLabelField(fields.value),
+    })
+    .open();
 }
 
 function onSaveField(updatedField: Field, index: number) {

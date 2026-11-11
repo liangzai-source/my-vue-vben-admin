@@ -139,7 +139,10 @@ function handlePreviewSuccess() {
         />
       </NTabPane>
       <NTabPane name="字段信息" display-directive="show:lazy">
-        <FieldForm v-model="formData.fieldsConfig" />
+        <FieldForm
+          v-model="formData.fieldsConfig"
+          :table-name="formData.basicConfig.tableName"
+        />
       </NTabPane>
       <NTabPane name="路由信息" display-directive="show:lazy">
         <RouteForm v-model="formData.routeConfig" />

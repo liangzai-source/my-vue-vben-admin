@@ -16,7 +16,32 @@ export function parseCommentOptions(comment: string): Enum[] {
   });
 }
 
-export function smartInferField(field: Field): Field {
+export interface SmartInferContext {
+  labelField?: string;
+  tableName?: string;
+}
+
+export function inferSelfLabelField(fields: Field[]): string {
+  const names = new Set(
+    (fields || []).map((item) =>
+      (item.columnName || item.tsName || item.name || '').toLowerCase(),
+    ),
+  );
+  if (names.has('name')) return 'name';
+  if (names.has('title')) return 'title';
+  if (names.has('label')) return 'label';
+  return 'name';
+}
+
+export function isSelfParentFieldName(name: string): boolean {
+  const lower = (name || '').toLowerCase();
+  return lower === 'parent_id' || lower === 'parentid' || lower === 'pid';
+}
+
+export function smartInferField(
+  field: Field,
+  context?: SmartInferContext,
+): Field {
   const f: Field = { ...field };
   const name = (f.columnName || f.name || f.tsName || '').toLowerCase();
   const comment = f.comment || '';
@@ -313,7 +338,43 @@ export function smartInferField(field: Field): Field {
     return f;
   }
 
-  // 14. 外键关联 (_id 且非 id)
+  // 14a. 自关联父级字段 (parent_id / parentid / pid) -> 关联当前自身表
+  if (isSelfParentFieldName(name)) {
+    const selfTable =
+      context?.tableName ||
+      (f.relation?.targetTable && f.relation.targetTable !== 'y_parent'
+        ? f.relation.targetTable
+        : '');
+    const labelField = context?.labelField || f.relation?.labelField || 'name';
+    f.relation = {
+      enable: true,
+      targetTable: selfTable,
+      valueField: 'id',
+      labelField,
+    };
+    f.formComp = 'RelationSelect';
+    f.listComp = 'NText';
+    if (!f.searchData || f.searchData.length === 0) {
+      f.searchData = [
+        {
+          type: '2',
+          symbol: '=',
+          component: 'RelationSelect',
+          label: f.label || f.name,
+          name: f.tsName || f.name,
+          value: '',
+          optionType: 0,
+          optionData: [],
+          compOptions: '',
+          compLabelField: '',
+          compValueField: '',
+        },
+      ];
+    }
+    return f;
+  }
+
+  // 14b. 外键关联 (_id 且非 id)
   if (name.endsWith('_id') && name !== 'id') {
     const baseName = name.replace(/_id$/, '');
     f.relation = {
@@ -349,10 +410,28 @@ export function smartInferField(field: Field): Field {
 
 export function smartInferSchema(schema: Schema): Schema {
   if (!schema || !Array.isArray(schema.fieldsConfig)) return schema;
+  const tableName = schema.basicConfig?.tableName || '';
+  const labelField = inferSelfLabelField(schema.fieldsConfig);
   const fields = schema.fieldsConfig.map((field) => {
+    const colLower = (
+      field.columnName ||
+      field.name ||
+      field.tsName ||
+      ''
+    ).toLowerCase();
+    // 修正历史/未重启后端解析出的 y_parent 误关联
+    if (
+      isSelfParentFieldName(colLower) &&
+      tableName &&
+      (!field.relation?.enable ||
+        !field.relation.targetTable ||
+        field.relation.targetTable === 'y_parent')
+    ) {
+      return smartInferField(field, { tableName, labelField });
+    }
     // 只有在字段属于常规默认初始状态时，执行推导增强
     if (field.listComp === 'NText' || !field.listComp) {
-      return smartInferField(field);
+      return smartInferField(field, { tableName, labelField });
     }
     return field;
   });
