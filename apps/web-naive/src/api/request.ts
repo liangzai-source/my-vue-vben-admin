@@ -50,9 +50,17 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
    */
   async function doRefreshToken() {
     const accessStore = useAccessStore();
-    const resp = await refreshTokenApi(accessStore.refreshToken ?? '');
-    const loginResult = resp?.data;
+    if (!accessStore.refreshToken) {
+      throw new Error('Refresh token is missing');
+    }
+    // baseRequestClient 默认 responseReturn 为 'raw'，返回完整 AxiosResponse，业务数据位于 resp.data.data
+    const resp = await refreshTokenApi(accessStore.refreshToken);
+    const body = resp?.data;
+    const loginResult = body?.data;
     const newToken = loginResult?.accessToken ?? '';
+    if (body?.code !== 0 || !newToken) {
+      throw new Error(body?.message || 'Refresh token failed');
+    }
     accessStore.setAccessToken(newToken);
     if (loginResult?.refreshToken) {
       accessStore.setRefreshToken(loginResult.refreshToken);

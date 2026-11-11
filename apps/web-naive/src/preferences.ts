@@ -14,6 +14,7 @@ export const overridesPreferences = defineOverridesPreferences({
     name: import.meta.env.VITE_APP_TITLE,
     accessMode: 'backend',
     defaultHomePath: '/analytics',
+    enableRefreshToken: true,
   },
   theme: {
     mode: 'light',

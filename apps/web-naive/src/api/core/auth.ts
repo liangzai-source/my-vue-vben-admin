@@ -1,3 +1,5 @@
+import type { RequestResponse } from '@vben/request';
+
 import { useAccessStore } from '@vben/stores';
 
 import { baseRequestClient, requestClient } from '#/api/request';
@@ -39,7 +41,7 @@ export async function loginApi(data: AuthApi.LoginParams) {
  * 刷新accessToken
  */
 export async function refreshTokenApi(refreshToken?: string) {
-  return baseRequestClient.post<AuthApi.RefreshTokenResult>(
+  return baseRequestClient.post<RequestResponse<AuthApi.RefreshTokenResult>>(
     '/auth/refresh-token',
     {
       refreshToken,
