@@ -94,7 +94,7 @@ export function useDevCrudColumns<T = DevCrudApi.DevCrud>(
             confirmContent: (row: DevCrudApi.DevCrud) =>
               `确定删除【${row.businessName || row.moduleName}】本地物理代码吗？（生成记录与已生成的菜单不会被删除，可修改配置后重新生成）`,
             show: (row: DevCrudApi.DevCrud) => row.status === 1,
-            perCode: 'dev:crud:delete',
+            perCode: ['dev:crud:delete', 'dev:srud:delete'],
           },
           {
             code: 'delete',
@@ -104,7 +104,7 @@ export function useDevCrudColumns<T = DevCrudApi.DevCrud>(
               row.status === 1
                 ? `确定仅删除【${row.businessName || row.moduleName}】的配置记录吗？已生成的本地代码与菜单不会自动删除。`
                 : `确定删除【${row.businessName || row.moduleName}】的配置记录吗？（已生成的菜单不会被删除）`,
-            perCode: 'dev:crud:delete',
+            perCode: ['dev:crud:delete', 'dev:srud:delete'],
           },
         ]),
       },
@@ -113,6 +113,7 @@ export function useDevCrudColumns<T = DevCrudApi.DevCrud>(
         'dev:crud:create',
         'dev:crud:update',
         'dev:crud:delete',
+        'dev:srud:delete',
       ]),
       field: 'operation',
       fixed: 'right',

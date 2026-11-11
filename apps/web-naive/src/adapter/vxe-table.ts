@@ -637,11 +637,19 @@ setupVbenVxeTable({
                 })
             : undefined;
           type Size = 'large' | 'medium' | 'small' | 'tiny';
+          const btnProps = objectOmit(opt, [
+            'show',
+            'btnText',
+            'confirm',
+            'confirmTitle',
+            'confirmContent',
+            'code',
+          ]);
           return h(
             NButton,
             {
               ...props,
-              ...opt,
+              ...btnProps,
               onClick,
               type: opt.type || 'primary',
               size: (opt.size as Size) || 'small',
@@ -677,11 +685,22 @@ setupVbenVxeTable({
             $t('ui.actionMessage.deleteConfirm', [
               displayName, // 兜底空值
             ]);
+          const popconfirmExtraProps = objectOmit(opt, [
+            'show',
+            'btnText',
+            'type',
+            'icon',
+            'size',
+            'code',
+            'confirm',
+            'confirmTitle',
+            'confirmContent',
+          ]);
           return h(
             PopConfirm,
             {
               ...props,
-              ...opt,
+              ...popconfirmExtraProps,
               title: confirmTitle,
               showIcon: true,
               placement: 'top',
