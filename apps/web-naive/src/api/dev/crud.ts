@@ -46,6 +46,12 @@ export namespace DevCrudApi {
     menuCount?: number;
   }
 
+  export interface SaveResult {
+    id: number;
+    moduleName: string;
+    status: number;
+  }
+
   export interface DeleteCodeResult {
     id: number;
     moduleName: string;
@@ -68,6 +74,13 @@ export async function devCrudListApi(param: any) {
  */
 export async function devCrudPreviewApi(data: Schema) {
   return requestClient.post<DevCrudApi.FilePreview[]>('/crud/preview', data);
+}
+
+/**
+ * 仅保存代码生成配置到数据库
+ */
+export async function devCrudSaveApi(data: Schema) {
+  return requestClient.post<DevCrudApi.SaveResult>('/crud/save', data);
 }
 
 /**

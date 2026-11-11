@@ -5,10 +5,14 @@ import { ref } from 'vue';
 
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
-import { NButton, NPopconfirm, NSpace, NTabPane, NTabs } from 'naive-ui';
+import { NButton, NPopconfirm, NTabPane, NTabs } from 'naive-ui';
 
 import { message } from '#/adapter/naive';
-import { devCrudGenerateApi, devCrudPreviewApi } from '#/api/dev/crud';
+import {
+  devCrudGenerateApi,
+  devCrudPreviewApi,
+  devCrudSaveApi,
+} from '#/api/dev/crud';
 import { createDefaultSchema } from '#/crud/default';
 import { smartInferSchema } from '#/crud/smartInference';
 import { isEmpty } from '#/utils/tools';
@@ -25,6 +29,7 @@ const emit = defineEmits<{
 
 const formData = ref<Schema>(createDefaultSchema());
 const previewLoading = ref(false);
+const saveLoading = ref(false);
 const generateLoading = ref(false);
 
 const [PreviewModal, previewModalApi] = useVbenModal({
@@ -56,6 +61,7 @@ async function handlePreview() {
     return;
   }
   previewLoading.value = true;
+  drawerApi.setState({ confirmLoading: true });
   try {
     const previews = await devCrudPreviewApi(formData.value);
     previewModalApi
@@ -68,6 +74,30 @@ async function handlePreview() {
     message.error(error?.message || '代码生成预览失败');
   } finally {
     previewLoading.value = false;
+    drawerApi.setState({ confirmLoading: false });
+  }
+}
+
+// 仅保存配置到数据库
+async function handleSaveConfig() {
+  if (!formData.value.basicConfig.moduleName.trim()) {
+    message.warning('请输入模块名称 (moduleName)');
+    return;
+  }
+
+  saveLoading.value = true;
+  drawerApi.lock();
+  try {
+    await devCrudSaveApi(formData.value);
+    message.success(
+      `模块 [${formData.value.basicConfig.moduleName}] 配置已保存到数据库！`,
+    );
+    emit('success');
+  } catch (error: any) {
+    message.error(error?.message || '保存配置失败');
+  } finally {
+    saveLoading.value = false;
+    drawerApi.unlock();
   }
 }
 
@@ -106,27 +136,37 @@ function handlePreviewSuccess() {
 </script>
 
 <template>
-  <Drawer class="w-[90vw] max-w-[1500px]" title="代码生成配置">
-    <template #extra>
-      <NSpace align="center" size="small">
-        <NButton
-          size="small"
-          type="primary"
-          secondary
-          :loading="previewLoading"
-          @click="handlePreview"
-        >
-          预览代码
-        </NButton>
-        <NPopconfirm @positive-click="handleGenerateWrite">
-          <template #trigger>
-            <NButton size="small" type="error" ghost :loading="generateLoading">
-              直接写入磁盘
-            </NButton>
-          </template>
-          确定跳过预览，直接将生成的全部代码写入本地物理项目吗？
-        </NPopconfirm>
-      </NSpace>
+  <Drawer
+    class="w-[90vw] max-w-[1500px]"
+    footer-class="gap-2"
+    title="代码生成配置"
+  >
+    <template #center-footer>
+      <NButton
+        type="info"
+        secondary
+        :loading="saveLoading"
+        :disabled="previewLoading || generateLoading"
+        @click="handleSaveConfig"
+      >
+        保存配置
+      </NButton>
+    </template>
+
+    <template #append-footer>
+      <NPopconfirm @positive-click="handleGenerateWrite">
+        <template #trigger>
+          <NButton
+            type="error"
+            secondary
+            :loading="generateLoading"
+            :disabled="previewLoading || saveLoading"
+          >
+            直接写入磁盘
+          </NButton>
+        </template>
+        确定跳过预览，直接将生成的全部代码写入本地物理项目吗？
+      </NPopconfirm>
     </template>
 
     <PreviewModal @success="handlePreviewSuccess" />

@@ -63,7 +63,6 @@ const darkCodeThemeOverrides: GlobalThemeOverrides = {
 const previews = ref<DevCrudApi.FilePreview[]>([]);
 const currentSchema = ref<null | Schema>(null);
 const activeTab = ref<string>('');
-const writing = ref(false);
 
 const activeFile = computed(() => {
   return (
@@ -212,15 +211,6 @@ async function onWriteToDisk() {
           </NButton>
           <NButton size="tiny" type="primary" secondary @click="onCopyCode">
             复制代码
-          </NButton>
-          <NButton
-            v-if="currentSchema"
-            size="tiny"
-            type="primary"
-            :loading="writing"
-            @click="onWriteToDisk"
-          >
-            直接写入磁盘
           </NButton>
         </NSpace>
       </div>
