@@ -86,8 +86,24 @@ export function useDevCrudColumns<T = DevCrudApi.DevCrud>(
             perCode: 'dev:crud:create',
           },
           {
-            code: 'delete',
+            code: 'deleteCode',
             btnText: '删除代码',
+            type: 'warning',
+            confirm: true,
+            confirmTitle: '删除生成代码',
+            confirmContent: (row: DevCrudApi.DevCrud) =>
+              `确定删除【${row.businessName || row.moduleName}】本地物理代码吗？（生成记录与已生成的菜单不会被删除，可修改配置后重新生成）`,
+            show: (row: DevCrudApi.DevCrud) => row.status === 1,
+            perCode: 'dev:crud:delete',
+          },
+          {
+            code: 'delete',
+            btnText: '删除记录',
+            confirmTitle: '删除生成记录',
+            confirmContent: (row: DevCrudApi.DevCrud) =>
+              row.status === 1
+                ? `确定仅删除【${row.businessName || row.moduleName}】的配置记录吗？已生成的本地代码与菜单不会自动删除。`
+                : `确定删除【${row.businessName || row.moduleName}】的配置记录吗？（已生成的菜单不会被删除）`,
             perCode: 'dev:crud:delete',
           },
         ]),
@@ -103,7 +119,7 @@ export function useDevCrudColumns<T = DevCrudApi.DevCrud>(
       headerAlign: 'center',
       showOverflow: false,
       title: $t('common.operation'),
-      width: 290,
+      width: 350,
     },
   ];
 }

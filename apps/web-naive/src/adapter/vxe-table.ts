@@ -623,12 +623,7 @@ setupVbenVxeTable({
             });
             return optBtn;
           })
-          .filter((opt) => {
-            if (typeof opt.show === 'function') {
-              return opt.show(row) !== false;
-            }
-            return true;
-          });
+          .filter((opt) => opt.show !== false);
 
         function renderBtn(opt: Recordable<any>, listen = true) {
           // 兜底按钮文本，避免空文本
@@ -674,12 +669,20 @@ setupVbenVxeTable({
             return h('span', ''); // 兜底空元素，避免 Popconfirm 无 trigger
           }
           const displayName = getByPath(row, attrs?.nameField);
+          const confirmTitle =
+            opt.confirmTitle ||
+            $t('ui.actionTitle.delete', [attrs?.nameTitle || '']);
+          const confirmContent =
+            opt.confirmContent ||
+            $t('ui.actionMessage.deleteConfirm', [
+              displayName, // 兜底空值
+            ]);
           return h(
             PopConfirm,
             {
-              title: $t('ui.actionTitle.delete', [attrs?.nameTitle || '']),
               ...props,
               ...opt,
+              title: confirmTitle,
               showIcon: true,
               placement: 'top',
               // 补充：确保 Popconfirm 有默认的触发行为
@@ -698,17 +701,17 @@ setupVbenVxeTable({
               default: () =>
                 h(
                   'div',
-                  { class: 'truncate' },
-                  $t('ui.actionMessage.deleteConfirm', [
-                    displayName, // 兜底空值
-                  ]),
+                  { class: 'max-w-[280px] whitespace-normal' },
+                  confirmContent,
                 ),
             },
           );
         }
 
         const btns = operations.map((opt) =>
-          opt.code === 'delete' ? renderConfirm(opt) : renderBtn(opt),
+          opt.code === 'delete' || opt.confirm === true
+            ? renderConfirm(opt)
+            : renderBtn(opt),
         );
         return h(
           'div',

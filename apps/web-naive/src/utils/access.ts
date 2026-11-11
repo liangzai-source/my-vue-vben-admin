@@ -70,12 +70,12 @@ export function processTableActions(
       return;
     }
 
-    // 校验通过，判断是否在默认列表中
-    if (DEFAULT_KEYS.includes(code)) {
+    // 校验通过，仅在没有任何额外配置项时转为默认字符串
+    if (DEFAULT_KEYS.includes(code) && Object.keys(cleanItem).length === 1) {
       // 在默认列表：转为字符串
       result.push(code);
     } else {
-      // 不在默认列表：保留清理后的对象
+      // 保留完整配置对象（支持自定义 btnText / confirmTitle / show 等）
       result.push(cleanItem);
     }
   });

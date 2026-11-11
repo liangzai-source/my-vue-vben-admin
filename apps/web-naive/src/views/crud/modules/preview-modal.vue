@@ -141,9 +141,13 @@ async function onWriteToDisk() {
   if (!currentSchema.value) return;
   modalApi.lock();
   try {
-    await devCrudGenerateApi(currentSchema.value);
+    const res = await devCrudGenerateApi(currentSchema.value);
+    const menuTip =
+      res?.menuCount && res.menuCount > 0
+        ? ` 并自动生成 ${res.menuCount} 条菜单/权限！`
+        : '';
     message.success(
-      `模块 [${currentSchema.value.basicConfig.moduleName}] 代码已成功写入磁盘！`,
+      `模块 [${currentSchema.value.basicConfig.moduleName}] 代码已成功写入磁盘！${menuTip}`,
     );
     emit('success');
     modalApi.close();

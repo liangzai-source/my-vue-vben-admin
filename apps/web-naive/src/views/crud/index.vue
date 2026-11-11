@@ -10,6 +10,7 @@ import { message } from '#/adapter/naive';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   devCrudDeleteApi,
+  devCrudDeleteCodeApi,
   devCrudDetailApi,
   devCrudListApi,
   devCrudPreviewApi,
@@ -26,6 +27,7 @@ const { onActionClick } = useTableAction<DevCrudApi.DevCrud>({
   preview: onPreview,
   update: onUpdate,
   regenerate: onRegenerate,
+  deleteCode: onDeleteCode,
   delete: onDelete,
 });
 
@@ -71,9 +73,13 @@ async function onUpdate(row: DevCrudApi.DevCrud) {
 // 重新生成
 async function onRegenerate(row: DevCrudApi.DevCrud) {
   try {
-    await devCrudReGenerateApi(row.id);
+    const res = await devCrudReGenerateApi(row.id);
+    const menuTip =
+      res?.menuCount && res.menuCount > 0
+        ? ` 并自动新增了 ${res.menuCount} 条菜单/权限节点！`
+        : '';
     message.success(
-      `模块 [${row.moduleName}] 代码重新生成成功，已覆盖本地文件！`,
+      `模块 [${row.moduleName}] 代码重新生成成功，已覆盖本地文件！${menuTip}`,
     );
     onRefresh();
   } catch (error: any) {
@@ -81,14 +87,29 @@ async function onRegenerate(row: DevCrudApi.DevCrud) {
   }
 }
 
-// 删除已生成代码
-async function onDelete(row: DevCrudApi.DevCrud) {
+// 仅删除已生成的物理代码文件（保留生成记录与菜单）
+async function onDeleteCode(row: DevCrudApi.DevCrud) {
   try {
-    await devCrudDeleteApi(row.id);
-    message.success(`模块 [${row.moduleName}] 本地物理代码与记录已安全清除！`);
+    await devCrudDeleteCodeApi(row.id);
+    message.warning(
+      `模块 [${row.moduleName}] 物理代码文件已删除（生成记录未删除，且已生成的菜单未删除）。`,
+    );
     onRefresh();
   } catch (error: any) {
     message.error(error?.message || '删除生成代码失败');
+  }
+}
+
+// 仅删除数据库生成记录（不删除菜单）
+async function onDelete(row: DevCrudApi.DevCrud) {
+  try {
+    await devCrudDeleteApi(row.id);
+    message.success(
+      `模块 [${row.moduleName}] 生成记录已删除（已生成的菜单未删除）。`,
+    );
+    onRefresh();
+  } catch (error: any) {
+    message.error(error?.message || '删除生成记录失败');
   }
 }
 

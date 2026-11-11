@@ -81,9 +81,13 @@ async function handleGenerateWrite() {
   generateLoading.value = true;
   drawerApi.lock();
   try {
-    await devCrudGenerateApi(formData.value);
+    const res = await devCrudGenerateApi(formData.value);
+    const menuTip =
+      res?.menuCount && res.menuCount > 0
+        ? ` 并自动生成 ${res.menuCount} 条菜单/权限！`
+        : '';
     message.success(
-      `模块 [${formData.value.basicConfig.moduleName}] 代码已直接写入本地项目！`,
+      `模块 [${formData.value.basicConfig.moduleName}] 代码已直接写入本地项目！${menuTip}`,
     );
     emit('success');
     drawerApi.close();

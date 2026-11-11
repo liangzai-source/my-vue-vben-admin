@@ -41,7 +41,7 @@ const formData = useModelProxy<Route>(modelValue);
         <NFormItemGi :span="12" label="API 接口路径">
           <NInput
             v-model:value="formData.apiPath"
-            placeholder="留空则自动推导，例如：/api/goods"
+            placeholder="留空则自动推导，例如：/goods（前端会自动拼接 /admin-api）"
           />
         </NFormItemGi>
 

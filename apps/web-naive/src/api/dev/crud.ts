@@ -37,6 +37,13 @@ export namespace DevCrudApi {
     id: number;
     moduleName: string;
     files: string[];
+    menuCount?: number;
+  }
+
+  export interface DeleteCodeResult {
+    id: number;
+    moduleName: string;
+    menuPreserved: boolean;
   }
 }
 
@@ -74,7 +81,16 @@ export async function devCrudReGenerateApi(id: number) {
 }
 
 /**
- * 删除生成代码及数据库记录
+ * 仅删除已生成的本地物理代码（保留数据库记录与菜单）
+ */
+export async function devCrudDeleteCodeApi(id: number) {
+  return requestClient.post<DevCrudApi.DeleteCodeResult>(
+    `/crud/delete-code/${id}`,
+  );
+}
+
+/**
+ * 仅删除数据库生成记录（不清理物理文件及菜单）
  */
 export async function devCrudDeleteApi(id: number) {
   return requestClient.post<DeleteResponse>(`/crud/delete/${id}`);
