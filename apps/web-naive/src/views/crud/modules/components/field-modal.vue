@@ -131,10 +131,19 @@ function handleRelationEnableChange(val: boolean) {
   }
   if (val) {
     currentField.value.formComp = 'RelationSelect';
+    if (hasSearch.value && currentField.value.searchData?.[0]) {
+      currentField.value.searchData[0].component = 'RelationSelect';
+      currentField.value.searchData[0].symbol = '=';
+    }
     loadDbTables();
     if (currentField.value.relation.targetTable) {
       loadTargetColumns(currentField.value.relation.targetTable);
     }
+  } else if (
+    hasSearch.value &&
+    currentField.value.searchData?.[0]?.component === 'RelationSelect'
+  ) {
+    currentField.value.searchData[0].component = 'NSelect';
   }
 }
 
@@ -177,6 +186,7 @@ const searchCompOptions: SelectOption[] = [
   { label: 'NInput (单行文本)', value: 'NInput' },
   { label: 'NInputNumber (数字)', value: 'NInputNumber' },
   { label: 'NSelect (下拉选择)', value: 'NSelect' },
+  { label: 'RelationSelect (自适应表关联下拉)', value: 'RelationSelect' },
   { label: 'NDatePicker (日期时间)', value: 'NDatePicker' },
   { label: 'NDatePickerRange (日期范围)', value: 'NDatePickerRange' },
 ];
@@ -215,16 +225,48 @@ const firstSearchOption = computed<SearchOption>(() => {
 });
 
 function createDefaultSearchOption(): SearchOption {
+  const f = currentField.value;
+  let component = f.goType === 'string' ? 'NInput' : 'NInputNumber';
+  let symbol = f.goType === 'string' ? 'LIKE' : '=';
+  let optionType = 0;
+  let optionData: Field['optionData'] = [];
+
+  if (f.relation?.enable || f.formComp === 'RelationSelect') {
+    component = 'RelationSelect';
+    symbol = '=';
+  } else if (
+    f.formComp === 'NSelect' ||
+    f.formComp === 'NSelectMultiple' ||
+    f.formComp === 'NRadioGroup' ||
+    f.formComp === 'NSwitch' ||
+    f.listComp === 'CellSwitch' ||
+    f.listComp === 'CellTag' ||
+    f.listComp === 'NTag'
+  ) {
+    component = 'NSelect';
+    symbol = '=';
+    if (Array.isArray(f.optionData) && f.optionData.length > 0) {
+      optionType = 1;
+      optionData = cloneDeep(f.optionData);
+    }
+  } else if (
+    f.formComp === 'NDatePicker' ||
+    f.formComp === 'NDate' ||
+    f.goType === 'time.Time'
+  ) {
+    component = 'NDatePickerRange';
+    symbol = 'BETWEEN';
+  }
+
   return {
     type: '2', // 表单用户输入
-    symbol: '=',
-    component:
-      currentField.value.goType === 'string' ? 'NInput' : 'NInputNumber',
-    label: currentField.value.label || currentField.value.name,
-    name: currentField.value.tsName || currentField.value.name,
+    symbol,
+    component,
+    label: f.label || f.name,
+    name: f.tsName || f.name,
     value: '',
-    optionType: 0,
-    optionData: [],
+    optionType,
+    optionData,
     compOptions: '',
     compLabelField: '',
     compValueField: '',
@@ -336,70 +378,146 @@ function onIsFileChange(val: boolean) {
   }
 }
 
-// 是否需要配置固定选项 (单选框组、普通下拉等)
+// 是否需要配置固定选项 (表单：单选框组、普通下拉或表格 Tag，且未开启表关联)
 const needOptions = computed(() => {
   return (
     (currentField.value.formComp === 'NRadioGroup' ||
       currentField.value.formComp === 'NSelect' ||
-      currentField.value.formComp === 'NSelectMultiple') &&
+      currentField.value.formComp === 'NSelectMultiple' ||
+      currentField.value.listComp === 'NTag') &&
     !currentField.value.relation?.enable
   );
 });
 
-function addOption() {
+// 搜索组件是否需要配置固定选项 (搜索组件选为 NSelect 且未开启表关联)
+const needSearchOptions = computed(() => {
+  return (
+    hasSearch.value &&
+    firstSearchOption.value.component === 'NSelect' &&
+    !currentField.value.relation?.enable
+  );
+});
+
+function ensureSearchOption(): SearchOption | undefined {
+  if (
+    !Array.isArray(currentField.value.searchData) ||
+    currentField.value.searchData.length === 0
+  ) {
+    currentField.value.searchData = [createDefaultSearchOption()];
+  }
+  const item = currentField.value.searchData[0];
+  if (item && !Array.isArray(item.optionData)) {
+    item.optionData = [];
+  }
+  return item;
+}
+
+function ensureOptionTarget(target: 'field' | 'search') {
+  if (target === 'search') {
+    return ensureSearchOption();
+  }
   if (!Array.isArray(currentField.value.optionData)) {
     currentField.value.optionData = [];
   }
+  return currentField.value;
+}
+
+function addOption(target: 'field' | 'search' = 'field') {
+  const holder = ensureOptionTarget(target);
+  if (!holder) return;
   const isString = currentField.value.goType === 'string';
   const nextVal = isString
-    ? String(currentField.value.optionData.length + 1)
-    : currentField.value.optionData.length + 1;
-  currentField.value.optionData.push({
+    ? String(holder.optionData.length + 1)
+    : holder.optionData.length + 1;
+  holder.optionType = 1;
+  holder.optionData.push({
     label: '',
     value: nextVal,
   });
 }
 
-function removeOption(index: number) {
-  if (Array.isArray(currentField.value.optionData)) {
-    currentField.value.optionData.splice(index, 1);
+function removeOption(index: number, target: 'field' | 'search' = 'field') {
+  const holder = ensureOptionTarget(target);
+  if (holder && Array.isArray(holder.optionData)) {
+    holder.optionData.splice(index, 1);
   }
 }
 
-function onOptionValueChange(index: number, val: string) {
-  if (!currentField.value.optionData || !currentField.value.optionData[index])
-    return;
-  const goType = currentField.value.goType;
+function parseOptionValueByGoType(val: string, goType: string) {
   if (goType === 'int' || goType === 'int64') {
     const num = Number(val);
-    currentField.value.optionData[index].value = Number.isNaN(num) ? val : num;
-  } else if (goType === 'bool') {
-    currentField.value.optionData[index].value = val === 'true' || val === '1';
-  } else {
-    currentField.value.optionData[index].value = val;
+    return Number.isNaN(num) ? val : num;
   }
+  if (goType === 'bool') {
+    return val === 'true' || val === '1';
+  }
+  return val;
 }
 
-function applyPresetOptions(type: 'gender' | 'status' | 'yesno') {
-  if (!Array.isArray(currentField.value.optionData)) {
-    currentField.value.optionData = [];
-  }
+function onOptionValueChange(
+  index: number,
+  val: string,
+  target: 'field' | 'search' = 'field',
+) {
+  const holder = ensureOptionTarget(target);
+  const optionItem = holder?.optionData?.[index];
+  if (!optionItem) return;
+  optionItem.value = parseOptionValueByGoType(val, currentField.value.goType);
+}
+
+function applyPresetOptions(
+  type: 'gender' | 'status' | 'yesno',
+  target: 'field' | 'search' = 'field',
+) {
+  const holder = ensureOptionTarget(target);
+  if (!holder) return;
   const isString = currentField.value.goType === 'string';
+  holder.optionType = 1;
   if (type === 'status') {
-    currentField.value.optionData = [
+    holder.optionData = [
       { label: '启用', value: isString ? '1' : 1 },
       { label: '禁用', value: isString ? '0' : 0 },
     ];
   } else if (type === 'gender') {
-    currentField.value.optionData = [
+    holder.optionData = [
       { label: '男', value: isString ? '1' : 1 },
       { label: '女', value: isString ? '2' : 2 },
     ];
   } else if (type === 'yesno') {
-    currentField.value.optionData = [
+    holder.optionData = [
       { label: '是', value: isString ? '1' : 1 },
       { label: '否', value: isString ? '0' : 0 },
     ];
+  }
+}
+
+function syncFieldOptionsToSearch() {
+  const searchHolder = ensureSearchOption();
+  if (!searchHolder) return;
+  searchHolder.optionType = 1;
+  searchHolder.optionData = cloneDeep(currentField.value.optionData || []);
+}
+
+function onSearchCompChange(val: string) {
+  const searchHolder = ensureSearchOption();
+  if (!searchHolder) return;
+  searchHolder.component = val;
+  if (val === 'RelationSelect') {
+    searchHolder.symbol = '=';
+    if (!currentField.value.relation?.enable) {
+      loadDbTables();
+    }
+  } else if (val === 'NSelect') {
+    searchHolder.symbol = '=';
+    if (
+      (!searchHolder.optionData || searchHolder.optionData.length === 0) &&
+      Array.isArray(currentField.value.optionData) &&
+      currentField.value.optionData.length > 0
+    ) {
+      syncFieldOptionsToSearch();
+    }
+  } else if (val === 'NDatePickerRange') {
+    searchHolder.symbol = 'BETWEEN';
   }
 }
 
@@ -649,9 +767,171 @@ const [Modal, modalApi] = useVbenModal<{ field: Field; index: number }>({
 
                 <NFormItemGi :span="12" label="搜索录入组件">
                   <NSelect
-                    v-model:value="firstSearchOption.component"
+                    :value="firstSearchOption.component"
                     :options="searchCompOptions"
+                    @update:value="onSearchCompChange"
                   />
+                </NFormItemGi>
+
+                <!-- 搜索使用表关联时的状态提示 -->
+                <NFormItemGi
+                  v-if="firstSearchOption.component === 'RelationSelect'"
+                  :span="24"
+                >
+                  <NAlert
+                    v-if="currentField.relation?.enable"
+                    type="info"
+                    title="已绑定自适应表关联下拉 (RelationSelect)"
+                  >
+                    <div class="flex items-center justify-between gap-2">
+                      <span>
+                        目标表：<b>{{
+                          currentField.relation.targetTable || '未选择'
+                        }}</b>
+                        ，存储字段：{{
+                          currentField.relation.valueField || 'id'
+                        }}，展示字段：{{
+                          currentField.relation.labelField || 'name'
+                        }}
+                      </span>
+                      <NButton
+                        size="tiny"
+                        type="primary"
+                        secondary
+                        @click="activeTab = 'relation'"
+                      >
+                        调整表关联配置
+                      </NButton>
+                    </div>
+                  </NAlert>
+                  <NAlert v-else type="warning" title="尚未开启表关联配置">
+                    <div class="flex items-center justify-between gap-2">
+                      <span>
+                        当前搜索组件选为
+                        RelationSelect，请先在「表关联配置」中开启并指定目标数据表。
+                      </span>
+                      <NButton
+                        size="tiny"
+                        type="warning"
+                        secondary
+                        @click="activeTab = 'relation'"
+                      >
+                        前往开启表关联
+                      </NButton>
+                    </div>
+                  </NAlert>
+                </NFormItemGi>
+
+                <!-- 未开启表关联时，搜索下拉选项数据配置 -->
+                <NFormItemGi v-if="needSearchOptions" :span="24">
+                  <div class="flex flex-col gap-2 w-full pt-1">
+                    <div
+                      class="flex items-center justify-between border-b pb-2"
+                    >
+                      <div class="flex items-center gap-2">
+                        <span class="text-sm font-medium">
+                          搜索选项数据配置 (Options)
+                        </span>
+                        <span class="text-xs text-muted-foreground">
+                          未开启表关联时，为搜索下拉提供可选项
+                        </span>
+                      </div>
+                      <NSpace size="small">
+                        <NButton
+                          v-if="
+                            currentField.optionData &&
+                            currentField.optionData.length > 0
+                          "
+                          size="tiny"
+                          quaternary
+                          type="success"
+                          @click="syncFieldOptionsToSearch"
+                        >
+                          同步表单选项
+                        </NButton>
+                        <NButton
+                          size="tiny"
+                          quaternary
+                          type="primary"
+                          @click="applyPresetOptions('status', 'search')"
+                        >
+                          预设: 状态(1/0)
+                        </NButton>
+                        <NButton
+                          size="tiny"
+                          quaternary
+                          type="primary"
+                          @click="applyPresetOptions('gender', 'search')"
+                        >
+                          预设: 性别(1/2)
+                        </NButton>
+                        <NButton
+                          size="tiny"
+                          quaternary
+                          type="primary"
+                          @click="applyPresetOptions('yesno', 'search')"
+                        >
+                          预设: 是/否(1/0)
+                        </NButton>
+                        <NButton
+                          size="tiny"
+                          dashed
+                          type="primary"
+                          @click="addOption('search')"
+                        >
+                          + 添加选项
+                        </NButton>
+                      </NSpace>
+                    </div>
+
+                    <div
+                      v-if="
+                        !firstSearchOption.optionData ||
+                        firstSearchOption.optionData.length === 0
+                      "
+                      class="py-4 text-center text-xs text-muted-foreground"
+                    >
+                      暂未配置搜索选项数据，可点击右上角快速添加、应用预设或同步表单选项
+                    </div>
+
+                    <div v-else class="flex flex-col gap-2 mt-1">
+                      <div
+                        v-for="(opt, optIdx) in firstSearchOption.optionData"
+                        :key="optIdx"
+                        class="flex items-center gap-2 rounded border border-border/70 p-2 bg-muted/20"
+                      >
+                        <span
+                          class="text-xs font-mono text-muted-foreground w-6 text-center"
+                        >
+                          #{{ optIdx + 1 }}
+                        </span>
+                        <div class="flex-1 flex items-center gap-2">
+                          <NInput
+                            v-model:value="opt.label"
+                            size="small"
+                            placeholder="选项标签 (Label)，如 启用"
+                          />
+                          <NInput
+                            :value="String(opt.value ?? '')"
+                            size="small"
+                            placeholder="存储值 (Value)，如 1"
+                            @update:value="
+                              (val) =>
+                                onOptionValueChange(optIdx, val, 'search')
+                            "
+                          />
+                        </div>
+                        <NButton
+                          size="tiny"
+                          quaternary
+                          type="error"
+                          @click="removeOption(optIdx, 'search')"
+                        >
+                          ✕
+                        </NButton>
+                      </div>
+                    </div>
+                  </div>
                 </NFormItemGi>
               </template>
             </NGrid>
@@ -722,7 +1002,7 @@ const [Modal, modalApi] = useVbenModal<{ field: Field; index: number }>({
                         size="tiny"
                         dashed
                         type="primary"
-                        @click="addOption"
+                        @click="addOption('field')"
                       >
                         + 添加选项
                       </NButton>
@@ -799,8 +1079,8 @@ const [Modal, modalApi] = useVbenModal<{ field: Field; index: number }>({
                       @update:value="handleRelationEnableChange"
                     />
                     <span class="text-xs text-muted-foreground">
-                      开启后，表单将自动采用自适应 RelationSelect 组件，Model
-                      与表格展示将自动联动对应名称。
+                      开启后，表单与搜索栏将自动采用自适应 RelationSelect
+                      组件，Model 与表格展示将自动联动对应名称。
                     </span>
                   </div>
                 </NFormItemGi>

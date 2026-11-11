@@ -329,7 +329,7 @@ export function smartInferField(field: Field): Field {
         {
           type: '2',
           symbol: '=',
-          component: 'NSelect',
+          component: 'RelationSelect',
           label: f.label || f.name,
           name: f.tsName || f.name,
           value: '',

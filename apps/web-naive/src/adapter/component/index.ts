@@ -34,6 +34,7 @@ import { ApiComponent, globalShareState, IconPicker } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
 import { message } from '#/adapter/naive';
+import { RelationSelect } from '#/components/common/relation';
 
 const NButton = defineAsyncComponent(() =>
   import('naive-ui/es/button').then((res) => res.NButton),
@@ -130,6 +131,7 @@ export type ComponentType =
   | 'Input'
   | 'InputNumber'
   | 'RadioGroup'
+  | 'RelationSelect'
   | 'Select'
   | 'Space'
   | 'Switch'
@@ -152,6 +154,14 @@ export interface ComponentPropsMap {
   Input: InputProps;
   InputNumber: InputNumberProps;
   RadioGroup: RadioGroupProps;
+  RelationSelect: {
+    clearable?: boolean;
+    disabled?: boolean;
+    labelField?: string;
+    placeholder?: string;
+    targetTable: string;
+    valueField?: string;
+  };
   Select: SelectProps;
   Space: SpaceProps;
   Switch: SwitchProps;
@@ -250,6 +260,7 @@ async function initComponentAdapter() {
         : groupRender;
     },
     Select: withDefaultPlaceholder(NSelect, 'select'),
+    RelationSelect: withDefaultPlaceholder(RelationSelect, 'select'),
     Space: NSpace,
     Switch: NSwitch,
     TimePicker: NTimePicker,
