@@ -38,6 +38,58 @@ export function isSelfParentFieldName(name: string): boolean {
   return lower === 'parent_id' || lower === 'parentid' || lower === 'pid';
 }
 
+export function isEnumSemanticName(name: string): boolean {
+  const lower = (name || '').toLowerCase();
+  return (
+    lower.includes('type') ||
+    lower.includes('mode') ||
+    lower.includes('channel') ||
+    lower.includes('level') ||
+    lower.includes('gender') ||
+    lower.includes('sex')
+  );
+}
+
+function isBoolOptionSet(options: Enum[]): boolean {
+  if (!options || options.length === 0) return true;
+  if (options.length !== 2) return false;
+  return options.every(
+    (opt) =>
+      opt.value === 0 ||
+      opt.value === 1 ||
+      opt.value === '0' ||
+      opt.value === '1',
+  );
+}
+
+function syncEnumSearchData(f: Field) {
+  const opts = f.optionData || [];
+  if (!f.searchData || f.searchData.length === 0) {
+    f.searchData = [
+      {
+        type: '2',
+        symbol: '=',
+        component: 'NSelect',
+        label: f.label || f.name,
+        name: f.tsName || f.name,
+        value: '',
+        optionType: opts.length > 0 ? 1 : f.optionType,
+        optionData: opts,
+        compOptions: '',
+        compLabelField: '',
+        compValueField: '',
+      },
+    ];
+  } else if (f.searchData[0] && opts.length > 0) {
+    f.searchData[0] = {
+      ...f.searchData[0],
+      component: 'NSelect',
+      optionType: 1,
+      optionData: opts,
+    };
+  }
+}
+
 export function smartInferField(
   field: Field,
   context?: SmartInferContext,
@@ -69,19 +121,30 @@ export function smartInferField(
     return f;
   }
 
-  // 3. 布尔/两态开关 (tinyint(1) 或 bool)
+  // 3. 布尔/两态开关 (tinyint(1) 或 bool)：仅在未包含多值枚举且非类型/等级字段时生效
+  const isStatusName =
+    name.includes('status') ||
+    name.includes('state') ||
+    name.includes('enable') ||
+    name.includes('active') ||
+    name.startsWith('is_');
   if (
     (dt.includes('tinyint(1)') || f.goType === 'bool') &&
-    (name.includes('status') ||
-      name.includes('state') ||
-      name.includes('enable') ||
-      name.includes('active') ||
-      name.startsWith('is_'))
+    isStatusName &&
+    !isEnumSemanticName(name) &&
+    isBoolOptionSet(f.optionData || [])
   ) {
     f.listComp = 'CellSwitch';
     f.formComp = 'NSwitch';
     f.switchConfirm = true;
     f.width = 100;
+    const switchOpts =
+      optLen === 2
+        ? f.optionData
+        : [
+            { label: '开启', value: 1 },
+            { label: '关闭', value: 0 },
+          ];
     if (!f.searchData || f.searchData.length === 0) {
       f.searchData = [
         {
@@ -92,10 +155,7 @@ export function smartInferField(
           name: f.tsName || f.name,
           value: '',
           optionType: 1,
-          optionData: [
-            { label: '开启', value: 1 },
-            { label: '关闭', value: 0 },
-          ],
+          optionData: switchOpts,
           compOptions: '',
           compLabelField: '',
           compValueField: '',
@@ -105,71 +165,37 @@ export function smartInferField(
     return f;
   }
 
+  // 若数据库为 tinyint(1) 但实际有多态/多值枚举或类型语义，纠正 bool 为 int8 避免丢失数值
+  if (dt.includes('tinyint') && f.goType === 'bool') {
+    f.goType = 'int8';
+    f.tsType = 'number';
+    if (f.formComp === 'NSwitch') {
+      f.formComp = 'NInputNumber';
+    }
+  }
+
   // 4. 状态字段 (status / state / enable / active / is_)
-  if (
-    name.includes('status') ||
-    name.includes('state') ||
-    name.includes('enable') ||
-    name.includes('active') ||
-    name.startsWith('is_')
-  ) {
+  if (isStatusName) {
     if (optLen === 2) {
       f.listComp = 'CellSwitch';
       f.formComp = 'NSwitch';
       f.switchConfirm = true;
       f.width = 100;
     } else {
-      f.listComp = 'CellTag';
+      f.listComp = 'NTag';
       f.formComp = optLen > 0 && optLen <= 4 ? 'NRadioGroup' : 'NSelect';
       f.width = 120;
     }
-    if (!f.searchData || f.searchData.length === 0) {
-      f.searchData = [
-        {
-          type: '2',
-          symbol: '=',
-          component: 'NSelect',
-          label: f.label || f.name,
-          name: f.tsName || f.name,
-          value: '',
-          optionType: f.optionType,
-          optionData: f.optionData || [],
-          compOptions: '',
-          compLabelField: '',
-          compValueField: '',
-        },
-      ];
-    }
+    syncEnumSearchData(f);
     return f;
   }
 
-  // 5. 类型 / 模式 / 渠道 (type / mode / channel / level)
-  if (
-    name.includes('type') ||
-    name.includes('mode') ||
-    name.includes('channel') ||
-    name.includes('level')
-  ) {
-    f.listComp = 'CellTag';
+  // 5. 类型 / 模式 / 渠道 / 等级 (type / mode / channel / level)
+  if (isEnumSemanticName(name)) {
+    f.listComp = 'NTag';
     f.formComp = optLen > 0 && optLen <= 4 ? 'NRadioGroup' : 'NSelect';
     f.width = 120;
-    if (!f.searchData || f.searchData.length === 0) {
-      f.searchData = [
-        {
-          type: '2',
-          symbol: '=',
-          component: 'NSelect',
-          label: f.label || f.name,
-          name: f.tsName || f.name,
-          value: '',
-          optionType: f.optionType,
-          optionData: f.optionData || [],
-          compOptions: '',
-          compLabelField: '',
-          compValueField: '',
-        },
-      ];
-    }
+    syncEnumSearchData(f);
     return f;
   }
 
@@ -426,6 +452,15 @@ export function smartInferSchema(schema: Schema): Schema {
       (!field.relation?.enable ||
         !field.relation.targetTable ||
         field.relation.targetTable === 'y_parent')
+    ) {
+      return smartInferField(field, { tableName, labelField });
+    }
+    // 修正 tinyint(1) 多值枚举（如 level 0-3）被旧后端误识别为开关的问题
+    const parsedOpts = parseCommentOptions(field.comment || '');
+    const optCount = Math.max(field.optionData?.length || 0, parsedOpts.length);
+    if (
+      (optCount > 2 || isEnumSemanticName(colLower)) &&
+      (field.listComp === 'CellSwitch' || field.formComp === 'NSwitch')
     ) {
       return smartInferField(field, { tableName, labelField });
     }

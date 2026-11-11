@@ -26,6 +26,7 @@ import {
 import { devCrudTablesApi, devCrudTableSchemaApi } from '#/api/dev/crud';
 import { createDefaultField } from '#/crud/default';
 import {
+  isEnumSemanticName,
   isSelfParentFieldName,
   parseCommentOptions,
   smartInferField,
@@ -362,7 +363,7 @@ function onCommentChange(val: string) {
         options.length <= 4 ? 'NRadioGroup' : 'NSelect';
     }
     if (currentField.value.listComp === 'NText') {
-      currentField.value.listComp = 'CellTag';
+      currentField.value.listComp = 'NTag';
     }
   }
 }
@@ -557,14 +558,21 @@ const [Modal, modalApi] = useVbenModal<{
           currentField.value.columnName ||
           currentField.value.name ||
           currentField.value.tsName;
-        // 若为未定制状态，或历史残留的 y_parent 自关联错配，自动纠正推导
+        // 若为未定制状态，或历史残留的 y_parent 自关联错配 / tinyint(1) 多值枚举误判为开关，自动纠正推导
+        const optCount = Math.max(
+          currentField.value.optionData.length,
+          parseCommentOptions(currentField.value.comment || '').length,
+        );
         if (
           (currentField.value.listComp === 'NText' &&
             (currentField.value.formComp === 'NInput' ||
               currentField.value.formComp === 'NInputNumber')) ||
           (isSelfParentFieldName(colName) &&
             currentTableName.value &&
-            currentField.value.relation?.targetTable === 'y_parent')
+            currentField.value.relation?.targetTable === 'y_parent') ||
+          ((optCount > 2 || isEnumSemanticName(colName)) &&
+            (currentField.value.listComp === 'CellSwitch' ||
+              currentField.value.formComp === 'NSwitch'))
         ) {
           currentField.value = smartInferField(currentField.value, {
             tableName: currentTableName.value,
