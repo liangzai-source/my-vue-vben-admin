@@ -5,7 +5,15 @@ import { ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { NButton, NCard, NEmpty, NPopconfirm, NTag, NTooltip } from 'naive-ui';
+import {
+  NButton,
+  NCard,
+  NEmpty,
+  NPopconfirm,
+  NSwitch,
+  NTag,
+  NTooltip,
+} from 'naive-ui';
 
 import { createDefaultField } from '#/crud/default';
 import { inferSelfLabelField } from '#/crud/smartInference';
@@ -232,6 +240,22 @@ function onDragEnd() {
               ({{ item.labelEn }})
             </span>
           </div>
+
+          <!-- 第 4 行：快捷开关（表格显示 / 表单显示） -->
+          <div
+            class="mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground"
+            @click.stop
+            @mousedown.stop
+          >
+            <div class="flex items-center gap-1.5">
+              <span>表格显示</span>
+              <NSwitch v-model:value="item.listable" size="small" />
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span>表单显示</span>
+              <NSwitch v-model:value="item.editable" size="small" />
+            </div>
+          </div>
         </div>
 
         <!-- 底部：状态小胶囊徽章 -->
@@ -286,8 +310,20 @@ function onDragEnd() {
           <NTag v-if="item.isFile" size="tiny" :bordered="false" type="error">
             文件
           </NTag>
-          <NTag v-if="!item.nullable" size="tiny" :bordered="false">
+          <NTag
+            v-if="!item.nullable || item.required"
+            size="tiny"
+            :bordered="false"
+          >
             必填
+          </NTag>
+          <NTag
+            v-if="item.rules && item.rules.length > 0"
+            size="tiny"
+            :bordered="false"
+            type="info"
+          >
+            校验({{ item.rules.length }})
           </NTag>
         </div>
       </div>

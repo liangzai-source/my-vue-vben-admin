@@ -70,6 +70,8 @@ export const createDefaultField = (): Field => ({
   editable: true,
   formComp: 'NInput',
   default: null,
+  required: true,
+  rules: [],
   showInDetail: false,
   detailComp: 'NText',
   isFile: false,

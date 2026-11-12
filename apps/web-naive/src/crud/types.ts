@@ -91,6 +91,8 @@ export interface Field extends OptionSource {
   editable: boolean; // form 显示
   formComp: string; // 表单组件
   default: any; // 默认值
+  required?: boolean; // 是否必填（数据库非空时强制必填）
+  rules?: string[]; // 多选正则校验规则 tag 列表
   // 详情
   showInDetail: boolean; // 是否在详情页显示
   detailComp: string; // 详情页组件

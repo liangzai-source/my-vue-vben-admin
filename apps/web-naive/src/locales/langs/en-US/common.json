@@ -38,5 +38,25 @@
   "defaultSuccess": "Operation succeeded",
   "placeholder": "Please enter {0}",
   "successMessage": "{0} successfully",
-  "pleaseReloginEn": "Please log in again"
+  "pleaseReloginEn": "Please log in again",
+  "validate": {
+    "email": "Please enter a valid email for {0}",
+    "mobile": "Please enter a valid mobile number for {0}",
+    "tel": "Please enter a valid landline number for {0}",
+    "phone": "Please enter a valid phone number for {0}",
+    "idcard": "Please enter a valid ID card number for {0}",
+    "url": "Please enter a valid URL for {0}",
+    "ipv4": "Please enter a valid IPv4 address for {0}",
+    "zipCode": "Please enter a valid 6-digit postal code for {0}",
+    "creditCode": "Please enter a valid unified social credit code for {0}",
+    "username": "{0} must start with a letter and be 4-20 letters, numbers or underscores",
+    "chinese": "{0} must contain only Chinese characters",
+    "alphanum": "{0} must contain only letters and numbers",
+    "numeric": "{0} must be numeric",
+    "integer": "{0} must be an integer",
+    "positiveInt": "{0} must be a positive integer",
+    "decimal": "{0} must be a number with up to 2 decimal places",
+    "strongPwd": "{0} must be 8-32 characters containing both letters and digits",
+    "plateNo": "Please enter a valid license plate number for {0}"
+  }
 }

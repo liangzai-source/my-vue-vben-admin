@@ -69,6 +69,31 @@ const formCompOptions: SelectOption[] = [
   { label: 'NHidden (隐藏表单项)', value: 'NHidden' },
 ];
 
+// 常用正则校验选项 (前后端 tag 一致)
+const validationRuleOptions: SelectOption[] = [
+  { label: 'mobile - 手机号 (中国大陆11位)', value: 'mobile' },
+  { label: 'email - 邮箱地址', value: 'email' },
+  { label: 'tel - 固定电话 / 座机', value: 'tel' },
+  { label: 'phone - 手机号或固定电话', value: 'phone' },
+  { label: 'idcard - 居民身份证号 (15/18位)', value: 'idcard' },
+  { label: 'url - 网址链接 (http/https)', value: 'url' },
+  { label: 'ipv4 - IPv4 地址', value: 'ipv4' },
+  { label: 'zip_code - 6位邮政编码', value: 'zip_code' },
+  { label: 'credit_code - 统一社会信用代码 (18位)', value: 'credit_code' },
+  {
+    label: 'username - 账号 (字母开头4-20位字母数字下划线)',
+    value: 'username',
+  },
+  { label: 'strong_pwd - 强密码 (8-32位含字母和数字)', value: 'strong_pwd' },
+  { label: 'chinese - 纯中文字符', value: 'chinese' },
+  { label: 'alphanum - 纯字母和数字', value: 'alphanum' },
+  { label: 'numeric - 纯数字 (可含小数/负号)', value: 'numeric' },
+  { label: 'integer - 整数', value: 'integer' },
+  { label: 'positive_int - 正整数', value: 'positive_int' },
+  { label: 'decimal - 金额/小数 (最多两位小数)', value: 'decimal' },
+  { label: 'plate_no - 中国车牌号 (含新能源)', value: 'plate_no' },
+];
+
 const dbTables = ref<SelectOption[]>([]);
 const targetColumns = ref<SelectOption[]>([]);
 const loadingTables = ref(false);
@@ -388,6 +413,15 @@ function onIsFileChange(val: boolean) {
   }
 }
 
+const isDbNotNull = computed(() => !currentField.value.nullable);
+
+function onNullableChange(val: boolean) {
+  currentField.value.nullable = val;
+  if (!val) {
+    currentField.value.required = true;
+  }
+}
+
 // 是否需要配置固定选项 (表单：单选框组、普通下拉或表格 Tag，且未开启表关联)
 const needOptions = computed(() => {
   return (
@@ -538,7 +572,11 @@ const [Modal, modalApi] = useVbenModal<{
   tableName?: string;
 }>({
   onConfirm: () => {
-    emit('save', cloneDeep(currentField.value), editingIndex.value);
+    const saved = cloneDeep(currentField.value);
+    if (!saved.nullable) {
+      saved.required = true;
+    }
+    emit('save', saved, editingIndex.value);
     modalApi.close();
   },
   onOpenChange: (isOpen) => {
@@ -581,6 +619,14 @@ const [Modal, modalApi] = useVbenModal<{
         }
         if (currentField.value.switchConfirm === undefined) {
           currentField.value.switchConfirm = true;
+        }
+        if (!currentField.value.nullable) {
+          currentField.value.required = true;
+        } else if (currentField.value.required === undefined) {
+          currentField.value.required = false;
+        }
+        if (!Array.isArray(currentField.value.rules)) {
+          currentField.value.rules = [];
         }
         if (currentField.value.relation?.enable) {
           loadDbTables();
@@ -687,7 +733,10 @@ const [Modal, modalApi] = useVbenModal<{
               </NFormItemGi>
 
               <NFormItemGi :span="12" label="允许为空 (Nullable)">
-                <NSwitch v-model:value="currentField.nullable" />
+                <NSwitch
+                  :value="currentField.nullable"
+                  @update:value="onNullableChange"
+                />
               </NFormItemGi>
 
               <NFormItemGi :span="12" label="是否为附件 (isFile)">
@@ -988,10 +1037,38 @@ const [Modal, modalApi] = useVbenModal<{
                 />
               </NFormItemGi>
 
-              <NFormItemGi :span="24" label="表单默认值">
+              <NFormItemGi :span="12" label="表单默认值">
                 <NInput
                   v-model:value="currentField.default"
                   placeholder="未填写时为 null / 空"
+                />
+              </NFormItemGi>
+
+              <NFormItemGi :span="12" label="是否必填">
+                <div class="flex items-center gap-2">
+                  <NSwitch
+                    :value="isDbNotNull ? true : Boolean(currentField.required)"
+                    :disabled="isDbNotNull"
+                    @update:value="(val) => (currentField.required = val)"
+                  />
+                  <span class="text-xs text-muted-foreground">
+                    {{
+                      isDbNotNull
+                        ? '数据库非空列，不可关闭必填'
+                        : '控制表单与接口是否必填'
+                    }}
+                  </span>
+                </div>
+              </NFormItemGi>
+
+              <NFormItemGi :span="24" label="常用正则校验">
+                <NSelect
+                  v-model:value="currentField.rules"
+                  :options="validationRuleOptions"
+                  multiple
+                  clearable
+                  filterable
+                  placeholder="可多选常用正则规则（非必填字段仅在填写值时触发正则校验）"
                 />
               </NFormItemGi>
 
