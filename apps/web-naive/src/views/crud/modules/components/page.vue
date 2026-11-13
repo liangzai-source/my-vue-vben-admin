@@ -9,6 +9,8 @@ import { computed, watch } from 'vue';
 import {
   NAlert,
   NCard,
+  NCheckbox,
+  NCheckboxGroup,
   NForm,
   NFormItemGi,
   NGrid,
@@ -32,6 +34,15 @@ const formData = useModelProxy<Page>(modelValue);
 // 确保始终为 vxe-table 与 naive 表单
 formData.tableType = 'vxe-table';
 formData.formType = 'naive';
+if (!formData.operation) {
+  formData.operation = ['create', 'update', 'delete'];
+}
+
+const hasForm = computed(
+  () =>
+    formData.operation?.includes('create') ||
+    formData.operation?.includes('update'),
+);
 
 const sizeOptions: SelectOptions[] = [
   { label: '小 (Small)', value: 'small' },
@@ -105,57 +116,83 @@ watch(
     <NCard title="页面交互配置">
       <NForm :model="formData" label-placement="left" label-width="120">
         <NGrid :cols="24" :x-gap="24">
-          <!-- 第 1 行：交互形态 (独占一行) -->
-          <NFormItemGi :span="24" label="交互形态">
-            <NRadioGroup v-model:value="formData.dialogType">
-              <NSpace>
-                <NRadio value="drawer">抽屉 (Drawer)</NRadio>
-                <NRadio value="modal">弹窗 (Modal)</NRadio>
-              </NSpace>
-            </NRadioGroup>
+          <!-- 功能操作配置 -->
+          <NFormItemGi :span="24" label="功能操作">
+            <div class="flex flex-col gap-1.5">
+              <NCheckboxGroup v-model:value="formData.operation">
+                <NSpace>
+                  <NCheckbox value="create">新增 (Create)</NCheckbox>
+                  <NCheckbox value="update">编辑 (Update)</NCheckbox>
+                  <NCheckbox value="delete">删除 (Delete)</NCheckbox>
+                </NSpace>
+              </NCheckboxGroup>
+              <span class="text-xs text-muted-foreground">
+                未勾选的操作将不会生成对应的按钮、路由、接口及数据库菜单权限；若未勾选新增与编辑，将跳过生成
+                Form 表单组件
+              </span>
+            </div>
           </NFormItemGi>
 
-          <!-- 第 2 行：弹窗/抽屉尺寸预设 (独占一行) -->
-          <NFormItemGi
-            :span="24"
-            :label="formData.dialogType === 'modal' ? '弹窗尺寸' : '抽屉尺寸'"
-          >
-            <NSelect
-              v-model:value="formData.dialogSize"
-              :options="sizeOptions"
-              placeholder="请选择预设尺寸"
-            />
-          </NFormItemGi>
+          <!-- 交互形态 (仅在开启新增或编辑时生效) -->
+          <template v-if="hasForm">
+            <NFormItemGi :span="24" label="交互形态">
+              <NRadioGroup v-model:value="formData.dialogType">
+                <NSpace>
+                  <NRadio value="drawer">抽屉 (Drawer)</NRadio>
+                  <NRadio value="modal">弹窗 (Modal)</NRadio>
+                </NSpace>
+              </NRadioGroup>
+            </NFormItemGi>
 
-          <!-- 自定义尺寸配置 -->
-          <template v-if="formData.dialogSize === 'custom'">
-            <!-- 抽屉自定义宽度 -->
+            <!-- 弹窗/抽屉尺寸预设 -->
             <NFormItemGi
-              v-if="formData.dialogType === 'drawer'"
               :span="24"
-              label="自定义宽度"
+              :label="formData.dialogType === 'modal' ? '弹窗尺寸' : '抽屉尺寸'"
             >
-              <NInput
-                v-model:value="formData.dialogWidth"
-                placeholder="如 650px、50% 或 800px，未填写默认 650px"
+              <NSelect
+                v-model:value="formData.dialogSize"
+                :options="sizeOptions"
+                placeholder="请选择预设尺寸"
               />
             </NFormItemGi>
 
-            <!-- 弹窗自定义宽度与高度 -->
-            <template v-else>
-              <NFormItemGi :span="12" label="自定义宽度">
+            <!-- 自定义尺寸配置 -->
+            <template v-if="formData.dialogSize === 'custom'">
+              <!-- 抽屉自定义宽度 -->
+              <NFormItemGi
+                v-if="formData.dialogType === 'drawer'"
+                :span="24"
+                label="自定义宽度"
+              >
                 <NInput
                   v-model:value="formData.dialogWidth"
-                  placeholder="如 800px 或 60vw，未填写默认 800px"
+                  placeholder="如 650px、50% 或 800px，未填写默认 650px"
                 />
               </NFormItemGi>
-              <NFormItemGi :span="12" label="自定义高度">
-                <NInput
-                  v-model:value="formData.dialogHeight"
-                  placeholder="如 600px、75vh 或留空为自适应"
-                />
-              </NFormItemGi>
+
+              <!-- 弹窗自定义宽度与高度 -->
+              <template v-else>
+                <NFormItemGi :span="12" label="自定义宽度">
+                  <NInput
+                    v-model:value="formData.dialogWidth"
+                    placeholder="如 800px 或 60vw，未填写默认 800px"
+                  />
+                </NFormItemGi>
+                <NFormItemGi :span="12" label="自定义高度">
+                  <NInput
+                    v-model:value="formData.dialogHeight"
+                    placeholder="如 600px、75vh 或留空为自适应"
+                  />
+                </NFormItemGi>
+              </template>
             </template>
+          </template>
+          <template v-else>
+            <NFormItemGi :span="24" label="交互形态">
+              <span class="text-xs text-muted-foreground self-center">
+                （当前未勾选新增与编辑，页面为纯查询浏览模式，无需表单弹窗/抽屉）
+              </span>
+            </NFormItemGi>
           </template>
         </NGrid>
       </NForm>
