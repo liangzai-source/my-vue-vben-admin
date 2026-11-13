@@ -690,7 +690,18 @@ const [Modal, modalApi] = useVbenModal<{
               </NFormItemGi>
 
               <NFormItemGi :span="12" label="数据库物理列名">
+                <NTooltip v-if="currentTableName" trigger="hover">
+                  <template #trigger>
+                    <NInput
+                      v-model:value="currentField.columnName"
+                      disabled
+                      placeholder="如 user_name"
+                    />
+                  </template>
+                  当前基于已有数据表解析，物理列名受数据库约束，不可随意修改
+                </NTooltip>
                 <NInput
+                  v-else
                   v-model:value="currentField.columnName"
                   placeholder="如 user_name"
                 />

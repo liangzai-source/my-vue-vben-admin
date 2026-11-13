@@ -54,10 +54,44 @@ function onTableLoaded(loadedSchema: Schema) {
   formData.value = smartInferSchema(loadedSchema);
 }
 
+function validateBeforeAction(schema: Schema): boolean {
+  if (!schema.basicConfig.moduleName.trim()) {
+    message.warning('请输入模块名称 (moduleName)');
+    return false;
+  }
+
+  const pkField = (schema.basicConfig.pkField || 'id').trim().toLowerCase();
+
+  // 继承CRUD基类校验
+  if (schema.basicConfig.inheritBase && pkField !== 'id') {
+    message.error(
+      '开启【继承通用CRUD基类】时，主键名称必须为 id，请修改主键名称或关闭继承通用CRUD基类',
+    );
+    return false;
+  }
+
+  // 软删除校验
+  if (schema.basicConfig.softDelete) {
+    const hasDeletedAt = schema.fieldsConfig.some((f) => {
+      const col = (f.columnName || '').trim().toLowerCase();
+      const name = (f.name || '').trim().toLowerCase();
+      const ts = (f.tsName || '').trim().toLowerCase();
+      return col === 'deleted_at' || name === 'deletedat' || ts === 'deletedat';
+    });
+    if (!hasDeletedAt) {
+      message.error(
+        '开启【软删除】功能时，字段列表必须包含软删除字段 (deleted_at)，请在字段配置中添加该字段或关闭软删除开关',
+      );
+      return false;
+    }
+  }
+
+  return true;
+}
+
 // 预览代码
 async function handlePreview() {
-  if (!formData.value.basicConfig.moduleName.trim()) {
-    message.warning('请输入模块名称 (moduleName)');
+  if (!validateBeforeAction(formData.value)) {
     return;
   }
   previewLoading.value = true;
@@ -80,8 +114,7 @@ async function handlePreview() {
 
 // 仅保存配置到数据库
 async function handleSaveConfig() {
-  if (!formData.value.basicConfig.moduleName.trim()) {
-    message.warning('请输入模块名称 (moduleName)');
+  if (!validateBeforeAction(formData.value)) {
     return;
   }
 
@@ -103,8 +136,7 @@ async function handleSaveConfig() {
 
 // 直接生成并写入本地磁盘
 async function handleGenerateWrite() {
-  if (!formData.value.basicConfig.moduleName.trim()) {
-    message.warning('请输入模块名称 (moduleName)');
+  if (!validateBeforeAction(formData.value)) {
     return;
   }
 

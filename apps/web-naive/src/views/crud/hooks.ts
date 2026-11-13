@@ -59,6 +59,9 @@ export function useDevCrudColumns<T = DevCrudApi.DevCrud>(
       field: 'createdAt',
       title: '生成时间',
       width: 180,
+      cellRender: {
+        name: 'CellDateTime',
+      },
     },
     {
       align: 'center',

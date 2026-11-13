@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import type { Field } from '#/crud/types';
 
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
+import { VbenIcon } from '@vben-core/shadcn-ui';
+
 import {
+  NAlert,
   NButton,
   NCard,
   NEmpty,
@@ -24,6 +27,10 @@ const props = defineProps<{
   tableName?: string;
 }>();
 
+const hasExistingTable = computed(() =>
+  Boolean(props.tableName && props.tableName.trim()),
+);
+
 const fields = defineModel<Field[]>({ default: () => [] });
 
 const [FieldModal, fieldModalApi] = useVbenModal({
@@ -36,6 +43,9 @@ const draggingIndex = ref<null | number>(null);
 const dragOverIndex = ref<null | number>(null);
 
 function onAddField() {
+  if (hasExistingTable.value) {
+    return;
+  }
   const newField = createDefaultField();
   fields.value.push(newField);
   // 新建后自动打开编辑弹窗
@@ -43,6 +53,9 @@ function onAddField() {
 }
 
 function onRemoveField(index: number) {
+  if (hasExistingTable.value) {
+    return;
+  }
   fields.value.splice(index, 1);
 }
 
@@ -126,17 +139,42 @@ function onDragEnd() {
             （可拖拽方块调整字段顺序，点击编辑弹窗配置详细信息）
           </span>
         </div>
-        <NButton type="primary" size="small" @click="onAddField">
-          + 添加字段
+        <NButton
+          v-if="!hasExistingTable"
+          type="primary"
+          size="small"
+          @click="onAddField"
+        >
+          <template #icon>
+            <VbenIcon icon="carbon:add" />
+          </template>
+          添加字段
         </NButton>
       </div>
     </template>
+
+    <!-- 已有数据表时的安全提示 -->
+    <div v-if="hasExistingTable" class="mb-4">
+      <NAlert type="info" :bordered="false">
+        <template #icon>
+          <VbenIcon icon="carbon:information-filled" class="text-primary" />
+        </template>
+        当前模块绑定已有数据表
+        <span class="font-mono font-semibold text-primary">[{{ tableName }}]</span>。 数据库为物理字段唯一事实来源，<span
+          class="font-medium text-foreground"
+          >不支持在此处直接新增或删除字段</span>（如需变更物理表结构，请在数据库中修改后重新选择解析该表）。
+        您仍可在此<span class="font-medium text-foreground">拖拽调整顺序</span>，或点击卡片配置<span class="font-medium text-foreground">表格显示/隐藏、表单录入组件、校验规则及表关联</span>。
+      </NAlert>
+    </div>
 
     <div v-if="fields.length === 0" class="py-12">
       <NEmpty description="暂无字段，点击右上角添加字段或从已有数据表解析">
         <template #extra>
           <NButton type="primary" size="small" @click="onAddField">
-            + 添加第一个字段
+            <template #icon>
+              <VbenIcon icon="carbon:add" />
+            </template>
+            添加第一个字段
           </NButton>
         </template>
       </NEmpty>
@@ -197,16 +235,23 @@ function onDragEnd() {
                     type="primary"
                     @click.stop="onEditField(item, index)"
                   >
-                    编辑
+                    <template #icon>
+                      <VbenIcon icon="andrsrxn:edit" />
+                    </template>
                   </NButton>
                 </template>
                 打开弹窗配置全部属性
               </NTooltip>
 
-              <NPopconfirm @positive-click.stop="onRemoveField(index)">
+              <NPopconfirm
+                v-if="!hasExistingTable"
+                @positive-click.stop="onRemoveField(index)"
+              >
                 <template #trigger>
                   <NButton size="tiny" quaternary type="error" @click.stop>
-                    ✕
+                    <template #icon>
+                      <VbenIcon icon="ep:delete" />
+                    </template>
                   </NButton>
                 </template>
                 确认删除该字段？

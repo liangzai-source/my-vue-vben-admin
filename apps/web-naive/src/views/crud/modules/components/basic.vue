@@ -15,7 +15,6 @@ import {
   NInput,
   NSelect,
   NSwitch,
-  NTooltip,
 } from 'naive-ui';
 
 import { message } from '#/adapter/naive';
@@ -110,19 +109,16 @@ onMounted(() => {
             placeholder="主键名称，默认 id"
           />
         </NFormItemGi>
-        <NFormItemGi :span="8" label="继承CRUD基类">
-          <NTooltip trigger="hover">
-            <template #trigger>
-              <NSwitch v-model:value="formData.inheritBase" />
-            </template>
-            开启后继承通用泛型基类（BaseCrud），代码极简；关闭后展开标准独立代码，方便二开。
-          </NTooltip>
+        <NFormItemGi :span="12" label="继承CRUD基类">
+          <div class="flex flex-col gap-2 items-start">
+            <NSwitch v-model:value="formData.inheritBase" />
+            <span class="text-blue-400 text-xs leading-tight">
+              开启后继承通用泛型基类（BaseCrud），代码极简；关闭后展开标准独立代码，方便二开。
+            </span>
+          </div>
         </NFormItemGi>
-        <NFormItemGi :span="8" label="软删除">
+        <NFormItemGi :span="12" label="软删除">
           <NSwitch v-model:value="formData.softDelete" />
-        </NFormItemGi>
-        <NFormItemGi :span="8" label="创建/更新时间">
-          <NSwitch v-model:value="formData.hasCreatedAndUpdated" />
         </NFormItemGi>
       </NGrid>
     </NForm>
