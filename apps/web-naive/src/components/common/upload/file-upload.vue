@@ -17,6 +17,7 @@ interface Props {
   accept?: string;
   disabled?: boolean;
   maxCount?: number;
+  minCount?: number;
   modelValue?: string | string[];
   type?: number; // 1: 图片, 2: 视频, 3: 音频, 4: 文件
 }
@@ -25,6 +26,7 @@ const props = withDefaults(defineProps<Props>(), {
   accept: 'image/*',
   disabled: false,
   maxCount: 1,
+  minCount: 0,
   modelValue: '',
   type: 1,
 });
@@ -82,6 +84,10 @@ function handleMediaSelected(items: UploadItem[]) {
 async function handleCustomUpload(options: UploadCustomRequestOptions) {
   const rawFile = options.file.file;
   if (!rawFile) return;
+  if (props.maxCount > 1 && fileList.value.length >= props.maxCount) {
+    message.warning(`最多只能上传 ${props.maxCount} 个文件`);
+    return;
+  }
   uploading.value = true;
   try {
     const res = await uploadFileApi(rawFile, props.type);
@@ -159,7 +165,7 @@ function handleRemove(index: number) {
     </div>
 
     <!-- 操作按钮区 -->
-    <div v-if="!disabled && (fileList.length < maxCount || maxCount > 1)">
+    <div v-if="!disabled && fileList.length < maxCount">
       <NSpace align="center" size="small">
         <!-- 本地直接上传 -->
         <NUpload

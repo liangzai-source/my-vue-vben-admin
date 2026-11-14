@@ -98,8 +98,17 @@ export interface Field extends OptionSource {
   detailComp: string; // 详情页组件
   // 模型与存储
   isFile?: boolean; // 是否是文件/图片字段
+  upload?: UploadConfig; // 上传组件详细配置
   // 表关联配置
   relation?: RelationConfig;
+}
+
+export interface UploadConfig {
+  multiple: boolean; // 是否多选
+  minCount: number; // 最少数量
+  maxCount: number; // 最多数量
+  type: number; // 1: 图片, 2: 视频, 3: 音频, 4: 文件
+  accept?: string; // 允许上传格式
 }
 
 export interface RelationConfig {

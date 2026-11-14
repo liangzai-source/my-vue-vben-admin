@@ -75,6 +75,13 @@ export const createDefaultField = (): Field => ({
   showInDetail: false,
   detailComp: 'NText',
   isFile: false,
+  upload: {
+    multiple: false,
+    minCount: 0,
+    maxCount: 1,
+    type: 1,
+    accept: 'image/*',
+  },
   relation: {
     enable: false,
     targetTable: '',

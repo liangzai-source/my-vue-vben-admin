@@ -70,22 +70,6 @@ function validateBeforeAction(schema: Schema): boolean {
     return false;
   }
 
-  // 软删除校验
-  if (schema.basicConfig.softDelete) {
-    const hasDeletedAt = schema.fieldsConfig.some((f) => {
-      const col = (f.columnName || '').trim().toLowerCase();
-      const name = (f.name || '').trim().toLowerCase();
-      const ts = (f.tsName || '').trim().toLowerCase();
-      return col === 'deleted_at' || name === 'deletedat' || ts === 'deletedat';
-    });
-    if (!hasDeletedAt) {
-      message.error(
-        '开启【软删除】功能时，字段列表必须包含软删除字段 (deleted_at)，请在字段配置中添加该字段或关闭软删除开关',
-      );
-      return false;
-    }
-  }
-
   return true;
 }
 

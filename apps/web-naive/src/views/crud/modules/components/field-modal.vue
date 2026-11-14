@@ -64,9 +64,17 @@ const formCompOptions: SelectOption[] = [
   { label: 'NDatePicker (日期时间选择)', value: 'NDatePicker' },
   { label: 'NDate (仅日期选择)', value: 'NDate' },
   { label: 'NRadioGroup (单选框组)', value: 'NRadioGroup' },
-  { label: 'FileUpload (附件/图片选择器)', value: 'FileUpload' },
+  { label: 'FileUpload (附件/图片/文件上传)', value: 'FileUpload' },
   { label: 'VbenTiptap (富文本编辑器)', value: 'VbenTiptap' },
   { label: 'NHidden (隐藏表单项)', value: 'NHidden' },
+];
+
+// 上传资源类型选项
+const uploadTypeOptions: SelectOption[] = [
+  { label: '图片 (image/*)', value: 1 },
+  { label: '视频 (video/*)', value: 2 },
+  { label: '音频 (audio/*)', value: 3 },
+  { label: '通用文件/附件 (*/*)', value: 4 },
 ];
 
 // 常用正则校验选项 (前后端 tag 一致)
@@ -393,12 +401,59 @@ function onCommentChange(val: string) {
   }
 }
 
+function ensureUploadConfig() {
+  if (!currentField.value.upload) {
+    currentField.value.upload = {
+      multiple: false,
+      minCount: 0,
+      maxCount: 1,
+      type: 1,
+      accept: 'image/*',
+    };
+  }
+  return currentField.value.upload;
+}
+
+function onUploadMultipleChange(val: boolean) {
+  const upload = ensureUploadConfig();
+  upload.multiple = val;
+  if (val) {
+    if (upload.maxCount <= 1) {
+      upload.maxCount = 5;
+    }
+    currentField.value.tsType = 'string[]';
+    currentField.value.goType = '[]string';
+    currentField.value.gormType = 'json';
+  } else {
+    upload.maxCount = 1;
+    upload.minCount = 0;
+    currentField.value.tsType = 'string';
+    currentField.value.goType = 'string';
+    currentField.value.gormType = 'varchar(255)';
+  }
+}
+
+function onUploadTypeChange(val: number) {
+  const upload = ensureUploadConfig();
+  upload.type = val;
+  if (val === 1) {
+    upload.accept = 'image/*';
+  } else if (val === 2) {
+    upload.accept = 'video/*';
+  } else if (val === 3) {
+    upload.accept = 'audio/*';
+  } else {
+    upload.accept = '';
+  }
+}
+
 // 表单录入组件联动
 function onFormCompChange(val: string) {
   currentField.value.formComp = val;
   if (val === 'FileUpload') {
     currentField.value.isFile = true;
     currentField.value.listComp = 'CellAttachment';
+    ensureUploadConfig();
   } else if (val === 'NSwitch') {
     currentField.value.listComp = 'CellSwitch';
   }
@@ -410,6 +465,7 @@ function onIsFileChange(val: boolean) {
   if (val) {
     currentField.value.formComp = 'FileUpload';
     currentField.value.listComp = 'CellAttachment';
+    ensureUploadConfig();
   }
 }
 
@@ -627,6 +683,15 @@ const [Modal, modalApi] = useVbenModal<{
         }
         if (!Array.isArray(currentField.value.rules)) {
           currentField.value.rules = [];
+        }
+        if (!currentField.value.upload) {
+          currentField.value.upload = {
+            multiple: false,
+            minCount: 0,
+            maxCount: 1,
+            type: 1,
+            accept: 'image/*',
+          };
         }
         if (currentField.value.relation?.enable) {
           loadDbTables();
@@ -1081,6 +1146,87 @@ const [Modal, modalApi] = useVbenModal<{
                   filterable
                   placeholder="可多选常用正则规则（非必填字段仅在填写值时触发正则校验）"
                 />
+              </NFormItemGi>
+
+              <!-- 上传组件专属配置 (FileUpload / isFile) -->
+              <NFormItemGi
+                v-if="
+                  currentField.formComp === 'FileUpload' || currentField.isFile
+                "
+                :span="24"
+              >
+                <div
+                  class="flex flex-col gap-3 w-full rounded border border-border/70 p-3 bg-muted/20"
+                >
+                  <div class="flex items-center justify-between border-b pb-2">
+                    <span class="text-sm font-medium">
+                      上传组件配置 (FileUpload)
+                    </span>
+                    <span class="text-xs text-muted-foreground">
+                      配置上传模式、文件类型及数量限制
+                    </span>
+                  </div>
+
+                  <NGrid :cols="24" :x-gap="12">
+                    <NFormItemGi :span="12" label="上传模式">
+                      <div class="flex items-center gap-2">
+                        <NSwitch
+                          :value="currentField.upload?.multiple ?? false"
+                          @update:value="onUploadMultipleChange"
+                        />
+                        <span class="text-xs font-semibold">
+                          {{
+                            currentField.upload?.multiple
+                              ? '多图 / 多文件'
+                              : '单图 / 单文件'
+                          }}
+                        </span>
+                      </div>
+                    </NFormItemGi>
+
+                    <NFormItemGi :span="12" label="资源类型">
+                      <NSelect
+                        :value="currentField.upload?.type ?? 1"
+                        :options="uploadTypeOptions"
+                        @update:value="onUploadTypeChange"
+                      />
+                    </NFormItemGi>
+
+                    <template v-if="currentField.upload?.multiple">
+                      <NFormItemGi :span="12" label="最少上传数量 (minCount)">
+                        <NInputNumber
+                          :value="currentField.upload?.minCount ?? 0"
+                          :min="0"
+                          :max="currentField.upload?.maxCount ?? 5"
+                          class="w-full"
+                          placeholder="最少选择数量，0 表示不限"
+                          @update:value="
+                            (val) => {
+                              const u = ensureUploadConfig();
+                              u.minCount = Number(val || 0);
+                            }
+                          "
+                        />
+                      </NFormItemGi>
+
+                      <NFormItemGi :span="12" label="最多上传数量 (maxCount)">
+                        <NInputNumber
+                          :value="currentField.upload?.maxCount ?? 5"
+                          :min="2"
+                          :max="99"
+                          class="w-full"
+                          placeholder="最多选择数量，如 5"
+                          @update:value="
+                            (val) => {
+                              const u = ensureUploadConfig();
+                              u.maxCount = Number(val || 5);
+                            }
+                          "
+                        />
+                      </NFormItemGi>
+                    </template>
+                  </NGrid>
+                </div>
               </NFormItemGi>
 
               <!-- 固定选项配置 (单选框组、普通下拉选择等) -->
