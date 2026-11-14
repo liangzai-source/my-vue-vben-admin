@@ -138,8 +138,20 @@ function handleRemove(index: number) {
         <NImage
           v-if="type === 1"
           :src="getFileUrl(path)"
+          :preview-src="getFileUrl(path)"
+          width="100%"
+          height="100%"
           object-fit="cover"
-          class="h-full w-full"
+          class="h-full w-full [&>img]:h-full [&>img]:w-full [&>img]:object-cover"
+          :img-props="{
+            style: {
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              display: 'block',
+            },
+            class: 'w-full h-full object-cover',
+          }"
         />
         <!-- 其它文件类型展示文字标识 -->
         <div
@@ -155,7 +167,7 @@ function handleRemove(index: number) {
         <button
           v-if="!disabled"
           type="button"
-          class="absolute right-1 top-1 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white text-xs hover:scale-110 shadow"
+          class="absolute right-1 top-1 z-10 hidden group-hover:flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-white text-xs hover:scale-110 shadow cursor-pointer"
           title="移除"
           @click="handleRemove(idx)"
         >

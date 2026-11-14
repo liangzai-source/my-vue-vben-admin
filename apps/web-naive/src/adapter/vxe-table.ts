@@ -93,28 +93,43 @@ setupVbenVxeTable({
         const val = row[column.field];
         if (!val) return '';
         const url = getFileUrl(val);
-        return h(Image, {
-          height: 40,
-          imgProps: {
+        return h(
+          'div',
+          {
             style: {
-              cursor: 'pointer',
-              display: 'block',
-              height: '40px',
-              objectFit: 'cover',
-              width: '40px',
+              alignItems: 'center',
+              display: 'flex',
+              height: '100%',
+              justifyContent: 'center',
+              width: '100%',
             },
           },
-          objectFit: 'cover',
-          previewSrc: url,
-          src: url,
-          style: {
-            borderRadius: '4px',
-            cursor: 'pointer',
-            verticalAlign: 'middle',
-          },
-          width: 40,
-          ...props,
-        });
+          [
+            h(Image, {
+              height: 32,
+              imgProps: {
+                style: {
+                  cursor: 'pointer',
+                  display: 'block',
+                  height: '32px',
+                  objectFit: 'cover',
+                  width: '32px',
+                },
+              },
+              objectFit: 'cover',
+              previewSrc: url,
+              src: url,
+              style: {
+                borderRadius: '4px',
+                cursor: 'pointer',
+                display: 'inline-flex',
+                verticalAlign: 'middle',
+              },
+              width: 32,
+              ...props,
+            }),
+          ],
+        );
       },
     });
 

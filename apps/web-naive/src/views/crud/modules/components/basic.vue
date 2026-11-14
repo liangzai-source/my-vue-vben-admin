@@ -7,7 +7,10 @@ import { onMounted, ref } from 'vue';
 
 import { $t } from '@vben/locales';
 
+import { VbenIcon } from '@vben-core/shadcn-ui';
+
 import {
+  NButton,
   NCard,
   NForm,
   NFormItemGi,
@@ -15,6 +18,7 @@ import {
   NInput,
   NSelect,
   NSwitch,
+  NTooltip,
 } from 'naive-ui';
 
 import { message } from '#/adapter/naive';
@@ -72,15 +76,33 @@ onMounted(() => {
     <NForm :model="formData" label-placement="left" label-width="auto">
       <NGrid :cols="24" :x-gap="24">
         <NFormItemGi :span="12" :label="$t('crud.label.basic.hasTable')">
-          <NSelect
-            :value="formData.tableName || null"
-            filterable
-            clearable
-            :loading="loadingTables"
-            :placeholder="$t('crud.label.basic.hasTable')"
-            :options="hasTableOptions"
-            @update:value="onSelectTable"
-          />
+          <div class="flex items-center gap-2 w-full">
+            <NSelect
+              :value="formData.tableName || null"
+              filterable
+              clearable
+              :loading="loadingTables"
+              :placeholder="$t('crud.label.basic.hasTable')"
+              :options="hasTableOptions"
+              class="flex-1"
+              @update:value="onSelectTable"
+            />
+            <NTooltip v-if="formData.tableName" trigger="hover">
+              <template #trigger>
+                <NButton
+                  size="small"
+                  quaternary
+                  :loading="loadingTables"
+                  @click="onSelectTable(formData.tableName)"
+                >
+                  <template #icon>
+                    <VbenIcon icon="carbon:renew" />
+                  </template>
+                </NButton>
+              </template>
+              从数据库重新解析该表
+            </NTooltip>
+          </div>
         </NFormItemGi>
         <NFormItemGi :span="12" :label="$t('crud.label.basic.tableName')">
           <NInput

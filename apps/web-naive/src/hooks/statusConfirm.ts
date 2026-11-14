@@ -47,6 +47,8 @@ export function useStatusChange<T = Recordable>(
       0: $t('common.disableStatus'), // 禁用
       1: $t('common.enableStatus'), // 启用
       2: $t('common.disableStatus'), // 禁用
+      false: $t('common.disableStatus'), // 禁用
+      true: $t('common.enableStatus'), // 启用
     },
     rowNameField: 'name', // 默认取name字段
     rowIdField: 'id', // 默认取id字段
@@ -70,12 +72,30 @@ export function useStatusChange<T = Recordable>(
   ): Promise<boolean> => {
     // 通过 getByPath 获取行ID和名称（支持深层路径）
     const rowId = getByPath(row as Recordable, defaultConfig.rowIdField, '-');
-    const rowName = getByPath(
+    const rawName = getByPath(
       row as Recordable,
       defaultConfig.rowNameField,
-      '-',
+      '',
     );
-    const statusText = defaultConfig.statusTextMap[newStatus.toString()] || '';
+    const r = row as any;
+    const rowName =
+      (rawName && rawName !== '-' ? rawName : undefined) ??
+      r?.nickname ??
+      r?.title ??
+      r?.name ??
+      r?.account ??
+      r?.username ??
+      rowId;
+    let statusText = defaultConfig.statusTextMap[String(newStatus)] || '';
+    if (!statusText) {
+      statusText =
+        newStatus === 1 ||
+        newStatus === true ||
+        newStatus === '1' ||
+        newStatus === 'true'
+          ? $t('common.enableStatus')
+          : $t('common.disableStatus');
+    }
     if (showConfirm) {
       // 确认弹窗（用户取消则返回false）
       const isConfirm = await asyncConfirm({
@@ -85,8 +105,12 @@ export function useStatusChange<T = Recordable>(
       if (!isConfirm) return false;
     }
 
-    //  调用状态更新接口
-    await updateStatusApi(rowId, newStatus);
+    // 调用状态更新接口（将布尔值规整为数值 1/0）
+    let sendStatus = newStatus;
+    if (typeof newStatus === 'boolean') {
+      sendStatus = newStatus ? 1 : 0;
+    }
+    await updateStatusApi(rowId, sendStatus);
 
     // 可选执行刷新/回调
     if (afterSuccess) {

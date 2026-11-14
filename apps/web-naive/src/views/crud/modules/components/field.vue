@@ -18,8 +18,10 @@ import {
   NTooltip,
 } from 'naive-ui';
 
+import { message } from '#/adapter/naive';
+import { devCrudTableSchemaApi } from '#/api/dev/crud';
 import { createDefaultField } from '#/crud/default';
-import { inferSelfLabelField } from '#/crud/smartInference';
+import { inferSelfLabelField, smartInferSchema } from '#/crud/smartInference';
 
 import FieldModalComponent from './field-modal.vue';
 
@@ -32,11 +34,75 @@ const hasExistingTable = computed(() =>
 );
 
 const fields = defineModel<Field[]>({ default: () => [] });
+const syncing = ref(false);
 
 const [FieldModal, fieldModalApi] = useVbenModal({
   connectedComponent: FieldModalComponent,
   destroyOnClose: true,
 });
+
+// 从数据库同步最新物理字段
+async function onSyncDatabaseFields() {
+  if (!props.tableName) return;
+  syncing.value = true;
+  try {
+    const rawSchema = await devCrudTableSchemaApi(props.tableName);
+    const inferred = smartInferSchema(rawSchema);
+    const freshFields = inferred.fieldsConfig || [];
+
+    // 建立现有字段映射，以物理列名/字段名为 key (小写)
+    const existingMap = new Map<string, Field>();
+    for (const f of fields.value) {
+      const key = (f.columnName || f.name || f.tsName || '').toLowerCase();
+      if (key) {
+        existingMap.set(key, f);
+      }
+    }
+
+    let addedCount = 0;
+    const mergedFields: Field[] = [];
+
+    for (const fresh of freshFields) {
+      const key = (
+        fresh.columnName ||
+        fresh.name ||
+        fresh.tsName ||
+        ''
+      ).toLowerCase();
+      const old = existingMap.get(key);
+      if (old) {
+        // 已有字段：保留用户已有的所有配置（组件、显示/隐藏、表关联等），仅同步物理属性变化
+        old.goType = fresh.goType;
+        old.gormType = fresh.gormType;
+        old.nullable = fresh.nullable;
+        old.required = fresh.required;
+        if (!old.comment && fresh.comment) old.comment = fresh.comment;
+        if (!old.label && fresh.label) old.label = fresh.label;
+        mergedFields.push(old);
+      } else {
+        // 新增物理字段：智能推导后追加
+        mergedFields.push(fresh);
+        addedCount++;
+      }
+    }
+
+    fields.value = mergedFields;
+
+    if (addedCount > 0) {
+      message.success(
+        `成功从数据库同步字段！新增 ${addedCount} 个物理字段，已保留原字段配置`,
+      );
+    } else {
+      message.success(
+        `已同步数据库字段，所有字段均为最新状态（共 ${mergedFields.length} 个字段）`,
+      );
+    }
+  } catch (error: any) {
+    message.error(error?.message || '同步数据库字段失败');
+  } finally {
+    syncing.value = false;
+  }
+}
 
 // 拖拽排序状态
 const draggingIndex = ref<null | number>(null);
@@ -139,17 +205,27 @@ function onDragEnd() {
             （可拖拽方块调整字段顺序，点击编辑弹窗配置详细信息）
           </span>
         </div>
-        <NButton
-          v-if="!hasExistingTable"
-          type="primary"
-          size="small"
-          @click="onAddField"
-        >
-          <template #icon>
-            <VbenIcon icon="carbon:add" />
-          </template>
-          添加字段
-        </NButton>
+        <div class="flex items-center gap-2">
+          <NButton
+            v-if="hasExistingTable"
+            type="primary"
+            secondary
+            size="small"
+            :loading="syncing"
+            @click="onSyncDatabaseFields"
+          >
+            <template #icon>
+              <VbenIcon icon="carbon:renew" />
+            </template>
+            同步数据库字段
+          </NButton>
+          <NButton v-else type="primary" size="small" @click="onAddField">
+            <template #icon>
+              <VbenIcon icon="carbon:add" />
+            </template>
+            添加字段
+          </NButton>
+        </div>
       </div>
     </template>
 
@@ -160,10 +236,13 @@ function onDragEnd() {
           <VbenIcon icon="carbon:information-filled" class="text-primary" />
         </template>
         当前模块绑定已有数据表
-        <span class="font-mono font-semibold text-primary">[{{ tableName }}]</span>。 数据库为物理字段唯一事实来源，<span
-          class="font-medium text-foreground"
-          >不支持在此处直接新增或删除字段</span>（如需变更物理表结构，请在数据库中修改后重新选择解析该表）。
-        您仍可在此<span class="font-medium text-foreground">拖拽调整顺序</span>，或点击卡片配置<span class="font-medium text-foreground">表格显示/隐藏、表单录入组件、校验规则及表关联</span>。
+        <span class="font-mono font-semibold text-primary">[{{ tableName }}]</span>。
+        数据库为物理字段唯一事实来源（若数据库表结构发生变动，可直接点击右上角
+        <span
+          class="font-semibold text-primary underline cursor-pointer"
+          @click="onSyncDatabaseFields"
+          >【同步数据库字段】</span>
+        一键刷新），您仍可在此<span class="font-medium text-foreground">拖拽调整顺序</span>，或点击卡片配置<span class="font-medium text-foreground">表格显示/隐藏、表单录入组件、校验规则及表关联</span>。
       </NAlert>
     </div>
 

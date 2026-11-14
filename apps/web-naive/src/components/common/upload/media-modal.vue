@@ -7,6 +7,8 @@ import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
+import { VbenIcon } from '@vben-core/shadcn-ui';
+
 import {
   NButton,
   NEmpty,
@@ -16,6 +18,7 @@ import {
   NRadio,
   NRadioGroup,
   NSpin,
+  NTooltip,
   NUpload,
   useMessage,
 } from 'naive-ui';
@@ -91,7 +94,7 @@ function handlePageChange(p: number) {
 // 选中/取消选中
 function toggleSelect(item: UploadItem) {
   if (!isMultiple.value) {
-    selectedIds.value = [item.id];
+    selectedIds.value = selectedIds.value.includes(item.id) ? [] : [item.id];
     return;
   }
   const idx = selectedIds.value.indexOf(item.id);
@@ -104,6 +107,14 @@ function toggleSelect(item: UploadItem) {
   } else {
     selectedIds.value.splice(idx, 1);
   }
+}
+
+// 触发卡片中的图片原生灯箱预览
+function triggerCardImagePreview(event: MouseEvent) {
+  const target = event.currentTarget as HTMLElement | null;
+  const card = target?.closest('.group');
+  const img = card?.querySelector('.n-image img') as HTMLImageElement | null;
+  img?.click();
 }
 
 // 格式化文件大小
@@ -218,7 +229,7 @@ const [Modal, modalApi] = useVbenModal<{
       <NSpin :show="loading">
         <div
           v-if="fileList.length > 0"
-          class="grid grid-cols-6 gap-3 min-h-[360px] max-h-[460px] overflow-y-auto pr-1"
+          class="grid grid-cols-6 gap-3 max-h-[460px] overflow-y-auto pr-1 items-start"
         >
           <div
             v-for="item in fileList"
@@ -238,9 +249,20 @@ const [Modal, modalApi] = useVbenModal<{
               <NImage
                 v-if="item.type === 1"
                 :src="getFileUrl(item.preview)"
+                :preview-src="getFileUrl(item.preview)"
+                width="100%"
+                height="100%"
                 object-fit="cover"
-                preview-disabled
-                class="w-full h-full"
+                class="h-full w-full pointer-events-none [&>img]:h-full [&>img]:w-full [&>img]:object-cover"
+                :img-props="{
+                  style: {
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    display: 'block',
+                  },
+                  class: 'w-full h-full object-cover',
+                }"
               />
               <div
                 v-else
@@ -251,10 +273,31 @@ const [Modal, modalApi] = useVbenModal<{
                 }}</span>
               </div>
 
+              <!-- 图片悬停快捷预览遮罩 -->
+              <div
+                v-if="item.type === 1"
+                class="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                <NTooltip trigger="hover">
+                  <template #trigger>
+                    <NButton
+                      circle
+                      size="tiny"
+                      quaternary
+                      class="pointer-events-auto bg-black/30 hover:bg-black/60"
+                      @click.stop="triggerCardImagePreview($event)"
+                    >
+                      <VbenIcon icon="lucide:eye" class="text-white" />
+                    </NButton>
+                  </template>
+                  预览大图
+                </NTooltip>
+              </div>
+
               <!-- 选中对勾徽标 -->
               <div
                 v-if="selectedIds.includes(item.id)"
-                class="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white text-xs font-bold"
+                class="absolute right-1 top-1 z-10 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-white text-xs font-bold shadow"
               >
                 ✓
               </div>

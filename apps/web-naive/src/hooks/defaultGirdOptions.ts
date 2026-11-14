@@ -19,6 +19,10 @@ export function useDefaultGridOptions<T>(
   return {
     columns,
     height: 'auto',
+    rowConfig: {
+      isHover: true,
+      height: 48,
+    },
     proxyConfig: {
       ajax: {
         query: async ({ page }, formValues) => {
