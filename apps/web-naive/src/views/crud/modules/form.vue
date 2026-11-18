@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Schema } from '#/crud/types';
 
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
@@ -53,6 +53,18 @@ const [Drawer, drawerApi] = useVbenDrawer<Schema>({
 function onTableLoaded(loadedSchema: Schema) {
   formData.value = smartInferSchema(loadedSchema);
 }
+
+// 智能联动：当修改“功能名称(中文)”时，若菜单名称未被单独定制则自动同步
+watch(
+  () => formData.value.basicConfig?.comment,
+  (newComment, oldComment) => {
+    if (!formData.value?.routeConfig) return;
+    const currentMenuName = formData.value.routeConfig.menuName;
+    if (!currentMenuName || currentMenuName === oldComment) {
+      formData.value.routeConfig.menuName = newComment || '';
+    }
+  },
+);
 
 function validateBeforeAction(schema: Schema): boolean {
   if (!schema.basicConfig.moduleName.trim()) {

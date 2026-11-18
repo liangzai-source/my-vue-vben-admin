@@ -83,3 +83,59 @@ export function processTableActions(
   // 返回最终处理结果
   return result;
 }
+
+/**
+ * 根据权限过滤后的按钮配置列表动态计算操作列宽度
+ * @param actions 经过 processTableActions 过滤后的按钮列表
+ * @param options 可选配置（如安全边距、间距等）
+ */
+export function getActionColumnWidth(
+  actions: (Recordable<any> | string)[],
+  options?: {
+    minWidth?: number;
+    cellPadding?: number;
+    gap?: number;
+  },
+): number {
+  if (!actions || actions.length === 0) {
+    return 0;
+  }
+
+  const cellPadding = options?.cellPadding ?? 24;
+  const gap = options?.gap ?? 8;
+  const [presets] = getTableDefaultOperation();
+
+  let totalBtnWidth = 0;
+
+  actions.forEach((act) => {
+    let btnText = '';
+    let hasIcon = false;
+
+    if (typeof act === 'string') {
+      const preset = presets[act];
+      btnText = preset?.btnText || act;
+      hasIcon = Boolean(preset?.icon);
+    } else if (act && typeof act === 'object') {
+      const preset = presets[act.code];
+      btnText = act.btnText || preset?.btnText || act.code || '';
+      hasIcon = Boolean(act.icon || preset?.icon);
+    }
+
+    let textWidth = 0;
+    for (const char of btnText) {
+      textWidth += (char.codePointAt(0) ?? 0) > 255 ? 14 : 8;
+    }
+
+    let singleWidth = textWidth + 24;
+    if (hasIcon) {
+      singleWidth += 22;
+    }
+    totalBtnWidth += Math.max(singleWidth, 48);
+  });
+
+  const totalGap = (actions.length - 1) * gap;
+  const calculated = totalBtnWidth + totalGap + cellPadding;
+  const minWidth = options?.minWidth ?? 80;
+
+  return Math.max(calculated, minWidth);
+}
