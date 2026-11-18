@@ -8,6 +8,8 @@ export interface UploadItem {
   originName: string;
   preview: string; // 业务字段存储的逻辑路径，例如 "preview/1"
   url: string; // 可直接访问/展示的完整地址
+  cover?: string; // 视频封面图逻辑路径
+  coverUrl?: string; // 视频封面图访问完整地址
   size: number;
   mime: string;
   ext: string;
@@ -48,15 +50,21 @@ export function getFileUrl(path?: string): string {
 
 /**
  * 单文件上传接口 (统一走文件系统落库 y_system_upload)
+ * 支持传入可选的封面图文件 coverFile (如视频首帧封面)
  */
 export async function uploadFileApi(
   file: File,
   type: number = 1,
+  coverFile?: File | null,
 ): Promise<UploadItem> {
-  return requestClient.upload<UploadItem>('/system-upload/upload', {
+  const data: Record<string, any> & { file: File } = {
     file,
     type,
-  });
+  };
+  if (coverFile) {
+    data.cover = coverFile;
+  }
+  return requestClient.upload<UploadItem>('/system-upload/upload', data);
 }
 
 /**

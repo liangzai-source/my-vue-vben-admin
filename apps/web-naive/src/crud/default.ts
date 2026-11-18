@@ -35,6 +35,10 @@ export const createDefaultRoute = (): Route => ({
 
 // Page 默认值
 export const createDefaultPage = (): Page => ({
+  pageMode: 'crud',
+  tableMode: 'standalone',
+  singleCodeCol: '',
+  singleCodeVal: '',
   tableType: 'vxe-table', // 统一使用 VXE-Table
   formType: 'naive', // 统一使用 Naive 原生表单
   dialogType: 'drawer', // 默认 抽屉模式

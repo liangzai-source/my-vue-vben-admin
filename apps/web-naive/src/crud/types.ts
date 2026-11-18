@@ -30,6 +30,10 @@ export interface Route {
 }
 
 export interface Page {
+  pageMode?: 'crud' | 'single'; // 页面类型: crud (标准增删改查) / single (单页表单维护)
+  tableMode?: 'shared' | 'standalone'; // 存储模式 (单页模式生效): standalone (独占单表) / shared (多功能共享表)
+  singleCodeCol?: string; // 共享表模式下的唯一标识列 (如 code / slug / key)
+  singleCodeVal?: string; // 共享表模式下的唯一标识值 (如 about_us / privacy_policy)
   tableType: string; // 表格类型: 固定为 vxe-table
   formType: string; // 表单类型: 固定为 naive
   dialogType: string; // 弹窗类型: drawer / modal

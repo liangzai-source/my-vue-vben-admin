@@ -14,6 +14,7 @@ import {
   NEmpty,
   NImage,
   NInput,
+  NModal,
   NPagination,
   NRadio,
   NRadioGroup,
@@ -24,6 +25,7 @@ import {
 } from 'naive-ui';
 
 import { getFileListApi, getFileUrl, uploadFileApi } from '#/api/system/upload';
+import { captureVideoPoster } from '#/utils/videoPoster';
 
 const emit = defineEmits<{
   (e: 'select', items: UploadItem[]): void;
@@ -38,13 +40,34 @@ const total = ref(0);
 const page = ref(1);
 const pageSize = ref(18);
 const currentType = ref<number>(0); // 0: 全部, 1: 图片, 2: 视频, 3: 音频, 4: 文件
+const lockedType = ref<number>(0); // 若外层指定类型，则锁定该类型不允许切换
 const keyword = ref('');
 
 // 选中的文件ID列表
 const selectedIds = ref<number[]>([]);
 const maxCount = ref(1);
 
+// 视频预览播放弹窗
+const showVideoModal = ref(false);
+const previewVideoUrl = ref('');
+
+function handlePlayVideo(url: string) {
+  previewVideoUrl.value = getFileUrl(url);
+  showVideoModal.value = true;
+}
+
 const isMultiple = computed(() => maxCount.value > 1);
+
+const acceptMap: Record<number, string> = {
+  1: 'image/*',
+  2: 'video/*',
+  3: 'audio/*',
+  4: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv',
+};
+
+const currentAccept = computed(() => {
+  return acceptMap[currentType.value] || '*/*';
+});
 
 // 加载文件列表
 async function loadFiles() {
@@ -67,6 +90,7 @@ async function loadFiles() {
 
 // 切换分类
 function handleTypeChange(val: number) {
+  if (lockedType.value > 0) return;
   currentType.value = val;
   page.value = 1;
   loadFiles();
@@ -93,6 +117,18 @@ function handlePageChange(p: number) {
 
 // 选中/取消选中
 function toggleSelect(item: UploadItem) {
+  if (lockedType.value > 0 && item.type !== lockedType.value) {
+    const typeNames: Record<number, string> = {
+      1: '图片',
+      2: '视频',
+      3: '音频',
+      4: '文档',
+    };
+    message.warning(
+      `当前字段限定为【${typeNames[lockedType.value] || '指定类型'}】，无法选择此文件`,
+    );
+    return;
+  }
   if (!isMultiple.value) {
     selectedIds.value = selectedIds.value.includes(item.id) ? [] : [item.id];
     return;
@@ -130,19 +166,40 @@ function formatSize(bytes: number): string {
 async function handleDirectUpload(options: UploadCustomRequestOptions) {
   const rawFile = options.file.file;
   if (!rawFile) return;
+
+  const uploadType = currentType.value > 0 ? currentType.value : 1;
+  if (uploadType === 1 && !rawFile.type.startsWith('image/')) {
+    message.warning('请选择图片类型文件上传');
+    return;
+  }
+  if (uploadType === 2 && !rawFile.type.startsWith('video/')) {
+    message.warning('请选择视频类型文件上传');
+    return;
+  }
+  if (uploadType === 3 && !rawFile.type.startsWith('audio/')) {
+    message.warning('请选择音频类型文件上传');
+    return;
+  }
+
   uploading.value = true;
   try {
-    const uploaded = await uploadFileApi(
-      rawFile,
-      currentType.value > 0 ? currentType.value : 1,
-    );
+    let coverFile: File | null = null;
+    if (uploadType === 2 || rawFile.type.startsWith('video/')) {
+      coverFile = await captureVideoPoster(rawFile);
+    }
+    const uploaded = await uploadFileApi(rawFile, uploadType, coverFile);
     message.success('上传成功');
     // 自动追加并选中新上传的文件
     selectedIds.value = [uploaded.id];
     page.value = 1;
     await loadFiles();
   } catch (error: any) {
-    message.error(error.message || '上传失败');
+    const errorMsg =
+      error?.response?.data?.message ||
+      error?.response?.data?.error ||
+      error?.message ||
+      '上传失败';
+    message.error(errorMsg);
   } finally {
     uploading.value = false;
   }
@@ -174,6 +231,7 @@ const [Modal, modalApi] = useVbenModal<{
             type?: number;
           };
       maxCount.value = data?.maxCount || 1;
+      lockedType.value = data?.type || 0;
       currentType.value = data?.type || 0;
       selectedIds.value = [];
       page.value = 1;
@@ -190,7 +248,26 @@ const [Modal, modalApi] = useVbenModal<{
       <div
         class="flex flex-wrap items-center justify-between gap-3 border-b pb-3"
       >
+        <!-- 资源类型过滤：若外层已指定类型则固定展示，不可随意切换 -->
+        <div
+          v-if="lockedType > 0"
+          class="flex items-center gap-1.5 text-xs text-muted-foreground font-medium"
+        >
+          <span>限定类型:</span>
+          <span class="rounded bg-primary/10 px-2 py-0.5 text-primary">
+            {{
+              lockedType === 1
+                ? '图片 (image/*)'
+                : lockedType === 2
+                  ? '视频 (video/*)'
+                  : lockedType === 3
+                    ? '音频 (audio/*)'
+                    : '文档'
+            }}
+          </span>
+        </div>
         <NRadioGroup
+          v-else
           :value="currentType"
           size="small"
           @update:value="handleTypeChange"
@@ -216,8 +293,12 @@ const [Modal, modalApi] = useVbenModal<{
             搜索
           </NButton>
 
-          <!-- 弹窗内直传按钮 -->
-          <NUpload :show-file-list="false" :custom-request="handleDirectUpload">
+          <!-- 弹窗内直传按钮，绑定当前分类对应的 accept 规则 -->
+          <NUpload
+            :show-file-list="false"
+            :accept="currentAccept"
+            :custom-request="handleDirectUpload"
+          >
             <NButton size="small" type="primary" :loading="uploading">
               上传新文件
             </NButton>
@@ -264,6 +345,30 @@ const [Modal, modalApi] = useVbenModal<{
                   class: 'w-full h-full object-cover',
                 }"
               />
+              <!-- 视频类型展示封面图或首帧 -->
+              <div
+                v-else-if="item.type === 2"
+                class="relative h-full w-full flex items-center justify-center bg-black/85 overflow-hidden"
+              >
+                <img
+                  v-if="item.coverUrl || item.cover"
+                  :src="item.coverUrl || getFileUrl(item.cover)"
+                  class="h-full w-full object-cover pointer-events-none"
+                  alt="cover"
+                />
+                <video
+                  v-else
+                  :src="`${getFileUrl(item.preview)}#t=0.5`"
+                  preload="metadata"
+                  class="h-full w-full object-cover pointer-events-none"
+                ></video>
+                <!-- 视频常驻标识 -->
+                <div
+                  class="absolute bottom-1 right-1 z-0 flex items-center rounded bg-black/60 px-1 py-0.5 text-[9px] text-white"
+                >
+                  <VbenIcon icon="lucide:video" class="size-3" />
+                </div>
+              </div>
               <div
                 v-else
                 class="flex flex-col items-center justify-center text-muted-foreground"
@@ -291,6 +396,28 @@ const [Modal, modalApi] = useVbenModal<{
                     </NButton>
                   </template>
                   预览大图
+                </NTooltip>
+              </div>
+
+              <!-- 视频悬停播放预览遮罩 -->
+              <div
+                v-if="item.type === 2"
+                class="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                <NTooltip trigger="hover">
+                  <template #trigger>
+                    <button
+                      type="button"
+                      class="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-md hover:scale-110 transition cursor-pointer"
+                      @click.stop="handlePlayVideo(item.preview)"
+                    >
+                      <VbenIcon
+                        icon="lucide:play"
+                        class="size-4 fill-current ml-0.5"
+                      />
+                    </button>
+                  </template>
+                  播放视频
                 </NTooltip>
               </div>
 
@@ -343,4 +470,27 @@ const [Modal, modalApi] = useVbenModal<{
       </div>
     </div>
   </Modal>
+
+  <!-- 视频播放预览弹窗 -->
+  <NModal
+    v-model:show="showVideoModal"
+    preset="card"
+    title="视频预览"
+    class="w-[720px] max-w-[92vw]"
+    :segmented="{ content: true }"
+    @after-leave="previewVideoUrl = ''"
+  >
+    <div
+      class="flex items-center justify-center bg-black rounded overflow-hidden min-h-[300px]"
+    >
+      <video
+        v-if="previewVideoUrl"
+        :src="previewVideoUrl"
+        controls
+        autoplay
+        playsinline
+        class="w-full max-h-[70vh] object-contain"
+      ></video>
+    </div>
+  </NModal>
 </template>

@@ -3,7 +3,7 @@ import type { UploadCustomRequestOptions } from 'naive-ui';
 
 import type { UploadItem } from '#/api/system/upload';
 
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
 
@@ -35,6 +35,7 @@ import {
   uploadFileApi,
 } from '#/api/system/upload';
 import { $t } from '#/locales';
+import { captureVideoPoster } from '#/utils/videoPoster';
 
 const message = useMessage();
 
@@ -48,6 +49,17 @@ const pageSize = ref(24);
 const currentType = ref<number>(0); // 0: 全部, 1: 图片, 2: 视频, 3: 音频, 4: 文件
 const keyword = ref('');
 const viewMode = ref<'grid' | 'table'>('grid');
+
+const defaultAcceptMap: Record<number, string> = {
+  1: 'image/*',
+  2: 'video/*',
+  3: 'audio/*',
+  4: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv',
+};
+
+const computedAccept = computed(() => {
+  return defaultAcceptMap[currentType.value] || '*/*';
+});
 
 // 统一预览弹窗状态
 const previewModalVisible = ref(false);
@@ -153,7 +165,11 @@ async function handleCustomUpload(options: UploadCustomRequestOptions) {
   try {
     const uploadType =
       currentType.value > 0 ? currentType.value : getUploadTypeByFile(rawFile);
-    await uploadFileApi(rawFile, uploadType);
+    let coverFile: File | null = null;
+    if (uploadType === 2 || rawFile.type.startsWith('video/')) {
+      coverFile = await captureVideoPoster(rawFile);
+    }
+    await uploadFileApi(rawFile, uploadType, coverFile);
     message.success('上传成功');
     loadFiles();
   } catch (error: any) {
@@ -284,6 +300,7 @@ onMounted(() => {
             <NUpload
               :show-file-list="false"
               multiple
+              :accept="computedAccept"
               :custom-request="handleCustomUpload"
               :disabled="uploading"
             >
@@ -335,6 +352,31 @@ onMounted(() => {
                     class: 'w-full h-full object-cover cursor-pointer',
                   }"
                 />
+                <!-- 视频类型：展示封面图或首帧，常驻小角标，点击打开视频播放弹窗 -->
+                <div
+                  v-else-if="item.type === 2"
+                  class="relative size-full flex items-center justify-center bg-black/85 overflow-hidden cursor-pointer"
+                  @click="handlePreview(item)"
+                >
+                  <img
+                    v-if="item.coverUrl || item.cover"
+                    :src="item.coverUrl || getFileUrl(item.cover)"
+                    class="h-full w-full object-cover pointer-events-none"
+                    alt="cover"
+                  />
+                  <video
+                    v-else
+                    :src="`${getFileUrl(item.preview)}#t=0.5`"
+                    preload="metadata"
+                    class="h-full w-full object-cover pointer-events-none"
+                  ></video>
+                  <!-- 视频常驻标识 -->
+                  <div
+                    class="absolute bottom-1 right-1 z-0 flex items-center rounded bg-black/60 px-1 py-0.5 text-[9px] text-white"
+                  >
+                    <VbenIcon icon="lucide:video" class="size-3" />
+                  </div>
+                </div>
                 <!-- 非图片类型：点击图标打开音视频播放/文件预览弹窗 -->
                 <div
                   v-else
@@ -514,6 +556,33 @@ onMounted(() => {
                       class: 'size-full object-cover cursor-pointer',
                     }"
                   />
+                  <!-- 视频类型：展示缩略图与居中播放图标 -->
+                  <div
+                    v-else-if="item.type === 2"
+                    class="relative size-10 flex items-center justify-center rounded border bg-black/85 overflow-hidden cursor-pointer"
+                    @click="handlePreview(item)"
+                  >
+                    <img
+                      v-if="item.coverUrl || item.cover"
+                      :src="item.coverUrl || getFileUrl(item.cover)"
+                      class="size-full object-cover pointer-events-none"
+                      alt="cover"
+                    />
+                    <video
+                      v-else
+                      :src="`${getFileUrl(item.preview)}#t=0.5`"
+                      preload="metadata"
+                      class="size-full object-cover pointer-events-none"
+                    ></video>
+                    <div
+                      class="absolute inset-0 flex items-center justify-center bg-black/25"
+                    >
+                      <VbenIcon
+                        icon="lucide:play"
+                        class="size-3.5 fill-white text-white ml-0.5"
+                      />
+                    </div>
+                  </div>
                   <div
                     v-else
                     class="flex size-10 items-center justify-center rounded border bg-muted/40 text-muted-foreground cursor-pointer"
@@ -635,6 +704,8 @@ onMounted(() => {
           v-if="currentPreviewItem?.type === 2"
           :src="getFileUrl(currentPreviewItem.preview)"
           controls
+          autoplay
+          playsinline
           class="max-h-[70vh] max-w-full rounded shadow"
         ></video>
         <!-- 3. 音频 -->

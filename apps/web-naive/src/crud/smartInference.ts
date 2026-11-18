@@ -215,6 +215,13 @@ export function smartInferField(
     f.formComp = 'FileUpload';
     f.listComp = 'CellImage';
     f.width = 100;
+    f.upload = {
+      multiple: false,
+      minCount: 0,
+      maxCount: 1,
+      type: 1,
+      accept: 'image/*',
+    };
     return f;
   }
 
@@ -232,6 +239,22 @@ export function smartInferField(
     f.formComp = 'FileUpload';
     f.listComp = 'CellAttachment';
     f.width = 120;
+    let uploadType = 4;
+    let accept = '*/*';
+    if (name.includes('video')) {
+      uploadType = 2;
+      accept = 'video/*';
+    } else if (name.includes('audio')) {
+      uploadType = 3;
+      accept = 'audio/*';
+    }
+    f.upload = {
+      multiple: false,
+      minCount: 0,
+      maxCount: 1,
+      type: uploadType,
+      accept,
+    };
     return f;
   }
 

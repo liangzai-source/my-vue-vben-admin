@@ -7,9 +7,12 @@ import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
-import { NButton, NImage, NSpace, NUpload, useMessage } from 'naive-ui';
+import { VbenIcon } from '@vben-core/shadcn-ui';
+
+import { NButton, NImage, NModal, NSpace, NUpload, useMessage } from 'naive-ui';
 
 import { getFileUrl, uploadFileApi } from '#/api/system/upload';
+import { captureVideoPoster } from '#/utils/videoPoster';
 
 import MediaModalComponent from './media-modal.vue';
 
@@ -23,7 +26,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  accept: 'image/*',
+  accept: '',
   disabled: false,
   maxCount: 1,
   minCount: 0,
@@ -35,8 +38,31 @@ const emit = defineEmits<{
   (e: 'change' | 'update:modelValue', val: string | string[]): void;
 }>();
 
+const defaultAcceptMap: Record<number, string> = {
+  1: 'image/*',
+  2: 'video/*',
+  3: 'audio/*',
+  4: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv',
+};
+
+const computedAccept = computed(() => {
+  if (props.accept && props.accept.trim()) {
+    return props.accept;
+  }
+  return defaultAcceptMap[props.type] || 'image/*';
+});
+
 const message = useMessage();
 const uploading = ref(false);
+
+// 视频预览播放弹窗
+const showVideoModal = ref(false);
+const previewVideoUrl = ref('');
+
+function handlePlayVideo(url: string) {
+  previewVideoUrl.value = getFileUrl(url);
+  showVideoModal.value = true;
+}
 
 // 归一化为数组便于统一渲染
 const fileList = computed<string[]>(() => {
@@ -90,7 +116,11 @@ async function handleCustomUpload(options: UploadCustomRequestOptions) {
   }
   uploading.value = true;
   try {
-    const res = await uploadFileApi(rawFile, props.type);
+    let coverFile: File | null = null;
+    if (props.type === 2 || rawFile.type.startsWith('video/')) {
+      coverFile = await captureVideoPoster(rawFile);
+    }
+    const res = await uploadFileApi(rawFile, props.type, coverFile);
     message.success('上传成功');
     if (props.maxCount > 1) {
       const merged = [...fileList.value, res.preview];
@@ -101,7 +131,12 @@ async function handleCustomUpload(options: UploadCustomRequestOptions) {
       emit('change', res.preview);
     }
   } catch (error: any) {
-    message.error(error.message || '上传失败');
+    const errorMsg =
+      error?.response?.data?.message ||
+      error?.response?.data?.error ||
+      error?.message ||
+      '上传失败';
+    message.error(errorMsg);
   } finally {
     uploading.value = false;
   }
@@ -153,6 +188,40 @@ function handleRemove(index: number) {
             class: 'w-full h-full object-cover',
           }"
         />
+        <!-- 视频类型展示首帧缩略图与悬停播放操作 -->
+        <div
+          v-else-if="type === 2"
+          class="relative h-full w-full flex items-center justify-center bg-black/85 overflow-hidden"
+        >
+          <video
+            :src="`${getFileUrl(path)}#t=0.5`"
+            preload="metadata"
+            class="h-full w-full object-cover pointer-events-none"
+          ></video>
+          <!-- 视频常驻标识 -->
+          <div
+            class="absolute bottom-1 right-1 z-0 flex items-center rounded bg-black/60 px-1 py-0.5 text-[9px] text-white"
+          >
+            <VbenIcon icon="lucide:video" class="size-3" />
+          </div>
+
+          <!-- 悬停遮罩：播放预览按钮 -->
+          <div
+            class="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100"
+          >
+            <button
+              type="button"
+              class="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white shadow-md hover:scale-110 transition cursor-pointer"
+              title="播放预览"
+              @click.stop="handlePlayVideo(path)"
+            >
+              <VbenIcon
+                icon="lucide:play"
+                class="size-3.5 fill-current ml-0.5"
+              />
+            </button>
+          </div>
+        </div>
         <!-- 其它文件类型展示文字标识 -->
         <div
           v-else
@@ -182,7 +251,7 @@ function handleRemove(index: number) {
         <!-- 本地直接上传 -->
         <NUpload
           :show-file-list="false"
-          :accept="accept"
+          :accept="computedAccept"
           :custom-request="handleCustomUpload"
           :disabled="disabled || uploading"
         >
@@ -202,5 +271,28 @@ function handleRemove(index: number) {
         </NButton>
       </NSpace>
     </div>
+
+    <!-- 视频播放预览弹窗 -->
+    <NModal
+      v-model:show="showVideoModal"
+      preset="card"
+      title="视频预览"
+      class="w-[720px] max-w-[92vw]"
+      :segmented="{ content: true }"
+      @after-leave="previewVideoUrl = ''"
+    >
+      <div
+        class="flex items-center justify-center bg-black rounded overflow-hidden min-h-[300px]"
+      >
+        <video
+          v-if="previewVideoUrl"
+          :src="previewVideoUrl"
+          controls
+          autoplay
+          playsinline
+          class="w-full max-h-[70vh] object-contain"
+        ></video>
+      </div>
+    </NModal>
   </div>
 </template>

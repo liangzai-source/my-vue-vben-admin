@@ -82,6 +82,21 @@ function validateBeforeAction(schema: Schema): boolean {
     return false;
   }
 
+  // 单页模式校验
+  if (
+    schema.pageConfig.pageMode === 'single' &&
+    schema.pageConfig.tableMode === 'shared'
+  ) {
+    if (!schema.pageConfig.singleCodeCol?.trim()) {
+      message.error('共享表模式下必须选择标识字段 (singleCodeCol)');
+      return false;
+    }
+    if (!schema.pageConfig.singleCodeVal?.trim()) {
+      message.error('共享表模式下必须填写标识值 (singleCodeVal)');
+      return false;
+    }
+  }
+
   return true;
 }
 

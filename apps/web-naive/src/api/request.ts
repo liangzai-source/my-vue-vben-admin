@@ -102,6 +102,18 @@ function createRequestClient(baseURL: string, options?: RequestClientOptions) {
     }),
   );
 
+  // 业务错误信息提取与标准化：将后端返回的 code/message 注入 error.message，避免出现原生的 Request failed with status code 400
+  client.addResponseInterceptor({
+    rejected: (error) => {
+      const responseData = error?.response?.data ?? {};
+      const backendMessage = responseData?.message ?? responseData?.error ?? '';
+      if (backendMessage && typeof backendMessage === 'string') {
+        error.message = backendMessage;
+      }
+      return Promise.reject(error);
+    },
+  });
+
   // 通用的错误处理,如果没有进入上面的错误处理逻辑，就会进入这里
   client.addResponseInterceptor(
     errorMessageResponseInterceptor((msg: string, error) => {
