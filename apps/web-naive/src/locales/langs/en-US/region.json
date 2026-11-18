@@ -1,0 +1,18 @@
+{
+  "menuTitle": "Region",
+  "title": "Region Management",
+  "list": "Region List",
+  "name": "Name",
+  "level": "Level",
+  "parentId": "Parent id",
+  "short": "Short",
+  "cityCode": "City code",
+  "zipCode": "Zip code",
+  "gcj02Lng": "Gcj02 lng",
+  "gcj02Lat": "Gcj02 lat",
+  "db09Lng": "Db09 lng",
+  "db09Lat": "Db09 lat",
+  "remark1": "Remark1",
+  "remark2": "Remark2",
+  "sort": "Sort"
+}

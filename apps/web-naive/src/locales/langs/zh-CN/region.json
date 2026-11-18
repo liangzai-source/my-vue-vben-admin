@@ -1,0 +1,18 @@
+{
+  "menuTitle": "地区数据",
+  "title": "地区数据管理",
+  "list": "地区数据列表",
+  "name": "名称",
+  "level": "等级",
+  "parentId": "父级地区编码",
+  "short": "简称",
+  "cityCode": "地区编码",
+  "zipCode": "邮政编码",
+  "gcj02Lng": "纬度",
+  "gcj02Lat": "经度",
+  "db09Lng": "纬度",
+  "db09Lat": "经度",
+  "remark1": "Remark1",
+  "remark2": "Remark2",
+  "sort": "排序"
+}
