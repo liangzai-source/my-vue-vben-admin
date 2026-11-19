@@ -12,7 +12,6 @@ import { VbenIcon } from '@vben-core/shadcn-ui';
 import {
   NButton,
   NImage,
-  NModal,
   NSpace,
   NTooltip,
   NUpload,
@@ -20,9 +19,16 @@ import {
 } from 'naive-ui';
 
 import { getFileUrl, uploadFileApi } from '#/api/system/upload';
-import { getFileVisual } from '#/utils/fileHelper';
+import {
+  DEFAULT_ACCEPT_MAP,
+  downloadFile,
+  formatFileSize,
+  getFileMetaFromPath,
+  getFileVisual,
+} from '#/utils/fileHelper';
 import { captureVideoPoster } from '#/utils/videoPoster';
 
+import FilePreviewModal from './file-preview-modal.vue';
 import MediaModalComponent from './media-modal.vue';
 
 interface Props {
@@ -47,18 +53,11 @@ const emit = defineEmits<{
   (e: 'change' | 'update:modelValue', val: string | string[]): void;
 }>();
 
-const defaultAcceptMap: Record<number, string> = {
-  1: 'image/*',
-  2: 'video/*',
-  3: 'audio/*',
-  4: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv',
-};
-
 const computedAccept = computed(() => {
   if (props.accept && props.accept.trim()) {
     return props.accept;
   }
-  return defaultAcceptMap[props.type] || 'image/*';
+  return DEFAULT_ACCEPT_MAP[props.type] || 'image/*';
 });
 
 const message = useMessage();
@@ -69,103 +68,18 @@ const fileMetaMap = ref<
   Record<string, { ext?: string; originName?: string; size?: number }>
 >({});
 
-// 视频预览弹窗
-const showVideoModal = ref(false);
-const previewVideoUrl = ref('');
+// 统一预览弹窗组件引用
+const previewModalRef = ref<InstanceType<typeof FilePreviewModal> | null>(null);
 
-function handlePlayVideo(url: string) {
-  previewVideoUrl.value = getFileUrl(url);
-  showVideoModal.value = true;
-}
-
-// 音频试听弹窗
-const showAudioModal = ref(false);
-const previewAudioUrl = ref('');
-const previewAudioTitle = ref('');
-
-function handlePlayAudio(url: string, title?: string) {
-  previewAudioUrl.value = getFileUrl(url);
-  previewAudioTitle.value = title || '音频试听';
-  showAudioModal.value = true;
-}
-
-// 文档预览弹窗
-const showDocModal = ref(false);
-const previewDocUrl = ref('');
-const previewDocItem = ref<{
-  ext: string;
-  isPdf: boolean;
-  name: string;
-  size?: number;
-}>({ ext: '', isPdf: false, name: '' });
-
-function handlePreviewDoc(
-  url: string,
-  meta: { ext?: string; originName?: string; size?: number },
-) {
-  previewDocUrl.value = getFileUrl(url);
-  const ext = (meta.ext || '').toLowerCase();
-  const isPdf = ext === '.pdf' || url.toLowerCase().endsWith('.pdf');
-  previewDocItem.value = {
-    name: meta.originName || '文档文件',
-    ext,
+function handlePreview(path: string) {
+  const meta = getFileMetaFromPath(path, props.type, fileMetaMap.value[path]);
+  previewModalRef.value?.open({
+    ext: meta.ext,
+    name: meta.originName,
     size: meta.size,
-    isPdf,
-  };
-  showDocModal.value = true;
-}
-
-// 通用文件下载
-function handleDownloadFile(path: string, fileName?: string) {
-  const link = document.createElement('a');
-  link.href = getFileUrl(path);
-  link.download = fileName || path.split('/').pop() || 'download';
-  link.target = '_blank';
-  document.body.append(link);
-  link.click();
-  link.remove();
-}
-
-function openExternalUrl(url: string) {
-  window.open(url, '_blank');
-}
-
-// 提取/推导文件元信息
-function getFileMeta(path: string): {
-  ext: string;
-  originName: string;
-  size?: number;
-} {
-  const cached = fileMetaMap.value[path];
-  if (cached) {
-    return {
-      ext: cached.ext || '',
-      originName: cached.originName || path.split('/').pop() || path,
-      size: cached.size,
-    };
-  }
-  const fileName = path.split('/').pop() || path;
-  const extMatch = path.match(/\.([a-zA-Z0-9]+)$/);
-  const ext = extMatch ? `.${extMatch[1]?.toLowerCase()}` : '';
-  let originName = fileName;
-  if (!ext) {
-    originName =
-      props.type === 3 ? `音频附件 (${fileName})` : `文档附件 (${fileName})`;
-  }
-  return {
-    ext: ext || (props.type === 3 ? '.mp3' : '.file'),
-    originName,
-    size: 0,
-  };
-}
-
-// 格式化文件体积
-function formatFileSize(bytes?: number): string {
-  if (!bytes || bytes <= 0) return '';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / k ** i).toFixed(1)} ${sizes[i]}`;
+    type: props.type,
+    url: path,
+  });
 }
 
 // 归一化为数组便于统一渲染
@@ -280,6 +194,7 @@ function handleRemove(index: number) {
   <div class="flex flex-col gap-2">
     <!-- 弹窗组件挂载 -->
     <MediaModal @select="handleMediaSelected" />
+    <FilePreviewModal ref="previewModalRef" />
 
     <!-- 1. 图片与视频：保持方形卡片网格布局 -->
     <div
@@ -335,7 +250,7 @@ function handleRemove(index: number) {
               type="button"
               class="pointer-events-auto flex h-7 w-7 items-center justify-center rounded-full bg-primary text-white shadow-md hover:scale-110 transition cursor-pointer"
               title="播放预览"
-              @click.stop="handlePlayVideo(path)"
+              @click.stop="handlePreview(path)"
             >
               <VbenIcon
                 icon="lucide:play"
@@ -374,12 +289,23 @@ function handleRemove(index: number) {
           <div
             class="flex size-9 shrink-0 items-center justify-center rounded-md border"
             :class="[
-              getFileVisual(getFileMeta(path).ext, type).bg,
-              getFileVisual(getFileMeta(path).ext, type).color,
+              getFileVisual(
+                getFileMetaFromPath(path, type, fileMetaMap[path]).ext,
+                type,
+              ).bg,
+              getFileVisual(
+                getFileMetaFromPath(path, type, fileMetaMap[path]).ext,
+                type,
+              ).color,
             ]"
           >
             <VbenIcon
-              :icon="getFileVisual(getFileMeta(path).ext, type).icon"
+              :icon="
+                getFileVisual(
+                  getFileMetaFromPath(path, type, fileMetaMap[path]).ext,
+                  type,
+                ).icon
+              "
               class="size-5"
             />
           </div>
@@ -391,19 +317,39 @@ function handleRemove(index: number) {
                 <span
                   class="truncate text-xs font-medium text-foreground cursor-default"
                 >
-                  {{ getFileMeta(path).originName }}
+                  {{
+                    getFileMetaFromPath(path, type, fileMetaMap[path])
+                      .originName
+                  }}
                 </span>
               </template>
-              {{ getFileMeta(path).originName }}
+              {{
+                getFileMetaFromPath(path, type, fileMetaMap[path]).originName
+              }}
             </NTooltip>
             <div
               class="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5"
             >
               <span class="font-semibold uppercase text-primary/80">
-                {{ getFileVisual(getFileMeta(path).ext, type).tag }}
+                {{
+                  getFileVisual(
+                    getFileMetaFromPath(path, type, fileMetaMap[path]).ext,
+                    type,
+                  ).tag
+                }}
               </span>
-              <span v-if="getFileMeta(path).size">
-                · {{ formatFileSize(getFileMeta(path).size) }}
+              <span
+                v-if="
+                  getFileMetaFromPath(path, type, fileMetaMap[path]).size &&
+                  getFileMetaFromPath(path, type, fileMetaMap[path]).size! > 0
+                "
+              >
+                ·
+                {{
+                  formatFileSize(
+                    getFileMetaFromPath(path, type, fileMetaMap[path]).size,
+                  )
+                }}
               </span>
             </div>
           </div>
@@ -417,7 +363,7 @@ function handleRemove(index: number) {
               <button
                 type="button"
                 class="flex size-7 items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition cursor-pointer"
-                @click="handlePlayAudio(path, getFileMeta(path).originName)"
+                @click="handlePreview(path)"
               >
                 <VbenIcon
                   icon="lucide:play"
@@ -434,7 +380,7 @@ function handleRemove(index: number) {
               <button
                 type="button"
                 class="flex size-7 items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition cursor-pointer"
-                @click="handlePreviewDoc(path, getFileMeta(path))"
+                @click="handlePreview(path)"
               >
                 <VbenIcon icon="lucide:eye" class="size-4" />
               </button>
@@ -448,7 +394,13 @@ function handleRemove(index: number) {
               <button
                 type="button"
                 class="flex size-7 items-center justify-center rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition cursor-pointer"
-                @click="handleDownloadFile(path, getFileMeta(path).originName)"
+                @click="
+                  downloadFile(
+                    path,
+                    getFileMetaFromPath(path, type, fileMetaMap[path])
+                      .originName,
+                  )
+                "
               >
                 <VbenIcon icon="lucide:download" class="size-4" />
               </button>
@@ -499,116 +451,5 @@ function handleRemove(index: number) {
         </NButton>
       </NSpace>
     </div>
-
-    <!-- 视频播放预览弹窗 -->
-    <NModal
-      v-model:show="showVideoModal"
-      preset="card"
-      title="视频预览"
-      class="w-[720px] max-w-[92vw]"
-      :segmented="{ content: true }"
-      @after-leave="previewVideoUrl = ''"
-    >
-      <div
-        class="flex items-center justify-center bg-black rounded overflow-hidden min-h-[300px]"
-      >
-        <video
-          v-if="previewVideoUrl"
-          :src="previewVideoUrl"
-          controls
-          autoplay
-          playsinline
-          class="w-full max-h-[70vh] object-contain"
-        ></video>
-      </div>
-    </NModal>
-
-    <!-- 音频试听播放弹窗 -->
-    <NModal
-      v-model:show="showAudioModal"
-      preset="card"
-      title="音频试听"
-      class="!w-[460px] max-w-[80vw]"
-      :segmented="{ content: true }"
-      @after-leave="previewAudioUrl = ''"
-    >
-      <div class="flex flex-col items-center gap-4 py-4">
-        <div
-          class="flex size-16 items-center justify-center rounded-full bg-violet-500/10 text-violet-500"
-        >
-          <VbenIcon icon="lucide:music" class="size-8" />
-        </div>
-        <span
-          class="text-sm font-medium text-foreground text-center truncate max-w-[360px]"
-        >
-          {{ previewAudioTitle }}
-        </span>
-        <audio
-          v-if="previewAudioUrl"
-          :src="previewAudioUrl"
-          controls
-          autoplay
-          class="w-full"
-        ></audio>
-      </div>
-    </NModal>
-
-    <!-- 文档预览弹窗 -->
-    <NModal
-      v-model:show="showDocModal"
-      preset="card"
-      :title="previewDocItem.name || '文档预览'"
-      :class="
-        previewDocItem.isPdf
-          ? '!w-[860px] max-w-[90vw]'
-          : '!w-[480px] max-w-[80vw]'
-      "
-      :segmented="{ content: true }"
-      @after-leave="previewDocUrl = ''"
-    >
-      <!-- PDF 嵌入原生阅读器 -->
-      <div
-        v-if="previewDocItem.isPdf"
-        class="h-[68vh] w-full bg-muted/20 rounded overflow-hidden"
-      >
-        <iframe :src="previewDocUrl" class="w-full h-full border-0"></iframe>
-      </div>
-      <!-- 其它文件展示详情卡片并提供下载 -->
-      <div v-else class="flex flex-col items-center gap-4 py-6">
-        <div
-          class="flex size-20 items-center justify-center rounded-2xl bg-primary/10 text-primary"
-        >
-          <VbenIcon icon="lucide:file-text" class="size-10" />
-        </div>
-        <div class="flex flex-col items-center gap-1 text-center">
-          <span
-            class="text-base font-semibold text-foreground max-w-[380px] truncate"
-          >
-            {{ previewDocItem.name }}
-          </span>
-          <span class="text-xs text-muted-foreground">
-            {{
-              previewDocItem.size
-                ? formatFileSize(previewDocItem.size)
-                : '文档文件'
-            }}
-          </span>
-        </div>
-        <div class="flex items-center gap-3 mt-2">
-          <NButton
-            type="primary"
-            @click="handleDownloadFile(previewDocUrl, previewDocItem.name)"
-          >
-            <template #icon>
-              <VbenIcon icon="lucide:download" />
-            </template>
-            下载此文件
-          </NButton>
-          <NButton secondary @click="openExternalUrl(previewDocUrl)">
-            在新标签页打开
-          </NButton>
-        </div>
-      </div>
-    </NModal>
   </div>
 </template>

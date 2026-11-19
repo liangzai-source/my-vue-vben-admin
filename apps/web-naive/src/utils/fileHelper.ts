@@ -1,10 +1,29 @@
-export type FileVisual = {
+import { getFileUrl } from '#/api/system/upload';
+
+export interface FileVisual {
   bg: string;
   color: string;
   icon: string;
   tag: string;
+}
+
+export interface FileMeta {
+  ext: string;
+  originName: string;
+  size?: number;
+}
+
+export const DEFAULT_ACCEPT_MAP: Record<number, string> = {
+  1: 'image/*',
+  2: 'video/*',
+  3: 'audio/*',
+  4: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv',
 };
-export const getFileVisual = (ext: string, type: number): FileVisual => {
+
+export const getFileVisual = (
+  ext: string = '',
+  type: number = 4,
+): FileVisual => {
   const clean = (ext || '').toLowerCase().replace('.', '');
   if (type === 2) {
     return {
@@ -69,3 +88,94 @@ export const getFileVisual = (ext: string, type: number): FileVisual => {
     tag: clean ? clean.toUpperCase() : 'FILE',
   };
 };
+
+/**
+ * 格式化文件体积展示
+ */
+export function formatFileSize(bytes?: number): string {
+  if (!bytes || bytes <= 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / k ** i).toFixed(1)} ${sizes[i]}`;
+}
+
+/**
+ * 通用文件下载方法
+ */
+export function downloadFile(urlOrPath: string, fileName?: string): void {
+  const link = document.createElement('a');
+  link.href = getFileUrl(urlOrPath);
+  link.download = fileName || urlOrPath.split('/').pop() || 'download';
+  link.target = '_blank';
+  document.body.append(link);
+  link.click();
+  link.remove();
+}
+
+/**
+ * 在新标签页打开文件地址
+ */
+export function openExternalUrl(urlOrPath: string): void {
+  window.open(getFileUrl(urlOrPath), '_blank');
+}
+
+/**
+ * 从文件路径推断名称、扩展名及默认展示名称
+ */
+export function getFileMetaFromPath(
+  path: string,
+  type: number = 4,
+  cached?: { ext?: string; originName?: string; size?: number },
+): FileMeta {
+  if (cached) {
+    return {
+      ext: cached.ext || '',
+      originName: cached.originName || path.split('/').pop() || path,
+      size: cached.size,
+    };
+  }
+  const fileName = path.split('/').pop() || path;
+  const extMatch = path.match(/\.([a-zA-Z0-9]+)$/);
+  const ext = extMatch ? `.${extMatch[1]?.toLowerCase()}` : '';
+  let originName = fileName;
+  if (!ext) {
+    if (type === 1) originName = `图片附件 (${fileName})`;
+    else if (type === 2) originName = `视频附件 (${fileName})`;
+    else if (type === 3) originName = `音频附件 (${fileName})`;
+    else originName = `文档附件 (${fileName})`;
+  }
+  let fallbackExt = '.file';
+  if (type === 1) fallbackExt = '.jpg';
+  else if (type === 2) fallbackExt = '.mp4';
+  else if (type === 3) fallbackExt = '.mp3';
+
+  return {
+    ext: ext || fallbackExt,
+    originName,
+    size: 0,
+  };
+}
+
+/**
+ * 根据文件对象推断上传类型
+ */
+export function getUploadTypeByFile(file: File): number {
+  const ext = `.${file.name.split('.').pop()?.toLowerCase()}`;
+  if (
+    ['.gif', '.jpeg', '.jpg', '.png', '.webp'].includes(ext) ||
+    file.type.startsWith('image/')
+  ) {
+    return 1;
+  }
+  if (['.mp4', '.webm'].includes(ext) || file.type.startsWith('video/')) {
+    return 2;
+  }
+  if (
+    ['.aac', '.aiff', '.flac', '.mp3', '.ogg', '.wav'].includes(ext) ||
+    file.type.startsWith('audio/')
+  ) {
+    return 3;
+  }
+  return 4;
+}

@@ -15,7 +15,6 @@ import {
   NEmpty,
   NImage,
   NInput,
-  NModal,
   NPagination,
   NPopconfirm,
   NRadioButton,
@@ -34,8 +33,15 @@ import {
   getFileUrl,
   uploadFileApi,
 } from '#/api/system/upload';
+import { FilePreviewModal } from '#/components/common/upload';
 import { $t } from '#/locales';
-import { getFileVisual } from '#/utils/fileHelper';
+import {
+  DEFAULT_ACCEPT_MAP,
+  downloadFile,
+  formatFileSize,
+  getFileVisual,
+  getUploadTypeByFile,
+} from '#/utils/fileHelper';
 import { captureVideoPoster } from '#/utils/videoPoster';
 
 const message = useMessage();
@@ -51,25 +57,23 @@ const currentType = ref<number>(0); // 0: 全部, 1: 图片, 2: 视频, 3: 音�
 const keyword = ref('');
 const viewMode = ref<'grid' | 'table'>('grid');
 
-const defaultAcceptMap: Record<number, string> = {
-  1: 'image/*',
-  2: 'video/*',
-  3: 'audio/*',
-  4: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv',
-};
-
 const computedAccept = computed(() => {
-  return defaultAcceptMap[currentType.value] || '*/*';
+  return DEFAULT_ACCEPT_MAP[currentType.value] || '*/*';
 });
 
-// 统一预览弹窗状态
-const previewModalVisible = ref(false);
-const currentPreviewItem = ref<null | UploadItem>(null);
+// 统一预览弹窗组件引用
+const previewModalRef = ref<InstanceType<typeof FilePreviewModal> | null>(null);
 
 function handlePreview(item: UploadItem) {
   if (item.type === 1) return;
-  currentPreviewItem.value = item;
-  previewModalVisible.value = true;
+  previewModalRef.value?.open({
+    ext: item.ext,
+    name: item.originName || item.name,
+    size: item.size,
+    storage: item.storage,
+    type: item.type,
+    url: item.preview,
+  });
 }
 
 // 触发卡片中的图片原生灯箱预览
@@ -86,24 +90,6 @@ function triggerTableImagePreview(event: MouseEvent) {
   const row = target?.closest('tr');
   const img = row?.querySelector('.n-image img') as HTMLImageElement | null;
   img?.click();
-}
-
-// 根据文件扩展名推断上传类型
-function getUploadTypeByFile(file: File): number {
-  const ext = `.${file.name.split('.').pop()?.toLowerCase()}`;
-  if (['.gif', '.jpeg', '.jpg', '.png', '.webp'].includes(ext)) return 1;
-  if (['.mp4', '.webm'].includes(ext)) return 2;
-  if (['.aac', '.aiff', '.mp3', '.wav'].includes(ext)) return 3;
-  return 4;
-}
-
-// 格式化文件体积
-function formatFileSize(bytes: number): string {
-  if (!bytes || bytes <= 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / k ** i).toFixed(2)} ${sizes[i]}`;
 }
 
 // 加载文件列表
@@ -197,17 +183,7 @@ async function handleCopyUrl(item: UploadItem) {
 
 // 下载附件
 function handleDownload(item: UploadItem) {
-  const link = document.createElement('a');
-  link.href = getFileUrl(item.preview);
-  link.download = item.originName || item.name;
-  link.target = '_blank';
-  document.body.append(link);
-  link.click();
-  link.remove();
-}
-
-function openExternalUrl(url: string) {
-  window.open(url, '_blank');
+  downloadFile(item.preview, item.originName || item.name);
 }
 
 // 删除附件
@@ -688,125 +664,7 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 统一非图片附件预览弹窗 (支持视频播放、音频播放、PDF嵌入、文档展示) -->
-    <NModal
-      v-model:show="previewModalVisible"
-      preset="card"
-      :title="
-        currentPreviewItem?.originName || currentPreviewItem?.name || '附件预览'
-      "
-      :class="
-        currentPreviewItem?.ext?.toLowerCase() === '.pdf' ||
-        currentPreviewItem?.preview?.toLowerCase().endsWith('.pdf')
-          ? 'w-[880px] max-w-[94vw]'
-          : 'max-w-2xl'
-      "
-      :segmented="{ content: true }"
-    >
-      <div class="flex items-center justify-center p-2">
-        <!-- 1. 视频 -->
-        <video
-          v-if="currentPreviewItem?.type === 2"
-          :src="getFileUrl(currentPreviewItem.preview)"
-          controls
-          autoplay
-          playsinline
-          class="max-h-[70vh] max-w-full rounded shadow"
-        ></video>
-
-        <!-- 2. 音频 -->
-        <div
-          v-else-if="currentPreviewItem?.type === 3"
-          class="flex flex-col items-center gap-4 py-6 w-full max-w-md"
-        >
-          <div
-            class="flex size-16 items-center justify-center rounded-full bg-violet-500/10 text-violet-500"
-          >
-            <VbenIcon icon="lucide:music" class="size-8" />
-          </div>
-          <span
-            class="text-sm font-medium text-foreground text-center truncate max-w-[360px]"
-          >
-            {{ currentPreviewItem?.originName || currentPreviewItem?.name }}
-          </span>
-          <audio
-            :src="getFileUrl(currentPreviewItem.preview)"
-            controls
-            autoplay
-            class="w-full"
-          ></audio>
-        </div>
-
-        <!-- 3. 文档：PDF 内嵌原生阅读器 -->
-        <div
-          v-else-if="
-            currentPreviewItem?.ext?.toLowerCase() === '.pdf' ||
-            currentPreviewItem?.preview?.toLowerCase().endsWith('.pdf')
-          "
-          class="h-[68vh] w-full bg-muted/20 rounded overflow-hidden"
-        >
-          <iframe
-            :src="getFileUrl(currentPreviewItem.preview)"
-            class="w-full h-full border-0"
-          ></iframe>
-        </div>
-
-        <!-- 4. 其它文件展示详情卡片并提供下载 -->
-        <div v-else class="flex flex-col items-center gap-4 py-8">
-          <div
-            class="flex size-20 items-center justify-center rounded-2xl"
-            :class="
-              getFileVisual(
-                currentPreviewItem?.ext || '',
-                currentPreviewItem?.type || 4,
-              ).bg
-            "
-          >
-            <VbenIcon
-              :icon="
-                getFileVisual(
-                  currentPreviewItem?.ext || '',
-                  currentPreviewItem?.type || 4,
-                ).icon
-              "
-              class="size-10"
-              :class="
-                getFileVisual(
-                  currentPreviewItem?.ext || '',
-                  currentPreviewItem?.type || 4,
-                ).color
-              "
-            />
-          </div>
-          <span
-            class="text-base font-semibold text-foreground max-w-[420px] truncate"
-          >
-            {{ currentPreviewItem?.originName || currentPreviewItem?.name }}
-          </span>
-          <span class="text-xs text-muted-foreground">
-            体积：{{ formatFileSize(currentPreviewItem?.size || 0) }} | 存储：{{
-              currentPreviewItem?.storage
-            }}
-          </span>
-          <div class="flex items-center gap-3 mt-2">
-            <NButton
-              type="primary"
-              @click="handleDownload(currentPreviewItem!)"
-            >
-              <template #icon>
-                <VbenIcon icon="lucide:download" />
-              </template>
-              下载此文件
-            </NButton>
-            <NButton
-              secondary
-              @click="openExternalUrl(getFileUrl(currentPreviewItem!.preview))"
-            >
-              在新标签页打开
-            </NButton>
-          </div>
-        </div>
-      </div>
-    </NModal>
+    <!-- 统一附件预览弹窗组件 -->
+    <FilePreviewModal ref="previewModalRef" />
   </Page>
 </template>
