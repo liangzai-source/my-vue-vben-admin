@@ -108,11 +108,11 @@ const isPdf = computed(() => {
   );
 });
 
-const modalClass = computed(() => {
-  if (isVideo.value) return 'w-[760px] max-w-[94vw]';
-  if (isPdf.value) return 'w-[880px] max-w-[95vw]';
-  if (isAudio.value) return 'w-[460px] max-w-[92vw]';
-  return 'w-[480px] max-w-[92vw]';
+const modalStyle = computed(() => {
+  if (isVideo.value) return { width: '600px', maxWidth: '92vw' };
+  if (isPdf.value) return { width: '840px', maxWidth: '94vw' };
+  if (isAudio.value) return { width: '440px', maxWidth: '90vw' };
+  return { width: '460px', maxWidth: '90vw' };
 });
 
 function open(
@@ -150,7 +150,7 @@ defineExpose({
     v-model:show="visible"
     preset="card"
     :title="resolvedName"
-    :class="modalClass"
+    :style="modalStyle"
     :segmented="{ content: true }"
     @after-leave="currentItem = null"
   >
@@ -163,7 +163,6 @@ defineExpose({
         <video
           :src="resolvedUrl"
           controls
-          autoplay
           playsinline
           class="max-h-[70vh] w-full object-contain"
         ></video>
@@ -184,7 +183,7 @@ defineExpose({
         >
           {{ resolvedName }}
         </span>
-        <audio :src="resolvedUrl" controls autoplay class="w-full"></audio>
+        <audio :src="resolvedUrl" controls class="w-full"></audio>
       </div>
 
       <!-- 3. PDF 原生嵌入阅读 -->
