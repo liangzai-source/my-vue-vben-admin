@@ -25,6 +25,7 @@ import {
 } from 'naive-ui';
 
 import { getFileListApi, getFileUrl, uploadFileApi } from '#/api/system/upload';
+import { getFileVisual } from '#/utils/fileHelper';
 import { captureVideoPoster } from '#/utils/videoPoster';
 
 const emit = defineEmits<{
@@ -54,6 +55,54 @@ const previewVideoUrl = ref('');
 function handlePlayVideo(url: string) {
   previewVideoUrl.value = getFileUrl(url);
   showVideoModal.value = true;
+}
+
+// 音频试听弹窗
+const showAudioModal = ref(false);
+const previewAudioUrl = ref('');
+const previewAudioTitle = ref('');
+
+function handlePlayAudio(item: UploadItem) {
+  previewAudioUrl.value = getFileUrl(item.preview);
+  previewAudioTitle.value = item.originName || item.name || '音频试听';
+  showAudioModal.value = true;
+}
+
+// 文档预览弹窗
+const showDocModal = ref(false);
+const previewDocUrl = ref('');
+const previewDocItem = ref<{
+  ext: string;
+  isPdf: boolean;
+  name: string;
+  size?: number;
+}>({ ext: '', isPdf: false, name: '' });
+
+function handlePreviewDoc(item: UploadItem) {
+  previewDocUrl.value = getFileUrl(item.preview);
+  const ext = (item.ext || '').toLowerCase();
+  const isPdf = ext === '.pdf' || item.preview.toLowerCase().endsWith('.pdf');
+  previewDocItem.value = {
+    ext,
+    isPdf,
+    name: item.originName || item.name || '文档文件',
+    size: item.size,
+  };
+  showDocModal.value = true;
+}
+
+function handleDownloadFile(path: string, fileName?: string) {
+  const link = document.createElement('a');
+  link.href = getFileUrl(path);
+  link.download = fileName || path.split('/').pop() || 'download';
+  link.target = '_blank';
+  document.body.append(link);
+  link.click();
+  link.remove();
+}
+
+function openExternalUrl(url: string) {
+  window.open(url, '_blank');
 }
 
 const isMultiple = computed(() => maxCount.value > 1);
@@ -369,13 +418,23 @@ const [Modal, modalApi] = useVbenModal<{
                   <VbenIcon icon="lucide:video" class="size-3" />
                 </div>
               </div>
+              <!-- 音频与文档展示专属彩色图标与格式 -->
               <div
                 v-else
-                class="flex flex-col items-center justify-center text-muted-foreground"
+                class="flex size-full flex-col items-center justify-center gap-1 p-2"
+                :class="getFileVisual(item.ext, item.type).bg"
               >
-                <span class="text-2xl font-bold uppercase">{{
-                  item.ext.replace('.', '') || 'FILE'
-                }}</span>
+                <VbenIcon
+                  :icon="getFileVisual(item.ext, item.type).icon"
+                  class="size-8"
+                  :class="getFileVisual(item.ext, item.type).color"
+                />
+                <span
+                  class="text-[11px] font-bold uppercase tracking-wide"
+                  :class="getFileVisual(item.ext, item.type).color"
+                >
+                  {{ getFileVisual(item.ext, item.type).tag }}
+                </span>
               </div>
 
               <!-- 图片悬停快捷预览遮罩 -->
@@ -418,6 +477,49 @@ const [Modal, modalApi] = useVbenModal<{
                     </button>
                   </template>
                   播放视频
+                </NTooltip>
+              </div>
+
+              <!-- 音频悬停试听预览遮罩 -->
+              <div
+                v-if="item.type === 3"
+                class="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                <NTooltip trigger="hover">
+                  <template #trigger>
+                    <button
+                      type="button"
+                      class="pointer-events-auto flex h-8 w-8 items-center justify-center rounded-full bg-violet-600 text-white shadow-md hover:scale-110 transition cursor-pointer"
+                      @click.stop="handlePlayAudio(item)"
+                    >
+                      <VbenIcon
+                        icon="lucide:play"
+                        class="size-4 fill-current ml-0.5"
+                      />
+                    </button>
+                  </template>
+                  试听音频
+                </NTooltip>
+              </div>
+
+              <!-- 文档悬停查看预览遮罩 -->
+              <div
+                v-if="item.type === 4"
+                class="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/45 opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                <NTooltip trigger="hover">
+                  <template #trigger>
+                    <NButton
+                      circle
+                      size="tiny"
+                      quaternary
+                      class="pointer-events-auto bg-black/30 hover:bg-black/60"
+                      @click.stop="handlePreviewDoc(item)"
+                    >
+                      <VbenIcon icon="lucide:eye" class="text-white" />
+                    </NButton>
+                  </template>
+                  查看文档
                 </NTooltip>
               </div>
 
@@ -491,6 +593,90 @@ const [Modal, modalApi] = useVbenModal<{
         playsinline
         class="w-full max-h-[70vh] object-contain"
       ></video>
+    </div>
+  </NModal>
+
+  <!-- 音频试听播放弹窗 -->
+  <NModal
+    v-model:show="showAudioModal"
+    preset="card"
+    title="音频试听"
+    class="w-[460px] max-w-[92vw]"
+    :segmented="{ content: true }"
+    @after-leave="previewAudioUrl = ''"
+  >
+    <div class="flex flex-col items-center gap-4 py-4">
+      <div
+        class="flex size-16 items-center justify-center rounded-full bg-violet-500/10 text-violet-500"
+      >
+        <VbenIcon icon="lucide:music" class="size-8" />
+      </div>
+      <span
+        class="text-sm font-medium text-foreground text-center truncate max-w-[360px]"
+      >
+        {{ previewAudioTitle }}
+      </span>
+      <audio
+        v-if="previewAudioUrl"
+        :src="previewAudioUrl"
+        controls
+        autoplay
+        class="w-full"
+      ></audio>
+    </div>
+  </NModal>
+
+  <!-- 文档预览弹窗 -->
+  <NModal
+    v-model:show="showDocModal"
+    preset="card"
+    :title="previewDocItem.name || '文档预览'"
+    :class="
+      previewDocItem.isPdf ? 'w-[860px] max-w-[94vw]' : 'w-[480px] max-w-[92vw]'
+    "
+    :segmented="{ content: true }"
+    @after-leave="previewDocUrl = ''"
+  >
+    <!-- PDF 嵌入原生阅读器 -->
+    <div
+      v-if="previewDocItem.isPdf"
+      class="h-[68vh] w-full bg-muted/20 rounded overflow-hidden"
+    >
+      <iframe :src="previewDocUrl" class="w-full h-full border-0"></iframe>
+    </div>
+    <!-- 其它文件展示详情卡片并提供下载 -->
+    <div v-else class="flex flex-col items-center gap-4 py-6">
+      <div
+        class="flex size-20 items-center justify-center rounded-2xl bg-primary/10 text-primary"
+      >
+        <VbenIcon icon="lucide:file-text" class="size-10" />
+      </div>
+      <div class="flex flex-col items-center gap-1 text-center">
+        <span
+          class="text-base font-semibold text-foreground max-w-[380px] truncate"
+        >
+          {{ previewDocItem.name }}
+        </span>
+        <span class="text-xs text-muted-foreground">
+          {{
+            previewDocItem.size ? formatSize(previewDocItem.size) : '文档文件'
+          }}
+        </span>
+      </div>
+      <div class="flex items-center gap-3 mt-2">
+        <NButton
+          type="primary"
+          @click="handleDownloadFile(previewDocUrl, previewDocItem.name)"
+        >
+          <template #icon>
+            <VbenIcon icon="lucide:download" />
+          </template>
+          下载此文件
+        </NButton>
+        <NButton secondary @click="openExternalUrl(previewDocUrl)">
+          在新标签页打开
+        </NButton>
+      </div>
     </div>
   </NModal>
 </template>

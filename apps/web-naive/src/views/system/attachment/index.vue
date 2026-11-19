@@ -35,6 +35,7 @@ import {
   uploadFileApi,
 } from '#/api/system/upload';
 import { $t } from '#/locales';
+import { getFileVisual } from '#/utils/fileHelper';
 import { captureVideoPoster } from '#/utils/videoPoster';
 
 const message = useMessage();
@@ -205,6 +206,10 @@ function handleDownload(item: UploadItem) {
   link.remove();
 }
 
+function openExternalUrl(url: string) {
+  window.open(url, '_blank');
+}
+
 // 删除附件
 async function handleDelete(item: UploadItem) {
   try {
@@ -214,19 +219,6 @@ async function handleDelete(item: UploadItem) {
   } catch (error: any) {
     message.error(error.message || '删除失败');
   }
-}
-
-// 获取类型图标
-function getFileIcon(ext: string, type: number): string {
-  if (type === 2) return 'lucide:video';
-  if (type === 3) return 'lucide:music';
-  const cleanExt = (ext || '').toLowerCase().replace('.', '');
-  if (cleanExt === 'pdf') return 'lucide:file-text';
-  if (['doc', 'docx'].includes(cleanExt)) return 'lucide:file-type-doc';
-  if (['xls', 'xlsx'].includes(cleanExt)) return 'lucide:file-spreadsheet';
-  if (['7z', 'gz', 'rar', 'tar', 'zip'].includes(cleanExt))
-    return 'lucide:file-archive';
-  return 'lucide:file';
 }
 
 onMounted(() => {
@@ -377,18 +369,23 @@ onMounted(() => {
                     <VbenIcon icon="lucide:video" class="size-3" />
                   </div>
                 </div>
-                <!-- 非图片类型：点击图标打开音视频播放/文件预览弹窗 -->
+                <!-- 非图片与视频类型：展示专属彩色图标与格式，点击打开音视频播放/文件预览弹窗 -->
                 <div
                   v-else
-                  class="flex size-full flex-col items-center justify-center gap-1.5 text-muted-foreground cursor-pointer"
+                  class="flex size-full flex-col items-center justify-center gap-2 cursor-pointer p-3"
+                  :class="getFileVisual(item.ext, item.type).bg"
                   @click="handlePreview(item)"
                 >
                   <VbenIcon
-                    :icon="getFileIcon(item.ext, item.type)"
-                    class="size-10"
+                    :icon="getFileVisual(item.ext, item.type).icon"
+                    class="size-11"
+                    :class="getFileVisual(item.ext, item.type).color"
                   />
-                  <span class="text-xs font-bold uppercase tracking-wider">
-                    {{ item.ext.replace('.', '') || 'FILE' }}
+                  <span
+                    class="text-xs font-bold uppercase tracking-wider"
+                    :class="getFileVisual(item.ext, item.type).color"
+                  >
+                    {{ getFileVisual(item.ext, item.type).tag }}
                   </span>
                 </div>
 
@@ -585,12 +582,14 @@ onMounted(() => {
                   </div>
                   <div
                     v-else
-                    class="flex size-10 items-center justify-center rounded border bg-muted/40 text-muted-foreground cursor-pointer"
+                    class="flex size-10 items-center justify-center rounded border cursor-pointer"
+                    :class="getFileVisual(item.ext, item.type).bg"
                     @click="handlePreview(item)"
                   >
                     <VbenIcon
-                      :icon="getFileIcon(item.ext, item.type)"
+                      :icon="getFileVisual(item.ext, item.type).icon"
                       class="size-5"
+                      :class="getFileVisual(item.ext, item.type).color"
                     />
                   </div>
                 </td>
@@ -689,14 +688,20 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- 统一非图片附件预览弹窗 (支持视频播放、音频播放、文档展示) -->
+    <!-- 统一非图片附件预览弹窗 (支持视频播放、音频播放、PDF嵌入、文档展示) -->
     <NModal
       v-model:show="previewModalVisible"
       preset="card"
       :title="
         currentPreviewItem?.originName || currentPreviewItem?.name || '附件预览'
       "
-      class="max-w-3xl"
+      :class="
+        currentPreviewItem?.ext?.toLowerCase() === '.pdf' ||
+        currentPreviewItem?.preview?.toLowerCase().endsWith('.pdf')
+          ? 'w-[880px] max-w-[94vw]'
+          : 'max-w-2xl'
+      "
+      :segmented="{ content: true }"
     >
       <div class="flex items-center justify-center p-2">
         <!-- 1. 视频 -->
@@ -708,25 +713,74 @@ onMounted(() => {
           playsinline
           class="max-h-[70vh] max-w-full rounded shadow"
         ></video>
-        <!-- 3. 音频 -->
-        <audio
+
+        <!-- 2. 音频 -->
+        <div
           v-else-if="currentPreviewItem?.type === 3"
-          :src="getFileUrl(currentPreviewItem.preview)"
-          controls
-          class="w-full"
-        ></audio>
-        <!-- 4. 文档及其他文件 -->
+          class="flex flex-col items-center gap-4 py-6 w-full max-w-md"
+        >
+          <div
+            class="flex size-16 items-center justify-center rounded-full bg-violet-500/10 text-violet-500"
+          >
+            <VbenIcon icon="lucide:music" class="size-8" />
+          </div>
+          <span
+            class="text-sm font-medium text-foreground text-center truncate max-w-[360px]"
+          >
+            {{ currentPreviewItem?.originName || currentPreviewItem?.name }}
+          </span>
+          <audio
+            :src="getFileUrl(currentPreviewItem.preview)"
+            controls
+            autoplay
+            class="w-full"
+          ></audio>
+        </div>
+
+        <!-- 3. 文档：PDF 内嵌原生阅读器 -->
+        <div
+          v-else-if="
+            currentPreviewItem?.ext?.toLowerCase() === '.pdf' ||
+            currentPreviewItem?.preview?.toLowerCase().endsWith('.pdf')
+          "
+          class="h-[68vh] w-full bg-muted/20 rounded overflow-hidden"
+        >
+          <iframe
+            :src="getFileUrl(currentPreviewItem.preview)"
+            class="w-full h-full border-0"
+          ></iframe>
+        </div>
+
+        <!-- 4. 其它文件展示详情卡片并提供下载 -->
         <div v-else class="flex flex-col items-center gap-4 py-8">
-          <VbenIcon
-            :icon="
-              getFileIcon(
+          <div
+            class="flex size-20 items-center justify-center rounded-2xl"
+            :class="
+              getFileVisual(
                 currentPreviewItem?.ext || '',
                 currentPreviewItem?.type || 4,
-              )
+              ).bg
             "
-            class="size-16 text-primary"
-          />
-          <span class="text-base font-medium">
+          >
+            <VbenIcon
+              :icon="
+                getFileVisual(
+                  currentPreviewItem?.ext || '',
+                  currentPreviewItem?.type || 4,
+                ).icon
+              "
+              class="size-10"
+              :class="
+                getFileVisual(
+                  currentPreviewItem?.ext || '',
+                  currentPreviewItem?.type || 4,
+                ).color
+              "
+            />
+          </div>
+          <span
+            class="text-base font-semibold text-foreground max-w-[420px] truncate"
+          >
             {{ currentPreviewItem?.originName || currentPreviewItem?.name }}
           </span>
           <span class="text-xs text-muted-foreground">
@@ -734,9 +788,23 @@ onMounted(() => {
               currentPreviewItem?.storage
             }}
           </span>
-          <NButton type="primary" @click="handleDownload(currentPreviewItem!)">
-            下载此文件
-          </NButton>
+          <div class="flex items-center gap-3 mt-2">
+            <NButton
+              type="primary"
+              @click="handleDownload(currentPreviewItem!)"
+            >
+              <template #icon>
+                <VbenIcon icon="lucide:download" />
+              </template>
+              下载此文件
+            </NButton>
+            <NButton
+              secondary
+              @click="openExternalUrl(getFileUrl(currentPreviewItem!.preview))"
+            >
+              在新标签页打开
+            </NButton>
+          </div>
         </div>
       </div>
     </NModal>
