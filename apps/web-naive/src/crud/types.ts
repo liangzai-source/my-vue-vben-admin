@@ -123,6 +123,7 @@ export interface RelationConfig {
 }
 
 export interface Schema {
+  id?: number;
   basicConfig: Basic;
   routeConfig: Route;
   fieldsConfig: Field[];

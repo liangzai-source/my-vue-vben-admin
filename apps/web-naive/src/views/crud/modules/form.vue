@@ -54,14 +54,79 @@ function onTableLoaded(loadedSchema: Schema) {
   formData.value = smartInferSchema(loadedSchema);
 }
 
-// 智能联动：当修改“功能名称(中文)”时，若菜单名称未被单独定制则自动同步
+function formatMenuTitle(val?: string): string {
+  if (!val) return '';
+  return val.endsWith('管理') ? val : `${val}管理`;
+}
+
+// 智能联动：当修改“功能名称(中文)”时，若菜单名称未被单独定制则自动同步（默认补齐“管理”）
 watch(
   () => formData.value.basicConfig?.comment,
   (newComment, oldComment) => {
     if (!formData.value?.routeConfig) return;
     const currentMenuName = formData.value.routeConfig.menuName;
-    if (!currentMenuName || currentMenuName === oldComment) {
-      formData.value.routeConfig.menuName = newComment || '';
+    const oldExpected = formatMenuTitle(oldComment);
+    if (
+      !currentMenuName ||
+      currentMenuName === oldComment ||
+      currentMenuName === oldExpected
+    ) {
+      formData.value.routeConfig.menuName = formatMenuTitle(newComment);
+    }
+  },
+);
+
+// 智能联动：当在多功能共享表模式下修改“标识值 (singleCodeVal)”时，自动同步模块名与路由路径（仅在新建未持久化时联动，编辑已有配置时不静默覆盖）
+watch(
+  () => formData.value.pageConfig?.singleCodeVal,
+  (newVal) => {
+    if (
+      !formData.value.id &&
+      formData.value.pageConfig?.pageMode === 'single' &&
+      formData.value.pageConfig?.tableMode === 'shared' &&
+      newVal?.trim()
+    ) {
+      const codeSlug = newVal.trim();
+      const currentModule = formData.value.basicConfig?.moduleName;
+      const currentTable = formData.value.basicConfig?.tableName;
+      // 若当前模块名为空，或模块名依然与表名相同（未单独定制过），自动同步为标识值
+      if (
+        !currentModule ||
+        currentModule === currentTable ||
+        (currentTable && currentModule === currentTable.replace(/^y_/, ''))
+      ) {
+        formData.value.basicConfig.moduleName = codeSlug;
+        if (formData.value.routeConfig) {
+          formData.value.routeConfig.apiPath = `/${codeSlug}`;
+          formData.value.routeConfig.pagePath = `/${codeSlug}`;
+        }
+      }
+    }
+  },
+);
+
+// 智能联动：在多功能共享表模式下修改模块名时，自动同步 API 与页面路由路径
+watch(
+  () => formData.value.basicConfig?.moduleName,
+  (newMod, oldMod) => {
+    if (
+      formData.value.pageConfig?.pageMode === 'single' &&
+      formData.value.pageConfig?.tableMode === 'shared' &&
+      newMod?.trim()
+    ) {
+      const slug = newMod.trim();
+      if (
+        !formData.value.routeConfig?.apiPath ||
+        formData.value.routeConfig.apiPath === `/${oldMod}`
+      ) {
+        formData.value.routeConfig.apiPath = `/${slug}`;
+      }
+      if (
+        !formData.value.routeConfig?.pagePath ||
+        formData.value.routeConfig.pagePath === `/${oldMod}`
+      ) {
+        formData.value.routeConfig.pagePath = `/${slug}`;
+      }
     }
   },
 );
@@ -132,7 +197,10 @@ async function handleSaveConfig() {
   saveLoading.value = true;
   drawerApi.lock();
   try {
-    await devCrudSaveApi(formData.value);
+    const res = await devCrudSaveApi(formData.value);
+    if (res?.id) {
+      formData.value.id = res.id;
+    }
     message.success(
       `模块 [${formData.value.basicConfig.moduleName}] 配置已保存到数据库！`,
     );
@@ -155,6 +223,9 @@ async function handleGenerateWrite() {
   drawerApi.lock();
   try {
     const res = await devCrudGenerateApi(formData.value);
+    if (res?.id) {
+      formData.value.id = res.id;
+    }
     const menuTip =
       res?.menuCount && res.menuCount > 0
         ? ` 并自动生成 ${res.menuCount} 条菜单/权限！`

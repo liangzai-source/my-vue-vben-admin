@@ -25,10 +25,15 @@ const formData = useModelProxy<Route>(modelValue);
         </NFormItemGi>
 
         <NFormItemGi :span="12" label="菜单名称">
-          <NInput
-            v-model:value="formData.menuName"
-            placeholder="例如：商品管理"
-          />
+          <div class="flex flex-col gap-1 w-full">
+            <NInput
+              v-model:value="formData.menuName"
+              placeholder="例如：用户管理 / 商品管理"
+            />
+            <span class="text-xs text-muted-foreground">
+              左侧导航菜单显示的文案，默认根据功能名称自动拼接“管理”
+            </span>
+          </div>
         </NFormItemGi>
 
         <NFormItemGi :span="12" label="路由名称">

@@ -64,7 +64,11 @@ async function onPreview(row: DevCrudApi.DevCrud) {
 async function onUpdate(row: DevCrudApi.DevCrud) {
   try {
     const detail = await devCrudDetailApi(row.id);
-    formDrawerApi.setData(detail.schema).open();
+    const schema = {
+      ...detail.schema,
+      id: row.id,
+    };
+    formDrawerApi.setData(schema).open();
   } catch (error: any) {
     message.error(error?.message || '读取配置详情失败');
   }

@@ -111,19 +111,37 @@ onMounted(() => {
           />
         </NFormItemGi>
         <NFormItemGi :span="12" :label="$t('crud.label.basic.moduleName')">
-          <NInput
-            v-model:value="formData.moduleName"
-            placeholder="模块名称（如 region，后端自动剔除配置的表前缀）"
-          />
+          <div class="flex flex-col gap-1 w-full">
+            <NInput
+              v-model:value="formData.moduleName"
+              placeholder="模块名称（英文唯一标识，如 about / privacy）"
+            />
+            <span class="text-xs text-muted-foreground">
+              作为模块唯一标识与路由路径。共享表模式下为同表建多功能时，请设置不同模块名。
+            </span>
+          </div>
         </NFormItemGi>
         <NFormItemGi :span="12" label="功能名称 (中文)">
-          <NInput v-model:value="formData.comment" placeholder="如 区域管理" />
+          <div class="flex flex-col gap-1 w-full">
+            <NInput
+              v-model:value="formData.comment"
+              placeholder="如 用户 / 轮播图 / 文章"
+            />
+            <span class="text-xs text-muted-foreground">
+              用于按钮与弹窗文案，如“添加【用户】”、“编辑【用户】”
+            </span>
+          </div>
         </NFormItemGi>
         <NFormItemGi :span="12" label="功能名称 (英文)">
-          <NInput
-            v-model:value="formData.commentEn"
-            placeholder="如 Region Management"
-          />
+          <div class="flex flex-col gap-1 w-full">
+            <NInput
+              v-model:value="formData.commentEn"
+              placeholder="如 User / Banner / Article"
+            />
+            <span class="text-xs text-muted-foreground">
+              英文实体名称，如 Add [User] / Edit [User]
+            </span>
+          </div>
         </NFormItemGi>
         <NFormItemGi :span="12" :label="$t('crud.label.basic.pkField')">
           <NInput

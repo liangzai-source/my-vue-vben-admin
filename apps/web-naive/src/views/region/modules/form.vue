@@ -102,8 +102,8 @@ const rules: FormRules = {
 
 const getDialogTitle = computed(() =>
   formData.value?.id
-    ? $t('common.update', [$t('region.menuTitle')])
-    : $t('common.create', [$t('region.menuTitle')]),
+    ? $t('common.update', [$t('region.entityTitle')])
+    : $t('common.create', [$t('region.entityTitle')]),
 );
 const [Modal, modalApi] = useVbenModal<RegionApi.Region>({
   onConfirm: formConfirm,

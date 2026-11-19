@@ -211,10 +211,16 @@ watch(
                 />
               </NFormItemGi>
               <NFormItemGi :span="12" label="标识值 (Code)">
-                <NInput
-                  v-model:value="formData.singleCodeVal"
-                  placeholder="如 about_us、privacy_policy 或 agreement"
-                />
+                <div class="flex flex-col gap-1 w-full">
+                  <NInput
+                    v-model:value="formData.singleCodeVal"
+                    placeholder="如 about_us、privacy_policy 或 agreement"
+                  />
+                  <span class="text-xs text-muted-foreground">
+                    每个单页功能请填写唯一的标识值，后端将通过通用单页服务按此
+                    Code 自动存取。
+                  </span>
+                </div>
               </NFormItemGi>
             </template>
 

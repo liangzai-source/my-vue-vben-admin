@@ -238,7 +238,7 @@ function onCreateChild(row: RegionApi.Region) {
           @click="onCreate"
           v-access:code="'region:create'"
         >
-          {{ $t('common.create', [$t('region.menuTitle')]) }}
+          {{ $t('common.create', [$t('region.entityTitle')]) }}
         </IconButton>
       </template>
     </Grid>
