@@ -68,5 +68,33 @@
     "deleteConfirmTitle": "Confirm Delete",
     "deleteConfirmContent": "Are you sure to delete this file? This cannot be undone.",
     "deleteSuccess": "Deleted successfully"
+  },
+  "configSetting": {
+    "menuTitle": "System Config",
+    "title": "System Settings",
+    "save": "Save Settings",
+    "saveSuccess": "Settings saved successfully"
+  },
+  "configCategory": {
+    "menuTitle": "Config Category",
+    "title": "Config Category",
+    "name": "Category Name",
+    "code": "Category Code",
+    "sort": "Sort",
+    "isSystem": "System Builtin",
+    "remark": "Remark"
+  },
+  "config": {
+    "menuTitle": "Config Items",
+    "title": "Config Management",
+    "category": "Category",
+    "name": "Config Name",
+    "key": "Config Key",
+    "value": "Value",
+    "componentType": "Component Type",
+    "options": "Options (JSON)",
+    "extra": "Extra (JSON)",
+    "sort": "Sort",
+    "isSystem": "System Builtin"
   }
 }

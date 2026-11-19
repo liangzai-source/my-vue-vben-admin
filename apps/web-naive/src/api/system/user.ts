@@ -10,16 +10,24 @@ import type {
 import { requestClient } from '#/api/request';
 
 export namespace SystemUserApi {
+  export interface RoleSimple {
+    id: number;
+    name: string;
+  }
+
   export interface SystemUser extends BaseData {
     account: string;
     nickname: string;
     status: number;
     creatorId: number;
     isAdministrator?: number;
+    roleIds?: number[];
+    roles?: RoleSimple[];
   }
 
   export interface SystemUserSave extends SystemUser {
-    password: string;
+    password?: string;
+    roleIds?: number[];
   }
 
   export interface PasswordChange {
@@ -94,6 +102,14 @@ export async function systemUserChangePasswordApi(
     `/system-user/change-password`,
     data,
   );
+}
+
+/**
+ * 获取对应用户的所有角色id
+ * @param id
+ */
+export async function systemUserRoleIdsApi(id: number) {
+  return requestClient.post<number[]>(`/system-user/roles-id/${id}`);
 }
 
 /**

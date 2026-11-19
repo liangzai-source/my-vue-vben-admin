@@ -6,6 +6,7 @@ import { Page, useVbenDrawer, useVbenModal } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
 import cloneDeep from 'lodash.clonedeep';
+import { NSpace, NTag } from 'naive-ui';
 
 import { message } from '#/adapter/naive';
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -92,6 +93,24 @@ function onRefresh() {
     <FormModal @success="onRefresh" />
     <PermissionDrawer />
     <Grid :table-title="$t('system.user.list')">
+      <template #roles="{ row }">
+        <NSpace size="small" justify="center">
+          <NTag
+            v-for="role in row.roles || []"
+            :key="role.id"
+            size="small"
+            type="info"
+          >
+            {{ role.name }}
+          </NTag>
+          <span
+            v-if="!row.roles || row.roles.length === 0"
+            class="text-gray-400"
+          >
+            -
+          </span>
+        </NSpace>
+      </template>
       <template #toolbar-tools>
         <IconButton
           icon="ic:outline-plus"

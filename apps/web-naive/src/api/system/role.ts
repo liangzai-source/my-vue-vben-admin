@@ -96,3 +96,12 @@ export async function systemRolePermissionsApi(
     data,
   );
 }
+
+/**
+ * 获取所有启用的角色列表（用于下拉选择）
+ */
+export async function systemRoleAllApi() {
+  return requestClient.post<Array<{ id: number; name: string }>>(
+    '/system-role/all',
+  );
+}

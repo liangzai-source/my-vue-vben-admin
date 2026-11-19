@@ -30,6 +30,13 @@ export function useSystemUserColumns<T = SystemUserApi.SystemUser>(
       title: $t('system.user.nickname'),
     },
     {
+      align: 'center',
+      field: 'roles',
+      title: $t('system.role.createName'),
+      minWidth: 150,
+      slots: { default: 'roles' },
+    },
+    {
       cellRender: {
         name: 'CellSwitch',
         attrs: { beforeChange: onStatusChange },

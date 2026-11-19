@@ -82,5 +82,33 @@
     "remark": "备注",
     "permission": "权限",
     "setPermission": "设置权限"
+  },
+  "configSetting": {
+    "menuTitle": "系统配置",
+    "title": "系统配置设置",
+    "save": "保存配置",
+    "saveSuccess": "配置保存成功"
+  },
+  "configCategory": {
+    "menuTitle": "配置分类",
+    "title": "配置分类管理",
+    "name": "分类名称",
+    "code": "分类标识",
+    "sort": "排序",
+    "isSystem": "系统内置",
+    "remark": "备注"
+  },
+  "config": {
+    "menuTitle": "配置管理",
+    "title": "系统配置项管理",
+    "category": "所属分类",
+    "name": "配置名称",
+    "key": "配置键名(Key)",
+    "value": "配置值",
+    "componentType": "组件类型",
+    "options": "候选字典(JSON)",
+    "extra": "扩展属性(JSON)",
+    "sort": "排序",
+    "isSystem": "系统内置"
   }
 }

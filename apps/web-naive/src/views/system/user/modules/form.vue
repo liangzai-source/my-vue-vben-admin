@@ -8,8 +8,9 @@ import { computed, ref, useTemplateRef } from 'vue';
 import { useVbenModal } from '@vben/common-ui';
 import { $t } from '@vben/locales';
 
-import { NForm, NFormItem, NInput } from 'naive-ui';
+import { NForm, NFormItem, NInput, NSelect } from 'naive-ui';
 
+import { systemRoleAllApi } from '#/api/system/role';
 import { systemUserCreateApi, systemUserUpdateApi } from '#/api/system/user';
 import StatusRadios from '#/components/common/StatusRadios.vue';
 import { handleFormError, isEmpty, showFormMessage } from '#/utils/tools';
@@ -26,20 +27,48 @@ const defaultFormData: SystemUserApi.SystemUserSave = {
   password: '',
   nickname: '',
   status: 1,
+  roleIds: [],
 };
+
+const roleOptions = ref<Array<{ label: string; value: number }>>([]);
+const roleLoading = ref<boolean>(false);
+
+async function loadRoleOptions() {
+  try {
+    roleLoading.value = true;
+    const res = await systemRoleAllApi();
+    roleOptions.value = (res || []).map((item) => ({
+      label: item.name,
+      value: item.id,
+    }));
+  } finally {
+    roleLoading.value = false;
+  }
+}
+
 const [Modal, modalApi] = useVbenModal<SystemUserApi.SystemUserSave>({
   onConfirm: formConfirm,
-  onOpenChange: (isOpen) => {
-    const data = modalApi.getData();
-    if (isOpen && !isEmpty(data)) {
-      if (isEmpty(data.status)) {
-        data.status = 1;
+  onOpenChange: async (isOpen) => {
+    if (isOpen) {
+      loadRoleOptions();
+      const data = modalApi.getData();
+      if (isEmpty(data)) {
+        formData.value = { ...defaultFormData };
+      } else {
+        if (isEmpty(data.status)) {
+          data.status = 1;
+        }
+        if (!data.roleIds) {
+          data.roleIds = [];
+        }
+        // 编辑模式下密码留空，表示不修改密码
+        data.password = '';
+        formData.value = { ...data };
       }
-      formData.value = data;
     }
   },
 });
-const formData = ref<SystemUserApi.SystemUserSave>(defaultFormData);
+const formData = ref<SystemUserApi.SystemUserSave>({ ...defaultFormData });
 const loading = ref<boolean>(false);
 const baseRules = {
   account: [
@@ -105,11 +134,29 @@ function formConfirm() {
           type="password"
           autocomplete="off"
           clearable
+          :placeholder="
+            formData.id
+              ? '留空表示不修改密码'
+              : $t('ui.formRules.required', [$t('system.user.password')])
+          "
           v-model:value="formData.password"
         />
       </NFormItem>
       <NFormItem :label="$t('system.user.nickname')">
         <NInput v-model:value="formData.nickname" />
+      </NFormItem>
+      <NFormItem :label="$t('system.role.createName')" path="roleIds">
+        <NSelect
+          v-model:value="formData.roleIds"
+          multiple
+          filterable
+          clearable
+          :loading="roleLoading"
+          :options="roleOptions"
+          :placeholder="
+            $t('common.placeholder', [$t('system.role.createName')])
+          "
+        />
       </NFormItem>
       <NFormItem :label="$t('common.status')">
         <StatusRadios v-model:status="formData.status" />
