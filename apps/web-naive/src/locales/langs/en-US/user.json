@@ -1,0 +1,20 @@
+{
+  "entityTitle": "User",
+  "menuTitle": "用户管理",
+  "title": "User Management",
+  "list": "User List",
+  "nickname": "Nickname",
+  "avatar": "Avatar",
+  "account": "Account",
+  "password": "Password",
+  "passwordPlaceholder": "Leave blank to keep unchanged",
+  "mobile": "Mobile",
+  "status": "Status",
+  "lastLoginTime": "Last login time",
+  "lastLoginIp": "Last login ip",
+  "miniOpenid": "Mini openid",
+  "offOpenid": "Off openid",
+  "wechatUnionid": "Wechat unionid",
+  "createdAt": "Created at",
+  "updatedAt": "Updated at"
+}

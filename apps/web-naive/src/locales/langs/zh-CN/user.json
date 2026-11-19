@@ -1,0 +1,20 @@
+{
+  "entityTitle": "用户",
+  "menuTitle": "用户管理",
+  "title": "用户管理",
+  "list": "用户列表",
+  "nickname": "昵称",
+  "avatar": "头像URL",
+  "account": "账号",
+  "password": "密码",
+  "passwordPlaceholder": "留空表示不修改密码",
+  "mobile": "手机号码",
+  "status": "状态",
+  "lastLoginTime": "最后登录时间",
+  "lastLoginIp": "最后登录ip",
+  "miniOpenid": "小程序openid",
+  "offOpenid": "公众号openid",
+  "wechatUnionid": "微信开放平台unionid",
+  "createdAt": "创建时间",
+  "updatedAt": "更新时间"
+}
