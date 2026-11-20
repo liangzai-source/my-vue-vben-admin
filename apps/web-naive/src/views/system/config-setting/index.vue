@@ -202,19 +202,30 @@ async function handleSave() {
 
                         <!-- 开关 -->
                         <template v-else-if="item.componentType === 'switch'">
-                          <NSwitch
-                            v-model:value="formValues[item.key]"
-                            checked-value="1"
-                            unchecked-value="0"
-                          >
-                            <template #checked>开启</template>
-                            <template #unchecked>关闭</template>
-                          </NSwitch>
+                          <div class="flex items-center gap-3 self-start">
+                            <NSwitch
+                              v-model:value="formValues[item.key]"
+                              checked-value="1"
+                              unchecked-value="0"
+                            >
+                              <template #checked>开启</template>
+                              <template #unchecked>关闭</template>
+                            </NSwitch>
+                            <span
+                              v-if="parseJson(item.extra)?.tip"
+                              class="text-xs text-gray-400"
+                            >
+                              {{ parseJson(item.extra).tip }}
+                            </span>
+                          </div>
                         </template>
 
                         <!-- 单选框 -->
                         <template v-else-if="item.componentType === 'radio'">
-                          <NRadioGroup v-model:value="formValues[item.key]">
+                          <NRadioGroup
+                            v-model:value="formValues[item.key]"
+                            class="self-start"
+                          >
                             <NSpace>
                               <NRadio
                                 v-for="(opt, optIdx) in parseJson(
@@ -292,9 +303,12 @@ async function handleSave() {
                           />
                         </template>
 
-                        <!-- 辅助说明 tip -->
+                        <!-- 辅助说明 tip (非 switch 组件在下方显示) -->
                         <div
-                          v-if="parseJson(item.extra)?.tip"
+                          v-if="
+                            item.componentType !== 'switch' &&
+                            parseJson(item.extra)?.tip
+                          "
                           class="text-xs text-gray-400 mt-1"
                         >
                           {{ parseJson(item.extra).tip }}
