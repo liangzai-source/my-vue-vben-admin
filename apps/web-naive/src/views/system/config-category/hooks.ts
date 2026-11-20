@@ -9,13 +9,26 @@ import { $t } from '@vben/locales';
 
 import { NTag } from 'naive-ui';
 
-import { processTableActions } from '#/utils/access';
+import { getActionColumnWidth, processTableActions } from '#/utils/access';
 
 export function useSystemConfigCategoryColumns<
   T = SystemConfigCategoryApi.SystemConfigCategory,
 >(
   onActionClick: OnActionClickFn<T>,
 ): VxeTableGridOptions<SystemConfigCategoryApi.SystemConfigCategory>['columns'] {
+  const actionOptions = processTableActions([
+    {
+      code: 'update',
+      perCode: 'system:config-category:update',
+    },
+    {
+      code: 'delete',
+      perCode: 'system:config-category:delete',
+      disabled: (row: any) => row.isSystem === 1,
+    },
+  ]);
+  const actionColumnWidth = getActionColumnWidth(actionOptions);
+
   return [
     {
       title: 'ID',
@@ -66,14 +79,14 @@ export function useSystemConfigCategoryColumns<
       minWidth: 200,
     },
     {
-      title: $t('common.createTime'),
+      title: $t('common.createdAt'),
       field: 'createdAt',
       width: 180,
     },
     {
       align: 'center',
       fixed: 'right',
-      width: 150,
+      width: actionColumnWidth,
       title: $t('common.operation'),
       cellRender: {
         attrs: {
@@ -81,17 +94,7 @@ export function useSystemConfigCategoryColumns<
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: processTableActions([
-          {
-            code: 'update',
-            perCode: 'system:config-category:update',
-          },
-          {
-            code: 'delete',
-            perCode: 'system:config-category:delete',
-            disabled: (row: any) => row.isSystem === 1,
-          },
-        ]),
+        options: actionOptions,
       },
     },
   ];

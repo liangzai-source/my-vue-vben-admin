@@ -69,28 +69,30 @@ const rules: FormRules = {
     {
       required: true,
       type: 'number',
-      message: $t('common.required', [$t('system.config.category')]),
+      message: $t('common.validate.required', [$t('system.config.category')]),
       trigger: ['blur', 'change'],
     },
   ],
   name: [
     {
       required: true,
-      message: $t('common.required', [$t('system.config.name')]),
+      message: $t('common.validate.required', [$t('system.config.name')]),
       trigger: ['blur', 'input'],
     },
   ],
   key: [
     {
       required: true,
-      message: $t('common.required', [$t('system.config.key')]),
+      message: $t('common.validate.required', [$t('system.config.key')]),
       trigger: ['blur', 'input'],
     },
   ],
   componentType: [
     {
       required: true,
-      message: $t('common.required', [$t('system.config.componentType')]),
+      message: $t('common.validate.required', [
+        $t('system.config.componentType'),
+      ]),
       trigger: ['blur', 'change'],
     },
   ],

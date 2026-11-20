@@ -117,11 +117,12 @@ function handleAdd() {
       <template #toolbar-tools>
         <IconButton
           v-if="checkPermission('system:config:create')"
-          :text="$t('common.create')"
           icon="ant-design:plus-outlined"
           type="primary"
           @click="handleAdd"
-        />
+        >
+          {{ $t('common.create', [$t('system.config.entityTitle')]) }}
+        </IconButton>
       </template>
     </Grid>
     <FormModal @success="gridApi.reload()" />

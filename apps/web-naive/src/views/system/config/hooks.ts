@@ -9,7 +9,7 @@ import { $t } from '@vben/locales';
 
 import { NTag } from 'naive-ui';
 
-import { processTableActions } from '#/utils/access';
+import { getActionColumnWidth, processTableActions } from '#/utils/access';
 
 export const COMPONENT_TYPE_MAP: Record<string, { label: string; type: any }> =
   {
@@ -28,6 +28,19 @@ export const COMPONENT_TYPE_MAP: Record<string, { label: string; type: any }> =
 export function useSystemConfigColumns<T = SystemConfigApi.SystemConfig>(
   onActionClick: OnActionClickFn<T>,
 ): VxeTableGridOptions<SystemConfigApi.SystemConfig>['columns'] {
+  const actionOptions = processTableActions([
+    {
+      code: 'update',
+      perCode: 'system:config:update',
+    },
+    {
+      code: 'delete',
+      perCode: 'system:config:delete',
+      disabled: (row: any) => row.isSystem === 1,
+    },
+  ]);
+  const actionColumnWidth = getActionColumnWidth(actionOptions);
+
   return [
     {
       title: 'ID',
@@ -95,14 +108,14 @@ export function useSystemConfigColumns<T = SystemConfigApi.SystemConfig>(
       },
     },
     {
-      title: $t('common.createTime'),
+      title: $t('common.createdAt'),
       field: 'createdAt',
       width: 170,
     },
     {
       align: 'center',
       fixed: 'right',
-      width: 150,
+      width: actionColumnWidth,
       title: $t('common.operation'),
       cellRender: {
         attrs: {
@@ -110,17 +123,7 @@ export function useSystemConfigColumns<T = SystemConfigApi.SystemConfig>(
           onClick: onActionClick,
         },
         name: 'CellOperation',
-        options: processTableActions([
-          {
-            code: 'update',
-            perCode: 'system:config:update',
-          },
-          {
-            code: 'delete',
-            perCode: 'system:config:delete',
-            disabled: (row: any) => row.isSystem === 1,
-          },
-        ]),
+        options: actionOptions,
       },
     },
   ];

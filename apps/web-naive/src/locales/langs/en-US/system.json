@@ -85,6 +85,7 @@
     "remark": "Remark"
   },
   "config": {
+    "entityTitle": "Config",
     "menuTitle": "Config Items",
     "title": "Config Management",
     "category": "Category",

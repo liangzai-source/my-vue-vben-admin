@@ -41,6 +41,7 @@
   "successMessage": "{0}成功",
   "pleaseRelogin": "请重新登录",
   "validate": {
+    "required": "此项为必填项",
     "email": "请输入有效的{0}（邮箱格式）",
     "mobile": "请输入有效的{0}（中国大陆手机号）",
     "tel": "请输入有效的{0}（固定电话）",

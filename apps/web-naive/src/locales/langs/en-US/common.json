@@ -40,6 +40,7 @@
   "successMessage": "{0} successfully",
   "pleaseReloginEn": "Please log in again",
   "validate": {
+    "required": "This item is required",
     "email": "Please enter a valid email for {0}",
     "mobile": "Please enter a valid mobile number for {0}",
     "tel": "Please enter a valid landline number for {0}",
