@@ -15,6 +15,7 @@ export function useSystemConfigCategoryColumns<
   T = SystemConfigCategoryApi.SystemConfigCategory,
 >(
   onActionClick: OnActionClickFn<T>,
+  onStatusChange?: (newStatus: number, row: T) => PromiseLike<void>,
 ): VxeTableGridOptions<SystemConfigCategoryApi.SystemConfigCategory>['columns'] {
   const actionOptions = processTableActions([
     {
@@ -48,6 +49,15 @@ export function useSystemConfigCategoryColumns<
     {
       title: $t('system.configCategory.sort'),
       field: 'sort',
+      width: 100,
+    },
+    {
+      cellRender: {
+        name: 'CellSwitch',
+        attrs: { beforeChange: onStatusChange },
+      },
+      field: 'status',
+      title: $t('common.status'),
       width: 100,
     },
     {

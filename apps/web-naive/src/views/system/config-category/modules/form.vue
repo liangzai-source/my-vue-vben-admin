@@ -33,6 +33,7 @@ const defaultFormData: Partial<SystemConfigCategoryApi.SystemConfigCategory> = {
   name: '',
   code: '',
   sort: 0,
+  status: 1,
   isSystem: 0,
   remark: '',
 };
@@ -129,6 +130,15 @@ function formConfirm() {
 
       <NFormItem :label="$t('system.configCategory.sort')" path="sort">
         <NInputNumber v-model:value="formData.sort" :min="0" class="w-full" />
+      </NFormItem>
+
+      <NFormItem :label="$t('common.status')" path="status">
+        <NRadioGroup v-model:value="formData.status">
+          <NSpace>
+            <NRadio :value="1">{{ $t('common.enable') || '启用' }}</NRadio>
+            <NRadio :value="0">{{ $t('common.disable') || '禁用' }}</NRadio>
+          </NSpace>
+        </NRadioGroup>
       </NFormItem>
 
       <NFormItem :label="$t('system.configCategory.isSystem')" path="isSystem">

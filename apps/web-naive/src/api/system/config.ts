@@ -4,6 +4,7 @@ import type {
   DeleteResponse,
   ListResponse,
   UpdateResponse,
+  UpdateStatusResponse,
 } from '#/types/common';
 
 import { requestClient } from '#/api/request';
@@ -18,6 +19,7 @@ export namespace SystemConfigApi {
     options: string;
     extra: string;
     sort: number;
+    status: number;
     isSystem: number;
   }
 
@@ -59,6 +61,18 @@ export async function systemConfigUpdateApi(
   return requestClient.post<UpdateResponse>(
     `/system-config/update/${id}`,
     data,
+  );
+}
+
+/**
+ * 更新配置项状态
+ */
+export async function systemConfigUpdateStatusApi(id: number, status: number) {
+  return requestClient.post<UpdateStatusResponse>(
+    `/system-config/update-status/${id}`,
+    {
+      status,
+    },
   );
 }
 

@@ -4,6 +4,7 @@ import type {
   DeleteResponse,
   ListResponse,
   UpdateResponse,
+  UpdateStatusResponse,
 } from '#/types/common';
 
 import { requestClient } from '#/api/request';
@@ -13,6 +14,7 @@ export namespace SystemConfigCategoryApi {
     name: string;
     code: string;
     sort: number;
+    status: number;
     isSystem: number;
     remark: string;
   }
@@ -58,6 +60,21 @@ export async function systemConfigCategoryUpdateApi(
   return requestClient.post<UpdateResponse>(
     `/system-config-category/update/${id}`,
     data,
+  );
+}
+
+/**
+ * 更新配置分类状态
+ */
+export async function systemConfigCategoryUpdateStatusApi(
+  id: number,
+  status: number,
+) {
+  return requestClient.post<UpdateStatusResponse>(
+    `/system-config-category/update-status/${id}`,
+    {
+      status,
+    },
   );
 }
 

@@ -27,6 +27,7 @@ export const COMPONENT_TYPE_MAP: Record<string, { label: string; type: any }> =
 
 export function useSystemConfigColumns<T = SystemConfigApi.SystemConfig>(
   onActionClick: OnActionClickFn<T>,
+  onStatusChange?: (newStatus: number, row: T) => PromiseLike<void>,
 ): VxeTableGridOptions<SystemConfigApi.SystemConfig>['columns'] {
   const actionOptions = processTableActions([
     {
@@ -85,6 +86,15 @@ export function useSystemConfigColumns<T = SystemConfigApi.SystemConfig>(
       title: $t('system.config.sort'),
       field: 'sort',
       width: 90,
+    },
+    {
+      cellRender: {
+        name: 'CellSwitch',
+        attrs: { beforeChange: onStatusChange },
+      },
+      field: 'status',
+      title: $t('common.status'),
+      width: 100,
     },
     {
       title: $t('system.config.isSystem'),

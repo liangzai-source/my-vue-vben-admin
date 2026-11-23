@@ -55,6 +55,7 @@ const defaultFormData: Partial<SystemConfigApi.SystemConfig> = {
   options: '',
   extra: '',
   sort: 0,
+  status: 1,
   isSystem: 0,
 };
 
@@ -237,6 +238,15 @@ function formConfirm() {
 
       <NFormItem :label="$t('system.config.sort')" path="sort">
         <NInputNumber v-model:value="formData.sort" :min="0" class="w-full" />
+      </NFormItem>
+
+      <NFormItem :label="$t('common.status')" path="status">
+        <NRadioGroup v-model:value="formData.status">
+          <NSpace>
+            <NRadio :value="1">{{ $t('common.enable') || '启用' }}</NRadio>
+            <NRadio :value="0">{{ $t('common.disable') || '禁用' }}</NRadio>
+          </NSpace>
+        </NRadioGroup>
       </NFormItem>
 
       <NFormItem :label="$t('system.config.isSystem')" path="isSystem">

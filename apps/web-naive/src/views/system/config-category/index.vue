@@ -12,18 +12,32 @@ import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import {
   systemConfigCategoryDeleteApi,
   systemConfigCategoryListApi,
+  systemConfigCategoryUpdateStatusApi,
 } from '#/api/system/config-category';
 import IconButton from '#/components/common/IconButton.vue';
 import { useDefaultGridOptions } from '#/hooks/defaultGirdOptions';
+import { useStatusChange } from '#/hooks/statusConfirm';
 import { useTableAction } from '#/hooks/tableAction';
 import { checkPermission } from '#/utils/access';
 import { useSystemConfigCategoryColumns } from '#/views/system/config-category/hooks';
 import Form from '#/views/system/config-category/modules/form.vue';
 
+const { statusChangeFunc } =
+  useStatusChange<SystemConfigCategoryApi.SystemConfigCategory>(
+    systemConfigCategoryUpdateStatusApi,
+  );
+
 const [FormModal, formModalApi] = useVbenModal({
   connectedComponent: Form,
   destroyOnClose: true,
 });
+
+const statusChangeFun = async (
+  newStatus: number,
+  row: SystemConfigCategoryApi.SystemConfigCategory,
+) => {
+  await statusChangeFunc(newStatus, row);
+};
 
 const { onActionClick } =
   useTableAction<SystemConfigCategoryApi.SystemConfigCategory>({
@@ -33,7 +47,7 @@ const { onActionClick } =
 
 const getGridOptions: VxeTableGridOptions<SystemConfigCategoryApi.SystemConfigCategory> =
   useDefaultGridOptions(
-    useSystemConfigCategoryColumns(onActionClick),
+    useSystemConfigCategoryColumns(onActionClick, statusChangeFun),
     systemConfigCategoryListApi,
   );
 
