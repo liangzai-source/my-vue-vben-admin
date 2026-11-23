@@ -21,6 +21,7 @@ import {
   NSwitch,
   NTabPane,
   NTabs,
+  NTag,
 } from 'naive-ui';
 
 import { devCrudTablesApi, devCrudTableSchemaApi } from '#/api/dev/crud';
@@ -456,6 +457,66 @@ function onFormCompChange(val: string) {
     ensureUploadConfig();
   } else if (val === 'NSwitch') {
     currentField.value.listComp = 'CellSwitch';
+    ensureSwitchFieldOptions();
+  }
+}
+
+// 是否为开关类型字段 (表格组件选为 CellSwitch 或 表单组件选为 NSwitch)
+const isSwitchField = computed(() => {
+  return (
+    currentField.value.listComp === 'CellSwitch' ||
+    currentField.value.formComp === 'NSwitch'
+  );
+});
+
+// 开关固定选项：值固定为 1 和 2，只允许修改 label
+function ensureSwitchFieldOptions() {
+  const currentOpts = currentField.value.optionData || [];
+  const label1 =
+    currentOpts.find((o) => o.value === 1 || o.value === '1')?.label ||
+    currentOpts[0]?.label ||
+    '开启';
+  const label2 =
+    currentOpts.find(
+      (o) =>
+        o.value === 2 || o.value === '2' || o.value === 0 || o.value === '0',
+    )?.label ||
+    currentOpts[1]?.label ||
+    '关闭';
+  currentField.value.optionType = 1;
+  currentField.value.optionData = [
+    { label: label1, value: 1 },
+    { label: label2, value: 2 },
+  ];
+  if (
+    !currentField.value.formComp ||
+    currentField.value.formComp === 'NInput'
+  ) {
+    currentField.value.formComp = 'NSwitch';
+  }
+  const searchHolder = ensureSearchOption();
+  if (searchHolder) {
+    searchHolder.optionType = 1;
+    searchHolder.component = 'NSelect';
+    searchHolder.optionData = cloneDeep(currentField.value.optionData);
+  }
+}
+
+function onListCompChange(val: string) {
+  currentField.value.listComp = val;
+  if (val === 'CellSwitch') {
+    ensureSwitchFieldOptions();
+  }
+}
+
+function onSwitchLabelChange(index: number, val: string) {
+  const searchHolder = ensureSearchOption();
+  if (
+    searchHolder &&
+    Array.isArray(searchHolder.optionData) &&
+    searchHolder.optionData[index]
+  ) {
+    searchHolder.optionData[index].label = val;
   }
 }
 
@@ -478,12 +539,14 @@ function onNullableChange(val: boolean) {
   }
 }
 
-// 是否需要配置固定选项 (表单：单选框组、普通下拉或表格 Tag，且未开启表关联)
+// 是否需要配置固定选项 (表单：单选框组、普通下拉或表格 Tag/开关，且未开启表关联)
 const needOptions = computed(() => {
   return (
     (currentField.value.formComp === 'NRadioGroup' ||
       currentField.value.formComp === 'NSelect' ||
       currentField.value.formComp === 'NSelectMultiple' ||
+      currentField.value.formComp === 'NSwitch' ||
+      currentField.value.listComp === 'CellSwitch' ||
       currentField.value.listComp === 'NTag') &&
     !currentField.value.relation?.enable
   );
@@ -523,6 +586,7 @@ function ensureOptionTarget(target: 'field' | 'search') {
 }
 
 function addOption(target: 'field' | 'search' = 'field') {
+  if (isSwitchField.value) return;
   const holder = ensureOptionTarget(target);
   if (!holder) return;
   const isString = currentField.value.goType === 'string';
@@ -537,6 +601,7 @@ function addOption(target: 'field' | 'search' = 'field') {
 }
 
 function removeOption(index: number, target: 'field' | 'search' = 'field') {
+  if (isSwitchField.value) return;
   const holder = ensureOptionTarget(target);
   if (holder && Array.isArray(holder.optionData)) {
     holder.optionData.splice(index, 1);
@@ -559,6 +624,7 @@ function onOptionValueChange(
   val: string,
   target: 'field' | 'search' = 'field',
 ) {
+  if (isSwitchField.value) return;
   const holder = ensureOptionTarget(target);
   const optionItem = holder?.optionData?.[index];
   if (!optionItem) return;
@@ -576,7 +642,7 @@ function applyPresetOptions(
   if (type === 'status') {
     holder.optionData = [
       { label: '启用', value: isString ? '1' : 1 },
-      { label: '禁用', value: isString ? '0' : 0 },
+      { label: '禁用', value: isString ? '2' : 2 },
     ];
   } else if (type === 'gender') {
     holder.optionData = [
@@ -672,6 +738,12 @@ const [Modal, modalApi] = useVbenModal<{
             tableName: currentTableName.value,
             labelField: currentLabelField.value,
           });
+        }
+        if (
+          currentField.value.listComp === 'CellSwitch' ||
+          currentField.value.formComp === 'NSwitch'
+        ) {
+          ensureSwitchFieldOptions();
         }
         if (currentField.value.switchConfirm === undefined) {
           currentField.value.switchConfirm = true;
@@ -856,6 +928,7 @@ const [Modal, modalApi] = useVbenModal<{
                 <NSelect
                   v-model:value="currentField.listComp"
                   :options="listCompOptions"
+                  @update:value="onListCompChange"
                 />
               </NFormItemGi>
 
@@ -995,7 +1068,12 @@ const [Modal, modalApi] = useVbenModal<{
                           未开启表关联时，为搜索下拉提供可选项
                         </span>
                       </div>
-                      <NSpace size="small">
+                      <template v-if="isSwitchField">
+                        <NTag type="info" size="small">
+                          开关固定选项：值固定为 1 和 2，仅可自定义文字
+                        </NTag>
+                      </template>
+                      <NSpace v-else size="small">
                         <NButton
                           v-if="
                             currentField.optionData &&
@@ -1014,7 +1092,7 @@ const [Modal, modalApi] = useVbenModal<{
                           type="primary"
                           @click="applyPresetOptions('status', 'search')"
                         >
-                          预设: 状态(1/0)
+                          预设: 状态(1/2)
                         </NButton>
                         <NButton
                           size="tiny"
@@ -1072,6 +1150,7 @@ const [Modal, modalApi] = useVbenModal<{
                           />
                           <NInput
                             :value="String(opt.value ?? '')"
+                            :disabled="isSwitchField"
                             size="small"
                             placeholder="存储值 (Value)，如 1"
                             @update:value="
@@ -1081,6 +1160,7 @@ const [Modal, modalApi] = useVbenModal<{
                           />
                         </div>
                         <NButton
+                          v-if="!isSwitchField"
                           size="tiny"
                           quaternary
                           type="error"
@@ -1241,14 +1321,19 @@ const [Modal, modalApi] = useVbenModal<{
                         配置单选或下拉的选项条目
                       </span>
                     </div>
-                    <NSpace size="small">
+                    <template v-if="isSwitchField">
+                      <NTag type="info" size="small">
+                        开关固定选项：值固定为 1 和 2，仅可自定义文字
+                      </NTag>
+                    </template>
+                    <NSpace v-else size="small">
                       <NButton
                         size="tiny"
                         quaternary
                         type="primary"
                         @click="applyPresetOptions('status')"
                       >
-                        预设: 状态(1/0)
+                        预设: 状态(1/2)
                       </NButton>
                       <NButton
                         size="tiny"
@@ -1303,9 +1388,16 @@ const [Modal, modalApi] = useVbenModal<{
                           v-model:value="opt.label"
                           size="small"
                           placeholder="选项标签 (Label)，如 启用"
+                          @update:value="
+                            (val) => {
+                              if (isSwitchField)
+                                onSwitchLabelChange(optIdx, val);
+                            }
+                          "
                         />
                         <NInput
                           :value="String(opt.value ?? '')"
+                          :disabled="isSwitchField"
                           size="small"
                           placeholder="存储值 (Value)，如 1"
                           @update:value="
@@ -1314,6 +1406,7 @@ const [Modal, modalApi] = useVbenModal<{
                         />
                       </div>
                       <NButton
+                        v-if="!isSwitchField"
                         size="tiny"
                         quaternary
                         type="error"

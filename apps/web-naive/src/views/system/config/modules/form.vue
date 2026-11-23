@@ -24,6 +24,7 @@ import {
   systemConfigUpdateApi,
 } from '#/api/system/config';
 import { systemConfigCategoryAllApi } from '#/api/system/config-category';
+import StatusRadios from '#/components/common/StatusRadios.vue';
 import { handleFormError, isEmpty, showFormMessage } from '#/utils/tools';
 
 const emits = defineEmits<{
@@ -241,12 +242,7 @@ function formConfirm() {
       </NFormItem>
 
       <NFormItem :label="$t('common.status')" path="status">
-        <NRadioGroup v-model:value="formData.status">
-          <NSpace>
-            <NRadio :value="1">{{ $t('common.enable') || '启用' }}</NRadio>
-            <NRadio :value="0">{{ $t('common.disable') || '禁用' }}</NRadio>
-          </NSpace>
-        </NRadioGroup>
+        <StatusRadios v-model:status="formData.status" />
       </NFormItem>
 
       <NFormItem :label="$t('system.config.isSystem')" path="isSystem">

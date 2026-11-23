@@ -530,20 +530,9 @@ setupVbenVxeTable({
     vxeUI.renderer.add('CellSwitch', {
       renderTableDefault({ attrs, props }, { column, row }) {
         const loadingKey = `__loading_${column.field}`;
-        const val = row[column.field];
-        let defaultUncheckedValue: boolean | number | string = 2;
-        let defaultCheckedValue: boolean | number | string = 1;
-        if (typeof val === 'boolean') {
-          defaultCheckedValue = true;
-          defaultUncheckedValue = false;
-        } else if (val === 0 || val === '0') {
-          defaultUncheckedValue = typeof val === 'number' ? 0 : '0';
-          defaultCheckedValue = typeof val === 'number' ? 1 : '1';
-        }
-
         const baseSwitchProps: SwitchProps = {
-          checkedValue: defaultCheckedValue,
-          uncheckedValue: defaultUncheckedValue,
+          checkedValue: 1,
+          uncheckedValue: 2,
           rubberBand: false,
           loading: row[loadingKey] ?? false,
           value: row[column.field],

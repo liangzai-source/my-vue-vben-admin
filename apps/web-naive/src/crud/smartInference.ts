@@ -57,8 +57,10 @@ function isBoolOptionSet(options: Enum[]): boolean {
     (opt) =>
       opt.value === 0 ||
       opt.value === 1 ||
+      opt.value === 2 ||
       opt.value === '0' ||
-      opt.value === '1',
+      opt.value === '1' ||
+      opt.value === '2',
   );
 }
 
@@ -138,13 +140,11 @@ export function smartInferField(
     f.formComp = 'NSwitch';
     f.switchConfirm = true;
     f.width = 100;
-    const switchOpts =
-      optLen === 2
-        ? f.optionData
-        : [
-            { label: '开启', value: 1 },
-            { label: '关闭', value: 0 },
-          ];
+    const switchOpts = [
+      { label: f.optionData?.[0]?.label || '开启', value: 1 },
+      { label: f.optionData?.[1]?.label || '关闭', value: 2 },
+    ];
+    f.optionData = switchOpts;
     if (!f.searchData || f.searchData.length === 0) {
       f.searchData = [
         {
@@ -181,6 +181,10 @@ export function smartInferField(
       f.formComp = 'NSwitch';
       f.switchConfirm = true;
       f.width = 100;
+      f.optionData = [
+        { label: f.optionData?.[0]?.label || '开启', value: 1 },
+        { label: f.optionData?.[1]?.label || '关闭', value: 2 },
+      ];
     } else {
       f.listComp = 'NTag';
       f.formComp = optLen > 0 && optLen <= 4 ? 'NRadioGroup' : 'NSelect';
