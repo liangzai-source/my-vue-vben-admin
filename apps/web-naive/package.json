@@ -26,6 +26,7 @@
     "#/*": "./src/*"
   },
   "dependencies": {
+    "@vben-core/typings": "workspace:*",
     "@vben-core/menu-ui": "workspace:*",
     "@vben-core/shadcn-ui": "workspace:*",
     "@vben/access": "workspace:*",
