@@ -3,7 +3,7 @@ import type { SelectOption } from 'naive-ui';
 
 import type { Basic, Schema } from '#/crud/types';
 
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import { $t } from '@vben/locales';
 
@@ -25,34 +25,71 @@ import { message } from '#/adapter/naive';
 import { devCrudTablesApi, devCrudTableSchemaApi } from '#/api/dev/crud';
 import { useModelProxy } from '#/utils/tools';
 
+const props = withDefaults(
+  defineProps<{
+    tableOptions?: SelectOption[];
+    loadingTables?: boolean;
+  }>(),
+  {
+    tableOptions: () => [],
+    loadingTables: false,
+  },
+);
+
 const emit = defineEmits<{
   (e: 'tableLoaded', schema: Schema): void;
+  (e: 'reloadTables'): void;
 }>();
 
 const modelValue = defineModel<Basic>({ required: true });
 const formData = useModelProxy<Basic>(modelValue);
 
-const hasTableOptions = ref<SelectOption[]>([]);
-const loadingTables = ref(false);
+const internalTableOptions = ref<SelectOption[]>([]);
+const internalLoadingTables = ref(false);
+
+const currentTableOptions = computed(() =>
+  props.tableOptions && props.tableOptions.length > 0
+    ? props.tableOptions
+    : internalTableOptions.value,
+);
+
+const isLoadingTables = computed(
+  () => props.loadingTables || internalLoadingTables.value,
+);
+
+// 仅当当前表名确实匹配已有数据库表时，下拉框才进行回显，避免手动输入新表名时被强行显示在下拉框中
+const selectedTable = computed(() => {
+  if (!formData.tableName) return null;
+  const match = currentTableOptions.value.some(
+    (item) => item.value === formData.tableName,
+  );
+  return match ? formData.tableName : null;
+});
 
 async function fetchTables() {
-  loadingTables.value = true;
+  if (props.tableOptions && props.tableOptions.length > 0) return;
+  internalLoadingTables.value = true;
   try {
     const list = await devCrudTablesApi();
-    hasTableOptions.value = list.map((item) => ({
+    internalTableOptions.value = list.map((item) => ({
       label: item.label,
       value: item.value,
     }));
   } catch (error: any) {
     message.error(error?.message || '获取数据库表列表失败');
   } finally {
-    loadingTables.value = false;
+    internalLoadingTables.value = false;
   }
 }
 
 async function onSelectTable(tableName: null | string) {
-  if (!tableName) return;
-  loadingTables.value = true;
+  if (!tableName) {
+    if (selectedTable.value && formData.tableName === selectedTable.value) {
+      formData.tableName = '';
+    }
+    return;
+  }
+  internalLoadingTables.value = true;
   try {
     const fullSchema = await devCrudTableSchemaApi(tableName);
     emit('tableLoaded', fullSchema);
@@ -62,7 +99,7 @@ async function onSelectTable(tableName: null | string) {
   } catch (error: any) {
     message.error(error?.message || '解析数据表结构失败');
   } finally {
-    loadingTables.value = false;
+    internalLoadingTables.value = false;
   }
 }
 
@@ -78,22 +115,22 @@ onMounted(() => {
         <NFormItemGi :span="12" :label="$t('crud.label.basic.hasTable')">
           <div class="flex items-center gap-2 w-full">
             <NSelect
-              :value="formData.tableName || null"
+              :value="selectedTable"
               filterable
               clearable
-              :loading="loadingTables"
+              :loading="isLoadingTables"
               :placeholder="$t('crud.label.basic.hasTable')"
-              :options="hasTableOptions"
+              :options="currentTableOptions"
               class="flex-1"
               @update:value="onSelectTable"
             />
-            <NTooltip v-if="formData.tableName" trigger="hover">
+            <NTooltip v-if="selectedTable" trigger="hover">
               <template #trigger>
                 <NButton
                   size="small"
                   quaternary
-                  :loading="loadingTables"
-                  @click="onSelectTable(formData.tableName)"
+                  :loading="isLoadingTables"
+                  @click="onSelectTable(selectedTable)"
                 >
                   <template #icon>
                     <VbenIcon icon="carbon:renew" />

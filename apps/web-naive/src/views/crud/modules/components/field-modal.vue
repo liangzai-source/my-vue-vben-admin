@@ -22,6 +22,7 @@ import {
   NTabPane,
   NTabs,
   NTag,
+  NTooltip,
 } from 'naive-ui';
 
 import { devCrudTablesApi, devCrudTableSchemaApi } from '#/api/dev/crud';

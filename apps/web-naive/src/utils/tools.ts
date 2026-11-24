@@ -5,7 +5,7 @@ import type { ModelRef } from 'vue';
 
 import type { Recordable } from '@vben/types';
 
-import { $t } from '@vben/locales';
+import { $t, $te } from '@vben/locales';
 import { useAccessStore, useUserStore } from '@vben/stores';
 
 import { dialog, message } from '#/adapter/naive';
@@ -79,8 +79,8 @@ export function getByPath(
     if (result === null || result === undefined) break;
     result = result[key];
   }
-
-  return $t(safeToString(result, defaultValue));
+  const str = safeToString(result, defaultValue);
+  return $te(str) ? $t(str) : defaultValue;
 }
 
 /**

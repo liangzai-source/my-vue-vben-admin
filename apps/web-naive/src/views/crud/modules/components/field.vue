@@ -25,13 +25,18 @@ import { inferSelfLabelField, smartInferSchema } from '#/crud/smartInference';
 
 import FieldModalComponent from './field-modal.vue';
 
-const props = defineProps<{
-  tableName?: string;
-}>();
-
-const hasExistingTable = computed(() =>
-  Boolean(props.tableName && props.tableName.trim()),
+const props = withDefaults(
+  defineProps<{
+    tableName?: string;
+    isExistingTable?: boolean;
+  }>(),
+  {
+    tableName: '',
+    isExistingTable: false,
+  },
 );
+
+const hasExistingTable = computed(() => Boolean(props.isExistingTable));
 
 const fields = defineModel<Field[]>({ default: () => [] });
 const syncing = ref(false);

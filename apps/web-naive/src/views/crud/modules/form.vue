@@ -1,7 +1,9 @@
 <script setup lang="ts">
+import type { SelectOption } from 'naive-ui';
+
 import type { Schema } from '#/crud/types';
 
-import { ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 
 import { useVbenDrawer, useVbenModal } from '@vben/common-ui';
 
@@ -12,6 +14,7 @@ import {
   devCrudGenerateApi,
   devCrudPreviewApi,
   devCrudSaveApi,
+  devCrudTablesApi,
 } from '#/api/dev/crud';
 import { createDefaultSchema } from '#/crud/default';
 import { smartInferSchema } from '#/crud/smartInference';
@@ -32,6 +35,34 @@ const previewLoading = ref(false);
 const saveLoading = ref(false);
 const generateLoading = ref(false);
 
+const dbTableOptions = ref<SelectOption[]>([]);
+const dbTablesLoading = ref(false);
+
+async function loadDbTables() {
+  dbTablesLoading.value = true;
+  try {
+    const list = await devCrudTablesApi();
+    dbTableOptions.value = (list || []).map((item) => ({
+      label: item.label,
+      value: item.value,
+    }));
+  } catch (error: any) {
+    message.error(error?.message || '获取数据库表列表失败');
+  } finally {
+    dbTablesLoading.value = false;
+  }
+}
+
+const isExistingTable = computed(() => {
+  const current = formData.value?.basicConfig?.tableName?.trim();
+  if (!current) return false;
+  return dbTableOptions.value.some((item) => item.value === current);
+});
+
+onMounted(() => {
+  loadDbTables();
+});
+
 const [PreviewModal, previewModalApi] = useVbenModal({
   connectedComponent: PreviewModalComponent,
   destroyOnClose: true,
@@ -46,6 +77,9 @@ const [Drawer, drawerApi] = useVbenDrawer<Schema>({
       formData.value = data;
     } else if (isOpen) {
       formData.value = createDefaultSchema();
+    }
+    if (isOpen) {
+      loadDbTables();
     }
   },
 });
@@ -289,6 +323,9 @@ function handlePreviewSuccess() {
       <NTabPane name="基本信息" display-directive="show:lazy">
         <BasicForm
           v-model="formData.basicConfig"
+          :table-options="dbTableOptions"
+          :loading-tables="dbTablesLoading"
+          @reload-tables="loadDbTables"
           @table-loaded="onTableLoaded"
         />
       </NTabPane>
@@ -296,6 +333,7 @@ function handlePreviewSuccess() {
         <FieldForm
           v-model="formData.fieldsConfig"
           :table-name="formData.basicConfig.tableName"
+          :is-existing-table="isExistingTable"
         />
       </NTabPane>
       <NTabPane name="路由信息" display-directive="show:lazy">

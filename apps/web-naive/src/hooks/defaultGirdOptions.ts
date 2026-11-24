@@ -19,9 +19,11 @@ export function useDefaultGridOptions<T>(
   return {
     columns,
     height: 'auto',
+    cellConfig: {
+      height: 48,
+    },
     rowConfig: {
       isHover: true,
-      height: 48,
     },
     proxyConfig: {
       ajax: {
