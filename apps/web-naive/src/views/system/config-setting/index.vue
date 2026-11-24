@@ -54,6 +54,40 @@ function parseJson(str: string, defaultVal: any = null) {
   }
 }
 
+// 检查配置项是否满足显示条件
+function isItemVisible(item: SystemConfigApi.SystemConfig): boolean {
+  const extra = parseJson(item.extra);
+  if (!extra || !extra.show) return true;
+
+  const { key, op = 'eq', value } = extra.show;
+  if (!key) return true;
+
+  const currentVal = formValues[key];
+  const currStr =
+    currentVal === null || currentVal === undefined ? '' : String(currentVal);
+  const targetStr = value === null || value === undefined ? '' : String(value);
+
+  if (op === 'eq' || op === '=') {
+    return currStr === targetStr;
+  }
+  if (op === 'neq' || op === '!=') {
+    return currStr !== targetStr;
+  }
+  if (op === 'in') {
+    if (Array.isArray(value)) {
+      return value.map(String).includes(currStr);
+    }
+    return currStr === targetStr;
+  }
+  return true;
+}
+
+// 检查某个分类下是否有可见的配置项
+function hasVisibleItems(cat: SystemConfigApi.SettingCategory): boolean {
+  if (!cat.items || cat.items.length === 0) return false;
+  return cat.items.some((item) => isItemVisible(item));
+}
+
 // 加载配置
 async function loadSettings() {
   loading.value = true;
@@ -126,10 +160,10 @@ async function handleSave() {
           >
             <div class="py-4 max-w-4xl">
               <div
-                v-if="!cat.items || cat.items.length === 0"
+                v-if="!hasVisibleItems(cat)"
                 class="py-12 text-center text-gray-400"
               >
-                当前分类暂无配置项，请在【数据维护 -> 配置管理】中添加。
+                当前分类暂无可配置项。
               </div>
 
               <NForm
@@ -141,6 +175,7 @@ async function handleSave() {
                 <NGrid :cols="24" :x-gap="16" :y-gap="12">
                   <template v-for="item in cat.items" :key="item.id">
                     <NFormItemGi
+                      v-if="isItemVisible(item)"
                       :span="
                         item.componentType === 'editor' ||
                         item.componentType === 'textarea'
