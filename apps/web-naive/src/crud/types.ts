@@ -105,6 +105,21 @@ export interface Field extends OptionSource {
   upload?: UploadConfig; // 上传组件详细配置
   // 表关联配置
   relation?: RelationConfig;
+  // 表单动态显示条件
+  showWhen?: FieldShowWhen;
+}
+
+export interface FieldShowCondition {
+  field: string; // 依赖的表单字段名（如 "type"）
+  op: 'eq' | 'in' | 'ne' | 'notIn'; // 比较关系：等于 / 不等于 / 包含 / 不包含
+  value: any; // 期望匹配的值
+}
+
+export interface FieldShowWhen {
+  enable: boolean; // 是否启用显示条件
+  logic: 'and' | 'or'; // 多条件组合逻辑：and (且) / or (或)
+  conditions: FieldShowCondition[]; // 条件列表
+  clearOnHide: boolean; // 隐藏时是否自动清空字段数据
 }
 
 export interface UploadConfig {

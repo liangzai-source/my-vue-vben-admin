@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { SelectOption } from 'naive-ui';
 
-import type { Field, SearchOption } from '#/crud/types';
+import type { Field, FieldShowCondition, SearchOption } from '#/crud/types';
 
 import { computed, ref } from 'vue';
 
@@ -18,6 +18,8 @@ import {
   NGrid,
   NInput,
   NInputNumber,
+  NRadioButton,
+  NRadioGroup,
   NSelect,
   NSpace,
   NSwitch,
@@ -769,7 +771,143 @@ function onSearchCompChange(val: string) {
   }
 }
 
+const allFields = ref<Field[]>([]);
+
+const condOpOptions: SelectOption[] = [
+  { label: '等于 (==)', value: 'eq' },
+  { label: '不等于 (!=)', value: 'ne' },
+  { label: '包含于 (in)', value: 'in' },
+  { label: '不包含于 (notIn)', value: 'notIn' },
+];
+
+const availableDepFields = computed(() => {
+  const selfKey = (
+    currentField.value.tsName ||
+    currentField.value.name ||
+    ''
+  ).toLowerCase();
+  return allFields.value
+    .filter((f) => {
+      const k = (f.tsName || f.name || '').toLowerCase();
+      return Boolean(k && k !== selfKey && f.editable);
+    })
+    .map((f) => ({
+      label: `${f.label || f.name} (${f.tsName || f.name})`,
+      value: f.tsName || f.name,
+    }));
+});
+
+function getDepField(fieldName: string): Field | undefined {
+  const lower = (fieldName || '').toLowerCase();
+  return allFields.value.find(
+    (f) => (f.tsName || f.name || '').toLowerCase() === lower,
+  );
+}
+
+function getDepFieldOptions(fieldName: string) {
+  const f = getDepField(fieldName);
+  if (Array.isArray(f?.optionData) && f.optionData.length > 0) {
+    return f.optionData.map((opt) => ({
+      label: opt.label,
+      value: opt.value,
+    }));
+  }
+  return [];
+}
+
+function ensureShowWhen() {
+  if (!currentField.value.showWhen) {
+    currentField.value.showWhen = {
+      enable: false,
+      logic: 'and',
+      conditions: [],
+      clearOnHide: true,
+    };
+  }
+  if (!Array.isArray(currentField.value.showWhen.conditions)) {
+    currentField.value.showWhen.conditions = [];
+  }
+}
+
+function onToggleShowWhen(val: boolean) {
+  ensureShowWhen();
+  if (currentField.value.showWhen) {
+    currentField.value.showWhen.enable = val;
+    if (val && currentField.value.showWhen.conditions.length === 0) {
+      addCondition();
+    }
+  }
+}
+
+function addCondition() {
+  ensureShowWhen();
+  const defaultField = availableDepFields.value[0]?.value || '';
+  const depOpts = getDepFieldOptions(defaultField);
+  currentField.value.showWhen?.conditions.push({
+    field: defaultField,
+    op: 'eq',
+    value: depOpts.length > 0 ? depOpts[0]?.value : undefined,
+  });
+}
+
+function removeCondition(index: number) {
+  if (currentField.value.showWhen?.conditions) {
+    currentField.value.showWhen.conditions.splice(index, 1);
+    if (currentField.value.showWhen.conditions.length === 0) {
+      currentField.value.showWhen.enable = false;
+    }
+  }
+}
+
+function onCondFieldChange(cond: FieldShowCondition) {
+  const depOpts = getDepFieldOptions(cond.field);
+  if (depOpts.length > 0) {
+    if (cond.op === 'in' || cond.op === 'notIn') {
+      cond.value = depOpts[0] ? [depOpts[0].value] : [];
+    } else {
+      cond.value = depOpts[0]?.value;
+    }
+  } else {
+    cond.value = undefined;
+  }
+}
+
+function onCondOpChange(cond: FieldShowCondition) {
+  if (cond.op === 'in' || cond.op === 'notIn') {
+    if (!Array.isArray(cond.value)) {
+      cond.value =
+        cond.value !== undefined && cond.value !== null && cond.value !== ''
+          ? [cond.value]
+          : [];
+    }
+  } else if (Array.isArray(cond.value)) {
+    cond.value = cond.value[0];
+  }
+}
+
+function formatCondInputValue(val: any): string {
+  if (val === undefined || val === null) return '';
+  return String(val);
+}
+
+function onCondInputValueChange(cond: FieldShowCondition, val: string) {
+  if (cond.op === 'in' || cond.op === 'notIn') {
+    cond.value = val
+      ? val
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+          .map((s) => (/^-?\d+$/.test(s) ? Number(s) : s))
+      : [];
+  } else if (/^-?\d+$/.test(val.trim())) {
+    cond.value = Number(val.trim());
+  } else {
+    cond.value = val;
+  }
+}
+
 const [Modal, modalApi] = useVbenModal<{
+  allFields?: Field[];
   field: Field;
   index: number;
   labelField?: string;
@@ -779,6 +917,23 @@ const [Modal, modalApi] = useVbenModal<{
     const saved = cloneDeep(currentField.value);
     if (!saved.nullable) {
       saved.required = true;
+    }
+    // 表单动态显示条件规范化：未开启或无有效条件时移除
+    if (saved.showWhen) {
+      if (
+        !saved.showWhen.enable ||
+        !saved.showWhen.conditions ||
+        saved.showWhen.conditions.length === 0
+      ) {
+        delete (saved as any).showWhen;
+      } else {
+        saved.showWhen.conditions = saved.showWhen.conditions.filter((c) =>
+          Boolean(c.field),
+        );
+        if (saved.showWhen.conditions.length === 0) {
+          delete (saved as any).showWhen;
+        }
+      }
     }
     // 未开启独立自定义时，确保搜索项选项与字段通用选项保持完全同步
     if (!customSearchOptions.value && saved.searchData?.[0]) {
@@ -802,6 +957,7 @@ const [Modal, modalApi] = useVbenModal<{
       const payload = modalApi.getData();
       currentTableName.value = payload?.tableName || '';
       currentLabelField.value = payload?.labelField || 'name';
+      allFields.value = payload?.allFields || [];
       if (payload && payload.field) {
         currentField.value = cloneDeep(payload.field);
         if (!Array.isArray(currentField.value.optionData)) {
@@ -809,6 +965,17 @@ const [Modal, modalApi] = useVbenModal<{
         }
         currentField.value.isFile = Boolean(currentField.value.isFile);
         editingIndex.value = payload.index;
+        if (currentField.value.showWhen) {
+          if (!Array.isArray(currentField.value.showWhen.conditions)) {
+            currentField.value.showWhen.conditions = [];
+          }
+          if (currentField.value.showWhen.clearOnHide === undefined) {
+            currentField.value.showWhen.clearOnHide = true;
+          }
+          if (!currentField.value.showWhen.logic) {
+            currentField.value.showWhen.logic = 'and';
+          }
+        }
 
         // 搜索选项与字段通用选项初始化对齐
         const searchHolder = currentField.value.searchData?.[0];
@@ -1427,6 +1594,160 @@ const [Modal, modalApi] = useVbenModal<{
                   filterable
                   placeholder="可多选常用正则规则（非必填字段仅在填写值时触发正则校验）"
                 />
+              </NFormItemGi>
+
+              <!-- 表单动态显示条件 (v-if) -->
+              <NFormItemGi :span="24" label="表单显示条件">
+                <div
+                  class="flex flex-col gap-3 w-full border border-border/70 rounded-lg p-3 bg-muted/20"
+                >
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <NSwitch
+                        :value="currentField.showWhen?.enable ?? false"
+                        @update:value="onToggleShowWhen"
+                      />
+                      <span class="text-sm font-medium">
+                        启用动态显示条件 (v-if)
+                      </span>
+                      <span class="text-xs text-muted-foreground">
+                        默认一直显示；开启后可配置根据其他表单字段值联动显隐
+                      </span>
+                    </div>
+                    <div
+                      v-if="currentField.showWhen?.enable"
+                      class="flex items-center gap-2"
+                    >
+                      <NSwitch
+                        v-model:value="currentField.showWhen.clearOnHide"
+                      />
+                      <span class="text-xs text-muted-foreground">
+                        隐藏时清空字段值
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- 条件明细列表 -->
+                  <template v-if="currentField.showWhen?.enable">
+                    <div
+                      v-if="availableDepFields.length === 0"
+                      class="text-xs text-amber-500 py-1"
+                    >
+                      暂无其他可用表单字段供联动
+                    </div>
+                    <template v-else>
+                      <div
+                        v-if="currentField.showWhen.conditions.length > 1"
+                        class="flex items-center gap-2 pt-1 pb-1"
+                      >
+                        <span class="text-xs text-muted-foreground">
+                          多条件组合逻辑：
+                        </span>
+                        <NRadioGroup
+                          v-model:value="currentField.showWhen.logic"
+                          size="small"
+                        >
+                          <NRadioButton value="and">
+                            且 (AND - 全部满足)
+                          </NRadioButton>
+                          <NRadioButton value="or">
+                            或 (OR - 任一满足)
+                          </NRadioButton>
+                        </NRadioGroup>
+                      </div>
+
+                      <div class="flex flex-col gap-2">
+                        <div
+                          v-for="(cond, cIdx) in currentField.showWhen
+                            .conditions"
+                          :key="cIdx"
+                          class="flex items-center gap-2 bg-background p-2 rounded border border-border/60"
+                        >
+                          <span
+                            class="text-xs font-mono text-muted-foreground shrink-0 w-6 text-center"
+                          >
+                            #{{ cIdx + 1 }}
+                          </span>
+                          <!-- 依赖字段选择 (固定宽度外层容器，避免内部 NSelect 默认 100% 撑爆整行) -->
+                          <div class="w-44 shrink-0" style="width: 176px">
+                            <NSelect
+                              v-model:value="cond.field"
+                              :options="availableDepFields"
+                              size="small"
+                              filterable
+                              placeholder="选择依赖字段"
+                              @update:value="() => onCondFieldChange(cond)"
+                            />
+                          </div>
+                          <!-- 比较关系 (固定宽度外层容器) -->
+                          <div class="w-36 shrink-0" style="width: 144px">
+                            <NSelect
+                              v-model:value="cond.op"
+                              :options="condOpOptions"
+                              size="small"
+                              @update:value="() => onCondOpChange(cond)"
+                            />
+                          </div>
+                          <!-- 期望匹配值控件: 占满剩余全部空间 -->
+                          <div class="flex-1 min-w-0">
+                            <!-- 若依赖字段配置了选项，直接渲染下拉项选择（单选/多选） -->
+                            <NSelect
+                              v-if="getDepFieldOptions(cond.field).length > 0"
+                              v-model:value="cond.value"
+                              :options="getDepFieldOptions(cond.field)"
+                              :multiple="
+                                cond.op === 'in' || cond.op === 'notIn'
+                              "
+                              size="small"
+                              clearable
+                              filterable
+                              placeholder="选择匹配选项"
+                            />
+                            <!-- 否则作为普通输入框 -->
+                            <NInput
+                              v-else
+                              :value="formatCondInputValue(cond.value)"
+                              size="small"
+                              placeholder="输入匹配值（多值逗号隔开）"
+                              @update:value="
+                                (val) => onCondInputValueChange(cond, val)
+                              "
+                            />
+                          </div>
+                          <!-- 删除单条条件 -->
+                          <NButton
+                            quaternary
+                            circle
+                            type="error"
+                            size="small"
+                            class="shrink-0"
+                            title="删除条件"
+                            @click="removeCondition(cIdx)"
+                          >
+                            <template #icon>
+                              <VbenIcon
+                                icon="lucide:trash-2"
+                                class="size-3.5"
+                              />
+                            </template>
+                          </NButton>
+                        </div>
+                      </div>
+
+                      <div class="pt-1">
+                        <NButton
+                          dashed
+                          block
+                          size="small"
+                          type="primary"
+                          @click="addCondition"
+                        >
+                          + 添加显示条件
+                        </NButton>
+                      </div>
+                    </template>
+                  </template>
+                </div>
               </NFormItemGi>
 
               <!-- 上传组件专属配置 (FileUpload / isFile) -->

@@ -137,6 +137,7 @@ function onEditField(field: Field, index: number) {
       index,
       tableName: props.tableName,
       labelField: inferSelfLabelField(fields.value),
+      allFields: fields.value,
     })
     .open();
 }
