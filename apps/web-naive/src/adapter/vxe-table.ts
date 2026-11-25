@@ -528,11 +528,32 @@ setupVbenVxeTable({
     });
 
     vxeUI.renderer.add('CellSwitch', {
-      renderTableDefault({ attrs, props }, { column, row }) {
+      renderTableDefault({ attrs, props, options }, { column, row }) {
         const loadingKey = `__loading_${column.field}`;
+        const switchOptions = options ?? attrs?.options ?? props?.options;
+        const checkedItem =
+          switchOptions?.find(
+            (item: any) =>
+              item.value === 1 || item.value === '1' || item.value === true,
+          ) ?? switchOptions?.[0];
+        const uncheckedItem =
+          switchOptions?.find(
+            (item: any) =>
+              item.value === 2 ||
+              item.value === '2' ||
+              item.value === 0 ||
+              item.value === '0' ||
+              item.value === false,
+          ) ?? switchOptions?.[1];
+
+        const checkedValue = checkedItem?.value ?? 1;
+        const uncheckedValue = uncheckedItem?.value ?? 2;
+        const checkedLabel = checkedItem?.label ?? $t('common.enabled');
+        const uncheckedLabel = uncheckedItem?.label ?? $t('common.disabled');
+
         const baseSwitchProps: SwitchProps = {
-          checkedValue: 1,
-          uncheckedValue: 2,
+          checkedValue,
+          uncheckedValue,
           rubberBand: false,
           loading: row[loadingKey] ?? false,
           value: row[column.field],
@@ -573,8 +594,8 @@ setupVbenVxeTable({
 
         // 渲染 NSwitch
         return h(Switch, finallyProps, {
-          checked: () => $t('common.enabled'),
-          unchecked: () => $t('common.disabled'),
+          checked: () => checkedLabel,
+          unchecked: () => uncheckedLabel,
         });
       },
     });

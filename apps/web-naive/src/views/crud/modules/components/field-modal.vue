@@ -7,6 +7,8 @@ import { computed, ref } from 'vue';
 
 import { useVbenModal } from '@vben/common-ui';
 
+import { VbenIcon } from '@vben-core/shadcn-ui';
+
 import cloneDeep from 'lodash.clonedeep';
 import {
   NAlert,
@@ -25,6 +27,7 @@ import {
   NTooltip,
 } from 'naive-ui';
 
+import { message } from '#/adapter/naive';
 import { devCrudTablesApi, devCrudTableSchemaApi } from '#/api/dev/crud';
 import { createDefaultField } from '#/crud/default';
 import {
@@ -49,6 +52,7 @@ const goTypeOptions: SelectOption[] = [
   { label: 'string (字符串)', value: 'string' },
   { label: 'int64 (大整数)', value: 'int64' },
   { label: 'int (标准整数)', value: 'int' },
+  { label: 'uint8 (微整数/开关状态)', value: 'uint8' },
   { label: 'float64 (浮点数)', value: 'float64' },
   { label: 'bool (布尔值)', value: 'bool' },
   { label: 'time.Time (时间日期)', value: 'time.Time' },
@@ -338,11 +342,14 @@ function onGoTypeChange(val: string) {
       currentField.value.formComp = 'NInputNumber';
       break;
     }
+    case 'uint8':
     case 'bool': {
-      currentField.value.tsType = 'boolean';
-      currentField.value.gormType = 'tinyint(1)';
+      currentField.value.goType = 'uint8';
+      currentField.value.tsType = 'number';
+      currentField.value.gormType = 'tinyint';
       currentField.value.formComp = 'NSwitch';
       currentField.value.listComp = 'CellSwitch';
+      ensureSwitchFieldOptions();
       break;
     }
     case 'time.Time': {
@@ -489,6 +496,15 @@ function ensureSwitchFieldOptions() {
     { label: label1, value: 1 },
     { label: label2, value: 2 },
   ];
+  currentField.value.goType = 'uint8';
+  currentField.value.tsType = 'number';
+  if (
+    !currentField.value.gormType ||
+    currentField.value.gormType === 'tinyint(1)' ||
+    currentField.value.gormType === 'tinyint'
+  ) {
+    currentField.value.gormType = 'tinyint';
+  }
   if (
     !currentField.value.formComp ||
     currentField.value.formComp === 'NInput'
@@ -562,6 +578,17 @@ const needSearchOptions = computed(() => {
   );
 });
 
+// 搜索选项是否单独自定义（默认 false，继承字段通用选项）
+const customSearchOptions = ref(false);
+
+// 供搜索区域展示与操作的选项数据源
+const activeSearchOptions = computed(() => {
+  if (customSearchOptions.value) {
+    return firstSearchOption.value.optionData || [];
+  }
+  return currentField.value.optionData || [];
+});
+
 function ensureSearchOption(): SearchOption | undefined {
   if (
     !Array.isArray(currentField.value.searchData) ||
@@ -576,6 +603,40 @@ function ensureSearchOption(): SearchOption | undefined {
   return item;
 }
 
+// 同步通用选项到搜索配置（当未开启独立自定义时）
+function syncSharedOptions() {
+  if (!customSearchOptions.value) {
+    const searchHolder = ensureSearchOption();
+    if (searchHolder) {
+      searchHolder.optionType = currentField.value.optionType || 1;
+      searchHolder.optionData = cloneDeep(currentField.value.optionData || []);
+    }
+  }
+}
+
+function onCustomSearchOptionsChange(val: boolean) {
+  customSearchOptions.value = val;
+  const searchHolder = ensureSearchOption();
+  if (!searchHolder) return;
+  if (val) {
+    if (!searchHolder.optionData || searchHolder.optionData.length === 0) {
+      searchHolder.optionData = cloneDeep(currentField.value.optionData || []);
+    }
+    searchHolder.optionType = currentField.value.optionType || 1;
+  } else {
+    searchHolder.optionData = cloneDeep(currentField.value.optionData || []);
+    searchHolder.optionType = currentField.value.optionType || 1;
+  }
+}
+
+function resetSearchOptionsFromField() {
+  const searchHolder = ensureSearchOption();
+  if (!searchHolder) return;
+  searchHolder.optionData = cloneDeep(currentField.value.optionData || []);
+  searchHolder.optionType = currentField.value.optionType || 1;
+  message.success('已从字段通用选项重置搜索选项');
+}
+
 function ensureOptionTarget(target: 'field' | 'search') {
   if (target === 'search') {
     return ensureSearchOption();
@@ -588,7 +649,9 @@ function ensureOptionTarget(target: 'field' | 'search') {
 
 function addOption(target: 'field' | 'search' = 'field') {
   if (isSwitchField.value) return;
-  const holder = ensureOptionTarget(target);
+  const actualTarget =
+    target === 'search' && !customSearchOptions.value ? 'field' : target;
+  const holder = ensureOptionTarget(actualTarget);
   if (!holder) return;
   const isString = currentField.value.goType === 'string';
   const nextVal = isString
@@ -599,13 +662,21 @@ function addOption(target: 'field' | 'search' = 'field') {
     label: '',
     value: nextVal,
   });
+  if (actualTarget === 'field') {
+    syncSharedOptions();
+  }
 }
 
 function removeOption(index: number, target: 'field' | 'search' = 'field') {
   if (isSwitchField.value) return;
-  const holder = ensureOptionTarget(target);
+  const actualTarget =
+    target === 'search' && !customSearchOptions.value ? 'field' : target;
+  const holder = ensureOptionTarget(actualTarget);
   if (holder && Array.isArray(holder.optionData)) {
     holder.optionData.splice(index, 1);
+  }
+  if (actualTarget === 'field') {
+    syncSharedOptions();
   }
 }
 
@@ -626,17 +697,24 @@ function onOptionValueChange(
   target: 'field' | 'search' = 'field',
 ) {
   if (isSwitchField.value) return;
-  const holder = ensureOptionTarget(target);
+  const actualTarget =
+    target === 'search' && !customSearchOptions.value ? 'field' : target;
+  const holder = ensureOptionTarget(actualTarget);
   const optionItem = holder?.optionData?.[index];
   if (!optionItem) return;
   optionItem.value = parseOptionValueByGoType(val, currentField.value.goType);
+  if (actualTarget === 'field') {
+    syncSharedOptions();
+  }
 }
 
 function applyPresetOptions(
   type: 'gender' | 'status' | 'yesno',
   target: 'field' | 'search' = 'field',
 ) {
-  const holder = ensureOptionTarget(target);
+  const actualTarget =
+    target === 'search' && !customSearchOptions.value ? 'field' : target;
+  const holder = ensureOptionTarget(actualTarget);
   if (!holder) return;
   const isString = currentField.value.goType === 'string';
   holder.optionType = 1;
@@ -655,6 +733,9 @@ function applyPresetOptions(
       { label: '是', value: isString ? '1' : 1 },
       { label: '否', value: isString ? '0' : 0 },
     ];
+  }
+  if (actualTarget === 'field') {
+    syncSharedOptions();
   }
 }
 
@@ -699,6 +780,19 @@ const [Modal, modalApi] = useVbenModal<{
     if (!saved.nullable) {
       saved.required = true;
     }
+    // 未开启独立自定义时，确保搜索项选项与字段通用选项保持完全同步
+    if (!customSearchOptions.value && saved.searchData?.[0]) {
+      saved.searchData[0].optionData = cloneDeep(saved.optionData || []);
+      saved.searchData[0].optionType = saved.optionType || 1;
+    }
+    // 若通用选项为空但搜索项有选项，补全给通用选项
+    if (
+      (!saved.optionData || saved.optionData.length === 0) &&
+      saved.searchData?.[0]?.optionData?.length
+    ) {
+      saved.optionData = cloneDeep(saved.searchData[0].optionData);
+      saved.optionType = saved.searchData[0].optionType || 1;
+    }
     emit('save', saved, editingIndex.value);
     modalApi.close();
   },
@@ -715,6 +809,33 @@ const [Modal, modalApi] = useVbenModal<{
         }
         currentField.value.isFile = Boolean(currentField.value.isFile);
         editingIndex.value = payload.index;
+
+        // 搜索选项与字段通用选项初始化对齐
+        const searchHolder = currentField.value.searchData?.[0];
+        const hasFieldOpts =
+          Array.isArray(currentField.value.optionData) &&
+          currentField.value.optionData.length > 0;
+        const hasSearchOpts =
+          Array.isArray(searchHolder?.optionData) &&
+          searchHolder.optionData.length > 0;
+
+        if (!hasFieldOpts && hasSearchOpts && searchHolder) {
+          // 仅搜索有选项（如历史单边配置），自动提升为通用选项
+          currentField.value.optionData = cloneDeep(searchHolder.optionData);
+          currentField.value.optionType = searchHolder.optionType || 1;
+          customSearchOptions.value = false;
+        } else if (hasFieldOpts && hasSearchOpts && searchHolder) {
+          const isDiff =
+            JSON.stringify(currentField.value.optionData) !==
+            JSON.stringify(searchHolder.optionData);
+          customSearchOptions.value = isDiff;
+        } else {
+          customSearchOptions.value = false;
+          if (hasFieldOpts && searchHolder) {
+            searchHolder.optionData = cloneDeep(currentField.value.optionData);
+            searchHolder.optionType = currentField.value.optionType || 1;
+          }
+        }
         const colName =
           currentField.value.columnName ||
           currentField.value.name ||
@@ -1065,76 +1186,141 @@ const [Modal, modalApi] = useVbenModal<{
                         <span class="text-sm font-medium">
                           搜索选项数据配置 (Options)
                         </span>
-                        <span class="text-xs text-muted-foreground">
-                          未开启表关联时，为搜索下拉提供可选项
-                        </span>
-                      </div>
-                      <template v-if="isSwitchField">
-                        <NTag type="info" size="small">
-                          开关固定选项：值固定为 1 和 2，仅可自定义文字
+                        <NTag
+                          :type="customSearchOptions ? 'warning' : 'info'"
+                          size="small"
+                        >
+                          {{
+                            customSearchOptions
+                              ? '搜索独立自定义模式'
+                              : '默认继承字段通用选项'
+                          }}
                         </NTag>
-                      </template>
-                      <NSpace v-else size="small">
-                        <NButton
-                          v-if="
-                            currentField.optionData &&
-                            currentField.optionData.length > 0
-                          "
-                          size="tiny"
-                          quaternary
-                          type="success"
-                          @click="syncFieldOptionsToSearch"
-                        >
-                          同步表单选项
-                        </NButton>
-                        <NButton
-                          size="tiny"
-                          quaternary
-                          type="primary"
-                          @click="applyPresetOptions('status', 'search')"
-                        >
-                          预设: 状态(1/2)
-                        </NButton>
-                        <NButton
-                          size="tiny"
-                          quaternary
-                          type="primary"
-                          @click="applyPresetOptions('gender', 'search')"
-                        >
-                          预设: 性别(1/2)
-                        </NButton>
-                        <NButton
-                          size="tiny"
-                          quaternary
-                          type="primary"
-                          @click="applyPresetOptions('yesno', 'search')"
-                        >
-                          预设: 是/否(1/0)
-                        </NButton>
-                        <NButton
-                          size="tiny"
-                          dashed
-                          type="primary"
-                          @click="addOption('search')"
-                        >
-                          + 添加选项
-                        </NButton>
-                      </NSpace>
+                      </div>
+                      <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-1.5">
+                          <span class="text-xs text-muted-foreground">
+                            搜索单独配置
+                          </span>
+                          <NSwitch
+                            :value="customSearchOptions"
+                            size="small"
+                            @update:value="onCustomSearchOptionsChange"
+                          />
+                        </div>
+                        <template v-if="isSwitchField">
+                          <NTag type="info" size="small">
+                            开关固定选项：值固定为 1 和 2，仅可自定义文字
+                          </NTag>
+                        </template>
+                        <NSpace v-else size="small">
+                          <NButton
+                            v-if="customSearchOptions"
+                            size="tiny"
+                            quaternary
+                            type="warning"
+                            @click="resetSearchOptionsFromField"
+                          >
+                            从通用选项重置
+                          </NButton>
+                          <NButton
+                            size="tiny"
+                            quaternary
+                            type="primary"
+                            @click="
+                              applyPresetOptions(
+                                'status',
+                                customSearchOptions ? 'search' : 'field',
+                              )
+                            "
+                          >
+                            预设: 状态(1/2)
+                          </NButton>
+                          <NButton
+                            size="tiny"
+                            quaternary
+                            type="primary"
+                            @click="
+                              applyPresetOptions(
+                                'gender',
+                                customSearchOptions ? 'search' : 'field',
+                              )
+                            "
+                          >
+                            预设: 性别(1/2)
+                          </NButton>
+                          <NButton
+                            size="tiny"
+                            quaternary
+                            type="primary"
+                            @click="
+                              applyPresetOptions(
+                                'yesno',
+                                customSearchOptions ? 'search' : 'field',
+                              )
+                            "
+                          >
+                            预设: 是/否(1/0)
+                          </NButton>
+                          <NButton
+                            size="tiny"
+                            dashed
+                            type="primary"
+                            @click="
+                              addOption(
+                                customSearchOptions ? 'search' : 'field',
+                              )
+                            "
+                          >
+                            + 添加选项
+                          </NButton>
+                        </NSpace>
+                      </div>
+                    </div>
+
+                    <!-- 模式说明提示 -->
+                    <div
+                      v-if="!customSearchOptions"
+                      class="text-xs text-muted-foreground flex items-center gap-1.5 py-1 bg-muted/30 px-2 rounded"
+                    >
+                      <VbenIcon
+                        icon="carbon:information"
+                        class="text-primary text-sm flex-shrink-0"
+                      />
+                      <span>
+                        当前为<b>默认继承模式</b>：在此处配置将<b>自动同步至表单录入组件与列表 Tag</b>，无需二次配置；若该字段搜索需要专属过滤选项，可开启右上角【搜索单独配置】。
+                      </span>
+                    </div>
+                    <div
+                      v-else
+                      class="text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1.5 py-1 bg-amber-500/10 px-2 rounded"
+                    >
+                      <VbenIcon
+                        icon="carbon:warning"
+                        class="text-amber-500 text-sm flex-shrink-0"
+                      />
+                      <span>
+                        当前已开启<b>搜索独立自定义模式</b>：在此配置的选项仅用于搜索下拉，不会覆盖表单录入与列表
+                        Tag 配置。
+                      </span>
                     </div>
 
                     <div
                       v-if="
-                        !firstSearchOption.optionData ||
-                        firstSearchOption.optionData.length === 0
+                        !activeSearchOptions || activeSearchOptions.length === 0
                       "
                       class="py-4 text-center text-xs text-muted-foreground"
                     >
-                      暂未配置搜索选项数据，可点击右上角快速添加、应用预设或同步表单选项
+                      {{
+                        customSearchOptions
+                          ? '暂未配置独立搜索选项，可点击右上角快速添加或选择常用预设'
+                          : '暂无选项数据，可点击右上角添加或选择预设（将同时作为表单与搜索选项）'
+                      }}
                     </div>
 
                     <div v-else class="flex flex-col gap-2 mt-1">
                       <div
-                        v-for="(opt, optIdx) in firstSearchOption.optionData"
+                        v-for="(opt, optIdx) in activeSearchOptions"
                         :key="optIdx"
                         class="flex items-center gap-2 rounded border border-border/70 p-2 bg-muted/20"
                       >
@@ -1148,6 +1334,11 @@ const [Modal, modalApi] = useVbenModal<{
                             v-model:value="opt.label"
                             size="small"
                             placeholder="选项标签 (Label)，如 启用"
+                            @update:value="
+                              () => {
+                                if (!customSearchOptions) syncSharedOptions();
+                              }
+                            "
                           />
                           <NInput
                             :value="String(opt.value ?? '')"
@@ -1156,7 +1347,11 @@ const [Modal, modalApi] = useVbenModal<{
                             placeholder="存储值 (Value)，如 1"
                             @update:value="
                               (val) =>
-                                onOptionValueChange(optIdx, val, 'search')
+                                onOptionValueChange(
+                                  optIdx,
+                                  val,
+                                  customSearchOptions ? 'search' : 'field',
+                                )
                             "
                           />
                         </div>
@@ -1165,7 +1360,12 @@ const [Modal, modalApi] = useVbenModal<{
                           size="tiny"
                           quaternary
                           type="error"
-                          @click="removeOption(optIdx, 'search')"
+                          @click="
+                            removeOption(
+                              optIdx,
+                              customSearchOptions ? 'search' : 'field',
+                            )
+                          "
                         >
                           ✕
                         </NButton>
@@ -1391,8 +1591,11 @@ const [Modal, modalApi] = useVbenModal<{
                           placeholder="选项标签 (Label)，如 启用"
                           @update:value="
                             (val) => {
-                              if (isSwitchField)
+                              if (isSwitchField) {
                                 onSwitchLabelChange(optIdx, val);
+                              } else {
+                                syncSharedOptions();
+                              }
                             }
                           "
                         />

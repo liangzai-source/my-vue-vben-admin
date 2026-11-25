@@ -71,7 +71,9 @@ export function useStatusChange<T = Recordable>(
     showMessage: boolean = true,
   ): Promise<boolean> => {
     // 通过 getByPath 获取行ID和名称（支持深层路径）
-    const rowId = getByPath(row as Recordable, defaultConfig.rowIdField, '-');
+    const rowId =
+      (row as any)?.id ??
+      getByPath(row as Recordable, defaultConfig.rowIdField, '-');
     const rawName = getByPath(
       row as Recordable,
       defaultConfig.rowNameField,

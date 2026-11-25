@@ -79,8 +79,11 @@ export function getByPath(
     if (result === null || result === undefined) break;
     result = result[key];
   }
+  if (result === null || result === undefined) {
+    return defaultValue;
+  }
   const str = safeToString(result, defaultValue);
-  return $te(str) ? $t(str) : defaultValue;
+  return $te(str) ? $t(str) : result;
 }
 
 /**

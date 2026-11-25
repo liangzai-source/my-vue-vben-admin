@@ -123,7 +123,7 @@ export function smartInferField(
     return f;
   }
 
-  // 3. 布尔/两态开关 (tinyint(1) 或 bool)：仅在未包含多值枚举且非类型/等级字段时生效
+  // 3. 布尔/两态开关 (tinyint(1) 或 bool 或 uint8)：仅在未包含多值枚举且非类型/等级字段时生效
   const isStatusName =
     name.includes('status') ||
     name.includes('state') ||
@@ -131,11 +131,16 @@ export function smartInferField(
     name.includes('active') ||
     name.startsWith('is_');
   if (
-    (dt.includes('tinyint(1)') || f.goType === 'bool') &&
+    (dt.includes('tinyint(1)') ||
+      f.goType === 'bool' ||
+      f.goType === 'uint8') &&
     isStatusName &&
     !isEnumSemanticName(name) &&
     isBoolOptionSet(f.optionData || [])
   ) {
+    f.goType = 'uint8';
+    f.tsType = 'number';
+    f.gormType = 'tinyint';
     f.listComp = 'CellSwitch';
     f.formComp = 'NSwitch';
     f.switchConfirm = true;
@@ -177,6 +182,9 @@ export function smartInferField(
   // 4. 状态字段 (status / state / enable / active / is_)
   if (isStatusName) {
     if (optLen === 2) {
+      f.goType = 'uint8';
+      f.tsType = 'number';
+      f.gormType = 'tinyint';
       f.listComp = 'CellSwitch';
       f.formComp = 'NSwitch';
       f.switchConfirm = true;
