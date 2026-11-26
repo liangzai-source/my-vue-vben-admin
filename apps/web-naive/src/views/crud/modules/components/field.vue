@@ -81,6 +81,16 @@ async function onSyncDatabaseFields() {
         old.required = fresh.required;
         if (!old.comment && fresh.comment) old.comment = fresh.comment;
         if (!old.label && fresh.label) old.label = fresh.label;
+        if (
+          (old.default === null ||
+            old.default === undefined ||
+            old.default === '') &&
+          fresh.default !== null &&
+          fresh.default !== undefined &&
+          fresh.default !== ''
+        ) {
+          old.default = fresh.default;
+        }
         mergedFields.push(old);
       } else {
         // 新增物理字段：智能推导后追加

@@ -451,10 +451,32 @@ function onFormCompChange(val: string) {
   if (val === 'FileUpload') {
     currentField.value.isFile = true;
     currentField.value.listComp = 'CellAttachment';
+    currentField.value.default = null;
     ensureUploadConfig();
   } else if (val === 'NSwitch') {
     currentField.value.listComp = 'CellSwitch';
     ensureSwitchFieldOptions();
+    if (currentField.value.default !== 1 && currentField.value.default !== 2) {
+      currentField.value.default = null;
+    }
+  } else if (
+    val === 'VbenTiptap' ||
+    val === 'RelationSelect' ||
+    val === 'NDatePicker' ||
+    val === 'NDate'
+  ) {
+    currentField.value.default = null;
+  } else if (
+    val === 'NInputNumber' &&
+    typeof currentField.value.default !== 'number'
+  ) {
+    const parsed = Number(currentField.value.default);
+    currentField.value.default =
+      currentField.value.default !== null &&
+      currentField.value.default !== '' &&
+      !Number.isNaN(parsed)
+        ? parsed
+        : null;
   }
 }
 
@@ -464,6 +486,62 @@ const isSwitchField = computed(() => {
     currentField.value.listComp === 'CellSwitch' ||
     currentField.value.formComp === 'NSwitch'
   );
+});
+
+const defaultOptionSelectList = computed<SelectOption[]>(() => {
+  if (isSwitchField.value) {
+    const opts = currentField.value.optionData || [];
+    const label1 =
+      opts.find((o) => o.value === 1 || o.value === '1')?.label ||
+      opts[0]?.label ||
+      '开启';
+    const label2 =
+      opts.find(
+        (o) =>
+          o.value === 2 || o.value === '2' || o.value === 0 || o.value === '0',
+      )?.label ||
+      opts[1]?.label ||
+      '关闭';
+    return [
+      { label: `${label1} (1)`, value: 1 },
+      { label: `${label2} (2)`, value: 2 },
+    ];
+  }
+  return (currentField.value.optionData || []).map((o) => ({
+    label: `${o.label} (${o.value})`,
+    value: o.value,
+  }));
+});
+
+const defaultInputKind = computed<
+  'number' | 'select' | 'select-multiple' | 'switch' | 'text' | 'unsupported'
+>(() => {
+  const comp = currentField.value.formComp;
+  if (comp === 'NSwitch') return 'switch';
+  if (
+    comp === 'FileUpload' ||
+    comp === 'VbenTiptap' ||
+    comp === 'RelationSelect' ||
+    comp === 'NDatePicker' ||
+    comp === 'NDate'
+  ) {
+    return 'unsupported';
+  }
+  if (comp === 'NSelectMultiple') {
+    return (currentField.value.optionData?.length || 0) > 0
+      ? 'select-multiple'
+      : 'unsupported';
+  }
+  if (
+    (comp === 'NSelect' || comp === 'NRadioGroup') &&
+    (currentField.value.optionData?.length || 0) > 0
+  ) {
+    return 'select';
+  }
+  if (comp === 'NInputNumber' || currentField.value.tsType === 'number') {
+    return 'number';
+  }
+  return 'text';
 });
 
 // 开关固定选项：值固定为 1 和 2，只允许修改 label
@@ -1524,9 +1602,42 @@ const [Modal, modalApi] = useVbenModal<{
               </NFormItemGi>
 
               <NFormItemGi :span="12" label="表单默认值">
-                <NInput
+                <NSelect
+                  v-if="
+                    defaultInputKind === 'switch' ||
+                    defaultInputKind === 'select'
+                  "
                   v-model:value="currentField.default"
-                  placeholder="未填写时为 null / 空"
+                  :options="defaultOptionSelectList"
+                  clearable
+                  placeholder="未设置 (undefined)"
+                />
+                <NSelect
+                  v-else-if="defaultInputKind === 'select-multiple'"
+                  v-model:value="currentField.default"
+                  :options="defaultOptionSelectList"
+                  multiple
+                  clearable
+                  placeholder="未设置 (undefined)"
+                />
+                <NInputNumber
+                  v-else-if="defaultInputKind === 'number'"
+                  v-model:value="currentField.default"
+                  clearable
+                  class="w-full"
+                  placeholder="未设置 (undefined)"
+                />
+                <NInput
+                  v-else-if="defaultInputKind === 'text'"
+                  v-model:value="currentField.default"
+                  clearable
+                  placeholder="未填写时为 undefined"
+                />
+                <NInput
+                  v-else
+                  disabled
+                  value=""
+                  placeholder="当前组件暂不支持静态默认值"
                 />
               </NFormItemGi>
 
