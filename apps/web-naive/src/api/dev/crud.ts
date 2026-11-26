@@ -153,3 +153,19 @@ export async function devCrudRelationOptionsApi(
     params,
   );
 }
+
+export interface DevCrudInferFieldParams {
+  field: import('#/crud/types').Field;
+  tableName?: string;
+  allFields?: import('#/crud/types').Field[];
+}
+
+/**
+ * 根据字段语义智能推导组件与属性
+ */
+export async function devCrudInferFieldApi(params: DevCrudInferFieldParams) {
+  return requestClient.post<import('#/crud/types').Field>(
+    '/crud/infer-field',
+    params,
+  );
+}

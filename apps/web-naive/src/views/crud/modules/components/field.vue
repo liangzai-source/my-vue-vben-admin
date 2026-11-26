@@ -21,7 +21,6 @@ import {
 import { message } from '#/adapter/naive';
 import { devCrudTableSchemaApi } from '#/api/dev/crud';
 import { createDefaultField } from '#/crud/default';
-import { inferSelfLabelField, smartInferSchema } from '#/crud/smartInference';
 
 import FieldModalComponent from './field-modal.vue';
 
@@ -52,8 +51,7 @@ async function onSyncDatabaseFields() {
   syncing.value = true;
   try {
     const rawSchema = await devCrudTableSchemaApi(props.tableName);
-    const inferred = smartInferSchema(rawSchema);
-    const freshFields = inferred.fieldsConfig || [];
+    const freshFields = rawSchema.fieldsConfig || [];
 
     // 建立现有字段映射，以物理列名/字段名为 key (小写)
     const existingMap = new Map<string, Field>();
@@ -136,7 +134,6 @@ function onEditField(field: Field, index: number) {
       field,
       index,
       tableName: props.tableName,
-      labelField: inferSelfLabelField(fields.value),
       allFields: fields.value,
     })
     .open();

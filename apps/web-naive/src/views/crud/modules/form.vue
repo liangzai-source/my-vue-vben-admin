@@ -17,7 +17,6 @@ import {
   devCrudTablesApi,
 } from '#/api/dev/crud';
 import { createDefaultSchema } from '#/crud/default';
-import { smartInferSchema } from '#/crud/smartInference';
 import { isEmpty } from '#/utils/tools';
 
 import BasicForm from './components/basic.vue';
@@ -85,7 +84,7 @@ const [Drawer, drawerApi] = useVbenDrawer<Schema>({
 });
 
 function onTableLoaded(loadedSchema: Schema) {
-  formData.value = smartInferSchema(loadedSchema);
+  formData.value = loadedSchema;
 }
 
 function formatMenuTitle(val?: string): string {

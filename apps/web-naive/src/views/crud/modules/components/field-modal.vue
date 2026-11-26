@@ -30,14 +30,12 @@ import {
 } from 'naive-ui';
 
 import { message } from '#/adapter/naive';
-import { devCrudTablesApi, devCrudTableSchemaApi } from '#/api/dev/crud';
-import { createDefaultField } from '#/crud/default';
 import {
-  isEnumSemanticName,
-  isSelfParentFieldName,
-  parseCommentOptions,
-  smartInferField,
-} from '#/crud/smartInference';
+  devCrudInferFieldApi,
+  devCrudTablesApi,
+  devCrudTableSchemaApi,
+} from '#/api/dev/crud';
+import { createDefaultField } from '#/crud/default';
 
 const emit = defineEmits<{
   (e: 'save', field: Field, index: number): void;
@@ -47,7 +45,7 @@ const currentField = ref<Field>(createDefaultField());
 const editingIndex = ref<number>(-1);
 const activeTab = ref<string>('basic');
 const currentTableName = ref<string>('');
-const currentLabelField = ref<string>('name');
+const inferring = ref<boolean>(false);
 
 // Go 数据类型选项
 const goTypeOptions: SelectOption[] = [
@@ -364,15 +362,29 @@ function onGoTypeChange(val: string) {
   }
 }
 
-// 字段智能推导规则（根据字段语义自动匹配最合理的表格/表单组件与属性）
-function applySmartInference() {
-  currentField.value = smartInferField(currentField.value, {
-    tableName: currentTableName.value,
-    labelField: currentLabelField.value,
-  });
+// 字段智能推导（统一由后端根据字段语义自动匹配最合理的表格/表单组件与属性）
+async function applySmartInference() {
+  if (!currentField.value.name && !currentField.value.columnName) {
+    message.warning('请先填写字段名称');
+    return;
+  }
+  inferring.value = true;
+  try {
+    const inferred = await devCrudInferFieldApi({
+      field: currentField.value,
+      tableName: currentTableName.value,
+      allFields: allFields.value,
+    });
+    currentField.value = inferred;
+    message.success('已完成字段智能推导');
+  } catch (error: any) {
+    message.error(error?.message || '字段智能推导失败');
+  } finally {
+    inferring.value = false;
+  }
 }
 
-// 字段名输入联动驼峰与智能推导
+// 字段名输入联动驼峰
 function onNameChange(val: string) {
   currentField.value.name = val;
   if (!currentField.value.tsName && val) {
@@ -381,35 +393,10 @@ function onNameChange(val: string) {
   if (!currentField.value.jsonTag && currentField.value.tsName) {
     currentField.value.jsonTag = currentField.value.tsName;
   }
-  // 若仍处于默认初始组件，则自动智能推导
-  if (
-    currentField.value.formComp === 'NInput' &&
-    currentField.value.listComp === 'NText'
-  ) {
-    applySmartInference();
-  }
 }
 
-// 字段注释输入与枚举选项智能解析 (如 '1-启用 2-禁用')
 function onCommentChange(val: string) {
   currentField.value.comment = val;
-  if (!val) return;
-  const options = parseCommentOptions(val);
-  if (
-    options.length >= 2 &&
-    (!currentField.value.optionData ||
-      currentField.value.optionData.length === 0)
-  ) {
-    currentField.value.optionType = 1;
-    currentField.value.optionData = options;
-    if (currentField.value.formComp === 'NInput') {
-      currentField.value.formComp =
-        options.length <= 4 ? 'NRadioGroup' : 'NSelect';
-    }
-    if (currentField.value.listComp === 'NText') {
-      currentField.value.listComp = 'NTag';
-    }
-  }
 }
 
 function ensureUploadConfig() {
@@ -956,7 +943,6 @@ const [Modal, modalApi] = useVbenModal<{
       activeTab.value = 'basic';
       const payload = modalApi.getData();
       currentTableName.value = payload?.tableName || '';
-      currentLabelField.value = payload?.labelField || 'name';
       allFields.value = payload?.allFields || [];
       if (payload && payload.field) {
         currentField.value = cloneDeep(payload.field);
@@ -1002,31 +988,6 @@ const [Modal, modalApi] = useVbenModal<{
             searchHolder.optionData = cloneDeep(currentField.value.optionData);
             searchHolder.optionType = currentField.value.optionType || 1;
           }
-        }
-        const colName =
-          currentField.value.columnName ||
-          currentField.value.name ||
-          currentField.value.tsName;
-        // 若为未定制状态，或历史残留的 y_parent 自关联错配 / tinyint(1) 多值枚举误判为开关，自动纠正推导
-        const optCount = Math.max(
-          currentField.value.optionData.length,
-          parseCommentOptions(currentField.value.comment || '').length,
-        );
-        if (
-          (currentField.value.listComp === 'NText' &&
-            (currentField.value.formComp === 'NInput' ||
-              currentField.value.formComp === 'NInputNumber')) ||
-          (isSelfParentFieldName(colName) &&
-            currentTableName.value &&
-            currentField.value.relation?.targetTable === 'y_parent') ||
-          ((optCount > 2 || isEnumSemanticName(colName)) &&
-            (currentField.value.listComp === 'CellSwitch' ||
-              currentField.value.formComp === 'NSwitch'))
-        ) {
-          currentField.value = smartInferField(currentField.value, {
-            tableName: currentTableName.value,
-            labelField: currentLabelField.value,
-          });
         }
         if (
           currentField.value.listComp === 'CellSwitch' ||
@@ -1086,6 +1047,7 @@ const [Modal, modalApi] = useVbenModal<{
                     size="tiny"
                     type="primary"
                     secondary
+                    :loading="inferring"
                     title="根据字段语义自动推导组件与属性"
                     @click="applySmartInference"
                   >
