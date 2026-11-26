@@ -2,7 +2,7 @@
 import { $t } from '@vben/locales';
 
 import { message } from '#/adapter/naive';
-import { asyncConfirm, getByPath } from '#/utils/tools';
+import { asyncConfirm, getByPath, getRowDisplayName } from '#/utils/tools';
 
 type Recordable<T = any> = Record<string, T>;
 /**
@@ -16,31 +16,52 @@ type StatusOptions = {
   statusTextMap?: Record<string, string>; // 自定义状态文案
 };
 
+type StatusChangeFn<T> = (
+  newStatus: any,
+  row: T,
+  showConfirm?: boolean,
+  showMessage?: boolean,
+  rowNameField?: string,
+) => Promise<boolean>;
+
 /**
  * 通用状态变更Hooks
  * 核心：传入字段名（支持深层路径）即可，无需写获取函数
  * @template T - 行数据类型
  * @param updateStatusApi - 必传：状态更新接口
- * @param afterSuccess - 可选：更新成功后的回调（仅菜单管理需要）
- * @param options - 可选：配置项（字段名/状态文案/弹窗标题）
+ * @param optionsOrAfterSuccess - 可选：配置项或更新成功后的回调
+ * @param options - 可选：自定义配置项（当第2个参数为回调时使用）
  * @returns 状态变更核心函数
  */
 /* oxlint-disable typescript/no-unnecessary-type-parameters */
 export function useStatusChange<T = Recordable>(
+  updateStatusApi: (id: number, newStatus: any) => Promise<any>,
+  options?: StatusOptions,
+): { statusChangeFunc: StatusChangeFn<T> };
+export function useStatusChange<T = Recordable>(
+  updateStatusApi: (id: number, newStatus: any) => Promise<any>,
+  afterSuccess?: () => Promise<void> | void,
+  options?: StatusOptions,
+): { statusChangeFunc: StatusChangeFn<T> };
+export function useStatusChange<T = Recordable>(
   // 必传：状态更新接口（id=行ID，newStatus=目标状态）
   updateStatusApi: (id: number, newStatus: any) => Promise<any>,
-  // 可选：成功后的回调（不传则不执行）
-  afterSuccess?: () => Promise<void> | void,
+  // 可选：成功后的回调或配置项
+  optionsOrAfterSuccess?: (() => Promise<void> | void) | StatusOptions,
   // 可选：自定义配置项（改为字段名配置）
   options?: StatusOptions,
 ): {
-  statusChangeFunc: (
-    newStatus: any,
-    row: T,
-    showConfirm?: boolean,
-    showMessage?: boolean,
-  ) => Promise<boolean>;
+  statusChangeFunc: StatusChangeFn<T>;
 } {
+  const afterSuccess =
+    typeof optionsOrAfterSuccess === 'function'
+      ? optionsOrAfterSuccess
+      : undefined;
+  const resolvedOptions =
+    typeof optionsOrAfterSuccess === 'function'
+      ? options
+      : (optionsOrAfterSuccess ?? options);
+
   // 默认配置（字段名默认值：id/name）
   const defaultConfig = {
     statusTextMap: {
@@ -53,7 +74,7 @@ export function useStatusChange<T = Recordable>(
     rowNameField: 'name', // 默认取name字段
     rowIdField: 'id', // 默认取id字段
     confirmTitle: $t('common.tip'), // 默认弹窗标题：提示
-    ...options,
+    ...resolvedOptions,
   };
 
   /**
@@ -62,32 +83,25 @@ export function useStatusChange<T = Recordable>(
    * @param row - 当前行数据
    * @param showConfirm - 是否显示确认弹窗
    * @param showMessage - 是否显示成功提示
+   * @param rowNameField - 可选：单次调用覆盖名称字段路径
    * @returns 操作是否成功
    */
-  const statusChangeFunc = async (
+  const statusChangeFunc: StatusChangeFn<T> = async (
     newStatus: any,
     row: T,
     showConfirm: boolean = true,
     showMessage: boolean = true,
+    rowNameField?: string,
   ): Promise<boolean> => {
-    // 通过 getByPath 获取行ID和名称（支持深层路径）
+    // 通过 getByPath / getRowDisplayName 获取行ID和名称（支持深层路径及兜底）
     const rowId =
       (row as any)?.id ??
       getByPath(row as Recordable, defaultConfig.rowIdField, '-');
-    const rawName = getByPath(
+    const rowName = getRowDisplayName(
       row as Recordable,
-      defaultConfig.rowNameField,
-      '',
+      rowNameField ?? defaultConfig.rowNameField,
+      defaultConfig.rowIdField,
     );
-    const r = row as any;
-    const rowName =
-      (rawName && rawName !== '-' ? rawName : undefined) ??
-      r?.nickname ??
-      r?.title ??
-      r?.name ??
-      r?.account ??
-      r?.username ??
-      rowId;
     let statusText = defaultConfig.statusTextMap[String(newStatus)] || '';
     if (!statusText) {
       statusText =

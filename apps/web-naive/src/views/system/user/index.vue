@@ -26,6 +26,7 @@ import Permission from './modules/permission.vue';
 
 const { statusChangeFunc } = useStatusChange<SystemUserApi.SystemUser>(
   systemUserUpdateStatusApi,
+  { rowNameField: 'nickname' },
 );
 
 const [FormModal, formModalApi] = useVbenModal({

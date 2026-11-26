@@ -33,14 +33,14 @@ import {
   NInput,
   NInputNumber,
   NSpin,
-  NPopconfirm as PopConfirm,
   NSwitch as Switch,
   NTag as Tag,
 } from 'naive-ui';
 
+import { dialog } from '#/adapter/naive';
 import { getFileUrl } from '#/api/system/upload';
 import { $t } from '#/locales';
-import { getByPath, getTableDefaultOperation } from '#/utils/tools';
+import { getRowDisplayName, getTableDefaultOperation } from '#/utils/tools';
 
 import { useVbenForm } from './form';
 
@@ -73,6 +73,10 @@ setupVbenVxeTable({
         round: true,
         showOverflow: true,
         size: 'small',
+        virtualYConfig: {
+          enabled: true,
+          gt: 30,
+        },
       } as VxeTableGridOptions,
     });
 
@@ -650,17 +654,39 @@ setupVbenVxeTable({
           })
           .filter((opt) => opt.show !== false);
 
-        function renderBtn(opt: Recordable<any>, listen = true) {
+        function renderBtn(opt: Recordable<any>) {
           // 兜底按钮文本，避免空文本
           const btnText = opt.btnText || $t('common.operate');
-          // 兜底按钮点击事件，避免空函数
-          const onClick = listen
-            ? () =>
-                attrs?.onClick?.({
-                  code: opt.code || 'unknown',
-                  row,
-                })
-            : undefined;
+          const needConfirm = opt.code === 'delete' || opt.confirm === true;
+          const onClick = () => {
+            if (needConfirm) {
+              const displayName = getRowDisplayName(row, attrs?.nameField);
+              const confirmTitle =
+                opt.confirmTitle ||
+                $t('ui.actionTitle.delete', [attrs?.nameTitle || '']);
+              const confirmContent =
+                opt.confirmContent ||
+                $t('ui.actionMessage.deleteConfirm', [displayName]);
+              dialog.info({
+                title: confirmTitle,
+                content: confirmContent,
+                positiveText: opt.positiveText || $t('common.confirm'),
+                negativeText: opt.negativeText || $t('common.cancel'),
+                transformOrigin: 'mouse',
+                onPositiveClick: () => {
+                  attrs?.onClick?.({
+                    code: opt.code || 'unknown',
+                    row,
+                  });
+                },
+              });
+              return;
+            }
+            attrs?.onClick?.({
+              code: opt.code || 'unknown',
+              row,
+            });
+          };
           type Size = 'large' | 'medium' | 'small' | 'tiny';
           const btnProps = objectOmit(opt, [
             'show',
@@ -668,6 +694,8 @@ setupVbenVxeTable({
             'confirm',
             'confirmTitle',
             'confirmContent',
+            'positiveText',
+            'negativeText',
             'code',
           ]);
           return h(
@@ -694,69 +722,7 @@ setupVbenVxeTable({
           );
         }
 
-        // 找到 vxeUI.renderer.add('CellOperation', { ... }) 中的 renderConfirm 方法
-        function renderConfirm(opt: Recordable<any>) {
-          // 先确保触发按钮存在
-          const triggerBtn = renderBtn({ ...opt }, false);
-          if (!triggerBtn) {
-            return h('span', ''); // 兜底空元素，避免 Popconfirm 无 trigger
-          }
-          const displayName = getByPath(row, attrs?.nameField);
-          const confirmTitle =
-            opt.confirmTitle ||
-            $t('ui.actionTitle.delete', [attrs?.nameTitle || '']);
-          const confirmContent =
-            opt.confirmContent ||
-            $t('ui.actionMessage.deleteConfirm', [
-              displayName, // 兜底空值
-            ]);
-          const popconfirmExtraProps = objectOmit(opt, [
-            'show',
-            'btnText',
-            'type',
-            'icon',
-            'size',
-            'code',
-            'confirm',
-            'confirmTitle',
-            'confirmContent',
-          ]);
-          return h(
-            PopConfirm,
-            {
-              ...props,
-              ...popconfirmExtraProps,
-              title: confirmTitle,
-              showIcon: true,
-              placement: 'top',
-              // 补充：确保 Popconfirm 有默认的触发行为
-              trigger: 'click',
-              'on-positive-click': () => {
-                attrs?.onClick?.({
-                  code: opt.code,
-                  row,
-                });
-              },
-            },
-            {
-              // 明确命名 trigger 插槽（Naive UI 要求）
-              trigger: () => triggerBtn,
-              // 内容插槽
-              default: () =>
-                h(
-                  'div',
-                  { class: 'max-w-[280px] whitespace-normal' },
-                  confirmContent,
-                ),
-            },
-          );
-        }
-
-        const btns = operations.map((opt) =>
-          opt.code === 'delete' || opt.confirm === true
-            ? renderConfirm(opt)
-            : renderBtn(opt),
-        );
+        const btns = operations.map((opt) => renderBtn(opt));
         return h(
           'div',
           {

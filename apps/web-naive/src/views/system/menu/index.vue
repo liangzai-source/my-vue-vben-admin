@@ -90,6 +90,9 @@ const [Grid, gridApi] = useVbenVxeGrid({
       transform: false,
       expandAll: expandAllStatus.value,
     },
+    virtualYConfig: {
+      enabled: false,
+    },
   },
   gridEvents: {
     initRendered: () => {

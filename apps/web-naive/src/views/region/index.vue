@@ -145,6 +145,9 @@ const getGridOptions: VxeTableGridOptions<RegionApi.Region> = {
       }).then(normalizeTreeRows);
     },
   },
+  virtualYConfig: {
+    enabled: false,
+  },
 };
 const formOptions: VbenFormProps = {
   collapsed: false,

@@ -46,6 +46,7 @@ export interface Page {
   treeParentField?: string; // 父级关联字段
   treeNodeColumn?: string; // 树折叠节点所在列名
   hasChildField?: string; // 拥有子节点标记字段
+  rowNameField?: string; // 行展示名称字段（用于删除/状态切换确认提示）
 }
 
 export interface Enum {

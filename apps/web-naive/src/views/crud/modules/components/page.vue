@@ -111,6 +111,29 @@ const fieldOptions = computed<SelectOption[]>(() => {
   }));
 });
 
+// 未设置展示名称字段时，按常见字段智能推荐默认值
+watch(
+  () => props.fields,
+  (fields) => {
+    if (formData.rowNameField || !fields || fields.length === 0) return;
+    const priorityNames = new Set([
+      'account',
+      'name',
+      'nickname',
+      'title',
+      'username',
+    ]);
+    const found =
+      fields.find((f) =>
+        priorityNames.has((f.columnName || f.name).toLowerCase()),
+      ) ?? fields.find((f) => f.listable && f.goType === 'string');
+    if (found) {
+      formData.rowNameField = found.columnName || found.name;
+    }
+  },
+  { immediate: true },
+);
+
 // 当开启树形表格时，智能推荐字段
 watch(
   () => formData.isTree,
@@ -259,6 +282,19 @@ watch(
                   未勾选的操作将不会生成对应的按钮、路由、接口及数据库菜单权限；若未勾选新增与编辑，将跳过生成
                   Form 表单组件
                 </span>
+              </div>
+            </NFormItemGi>
+
+            <NFormItemGi :span="24" label="展示名称字段">
+              <div class="flex flex-col gap-1 w-full">
+                <NSelect
+                  v-model:value="formData.rowNameField"
+                  :options="fieldOptions"
+                  clearable
+                  filterable
+                  tag
+                  placeholder="用于删除、状态切换等二次确认弹窗显示的名称字段（默认 name）"
+                />
               </div>
             </NFormItemGi>
 

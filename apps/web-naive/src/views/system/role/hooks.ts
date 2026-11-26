@@ -35,7 +35,7 @@ export function useSystemRoleColumns<T = SystemRoleApi.SystemRole>(
       align: 'center',
       cellRender: {
         attrs: {
-          nameField: 'meta.title',
+          nameField: 'name',
           onClick: onActionClick,
         },
         name: 'CellOperation',

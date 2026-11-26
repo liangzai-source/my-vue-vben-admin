@@ -31,6 +31,7 @@ const { onActionClick } = useTableAction<UserApi.User>({
 });
 const { statusChangeFunc } = useStatusChange<UserApi.User>(
   (id: number, newStatus: any) => userUpdateStatusApi(id, newStatus),
+  { rowNameField: 'nickname' },
 );
 
 async function onStatusChange(

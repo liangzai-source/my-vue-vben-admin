@@ -109,6 +109,32 @@ function safeToString(value: any, defaultValue: string): string {
 }
 
 /**
+ * 获取表格行的展示名称，优先按指定字段路径取值，取不到时按常见字段依次兜底
+ * @param row 行数据对象
+ * @param nameField 首选名称字段路径，如 'name' / 'meta.title'
+ * @param idField 兜底 ID 字段路径，默认 'id'
+ */
+export function getRowDisplayName(
+  row: Record<string, any>,
+  nameField = 'name',
+  idField = 'id',
+): string {
+  const rawName = nameField ? getByPath(row, nameField, '') : '';
+  const rowId = row?.[idField] ?? getByPath(row, idField, '-');
+  const resolved =
+    (rawName && rawName !== '-' ? rawName : undefined) ??
+    row?.nickname ??
+    row?.title ??
+    row?.name ??
+    row?.account ??
+    row?.username ??
+    rowId;
+  return resolved === undefined || resolved === null || resolved === ''
+    ? '-'
+    : safeToString(resolved, '-');
+}
+
+/**
  * 刷新左侧菜单
  */
 export async function refreshMenu(): Promise<void> {
