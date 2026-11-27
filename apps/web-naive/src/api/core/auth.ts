@@ -43,6 +43,21 @@ export namespace AuthApi {
     data: LoginResult;
     message: string;
   }
+
+  export interface SiteConfigResult {
+    siteName: string;
+    siteLogo: string;
+    siteIcp: string;
+    siteOpen: boolean;
+    loginCaptcha: boolean;
+  }
+}
+
+/**
+ * 获取公开站点配置
+ */
+export async function getSiteConfigApi() {
+  return requestClient.get<AuthApi.SiteConfigResult>('/auth/site-config');
 }
 
 /**

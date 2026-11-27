@@ -15,6 +15,7 @@ import { initComponentAdapter } from './adapter/component';
 import { initSetupVbenForm } from './adapter/form';
 import App from './app.vue';
 import { router } from './router';
+import { syncSiteConfig } from './utils/site-config';
 
 async function bootstrap(namespace: string) {
   // 初始化组件适配器
@@ -69,6 +70,9 @@ async function bootstrap(namespace: string) {
       useTitle(pageTitle);
     }
   });
+
+  // 异步同步后台系统配置中的站点名称、Logo 与备案信息
+  void syncSiteConfig();
 
   app.mount('#app');
 }

@@ -2,7 +2,7 @@
 import type { CaptchaPoint, VbenFormSchema } from '@vben/common-ui';
 import type { Recordable } from '@vben/types';
 
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 import { AuthenticationLogin, PointSelectionCaptcha, z } from '@vben/common-ui';
 import { $t } from '@vben/locales';
@@ -12,6 +12,7 @@ import { NModal, NSpin } from 'naive-ui';
 import { message } from '#/adapter/naive';
 import { getCaptchaApi } from '#/api';
 import { useAuthStore } from '#/store';
+import { syncSiteConfig } from '#/utils/site-config';
 
 defineOptions({ name: 'Login' });
 
@@ -29,6 +30,13 @@ const captchaInfo = ref<null | {
   width: number;
 }>(null);
 const pendingValues = ref<null | Recordable<any>>(null);
+
+onMounted(async () => {
+  const cfg = await syncSiteConfig();
+  if (cfg?.loginCaptcha) {
+    requireCaptcha.value = true;
+  }
+});
 
 const formSchema = computed((): VbenFormSchema[] => {
   return [

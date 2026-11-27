@@ -33,6 +33,7 @@ import {
 } from '#/api/system/config';
 import FileUpload from '#/components/common/upload/file-upload.vue';
 import { checkPermission } from '#/utils/access';
+import { syncSiteConfig } from '#/utils/site-config';
 
 const message = useMessage();
 const loading = ref<boolean>(false);
@@ -132,7 +133,8 @@ async function handleSave() {
 
     await systemConfigBatchSaveApi(payload);
     message.success($t('system.configSetting.saveSuccess') || '配置保存成功');
-    // 重新加载保证数据同步
+    // 同步站点基础配置（名称/Logo/备案号）并重新加载配置列表
+    void syncSiteConfig();
     await loadSettings();
   } catch (error: any) {
     message.error(error?.message || '配置保存失败');
