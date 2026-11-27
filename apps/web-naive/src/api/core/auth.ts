@@ -5,11 +5,26 @@ import { useAccessStore } from '@vben/stores';
 import { baseRequestClient, requestClient } from '#/api/request';
 
 export namespace AuthApi {
+  export interface CaptchaPoint {
+    x: number;
+    y: number;
+  }
+
+  export interface CaptchaResult {
+    captchaId: string;
+    captchaImage: string;
+    hintImage: string;
+    width: number;
+    height: number;
+    count: number;
+  }
+
   /** 登录接口参数 */
   export interface LoginParams {
     account?: string;
     password?: string;
-    captcha?: boolean;
+    captchaId?: string;
+    captchaPoints?: CaptchaPoint[];
     username?: string;
     rememberMe?: boolean;
   }
@@ -28,6 +43,13 @@ export namespace AuthApi {
     data: LoginResult;
     message: string;
   }
+}
+
+/**
+ * 获取点选验证码
+ */
+export async function getCaptchaApi() {
+  return requestClient.get<AuthApi.CaptchaResult>('/auth/captcha');
 }
 
 /**
