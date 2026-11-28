@@ -57,6 +57,29 @@ export namespace DevCrudApi {
     moduleName: string;
     menuPreserved: boolean;
   }
+
+  export interface ProjectPathsInfo {
+    backendPath: string;
+    frontendPath: string;
+    configured: boolean;
+    configFile: string;
+  }
+
+  export interface SaveProjectPathsParams {
+    backendPath: string;
+    frontendPath: string;
+  }
+
+  export interface DirItem {
+    name: string;
+    path: string;
+  }
+
+  export interface DirListResult {
+    currentPath: string;
+    parentPath: string;
+    dirs: DirItem[];
+  }
 }
 
 /**
@@ -168,4 +191,29 @@ export async function devCrudInferFieldApi(params: DevCrudInferFieldParams) {
     '/crud/infer-field',
     params,
   );
+}
+
+/**
+ * 获取当前代码生成器前后端项目路径配置
+ */
+export async function devCrudGetPathsApi() {
+  return requestClient.get<DevCrudApi.ProjectPathsInfo>('/crud/paths');
+}
+
+/**
+ * 保存代码生成器前后端项目路径到本地配置文件
+ */
+export async function devCrudSavePathsApi(
+  data: DevCrudApi.SaveProjectPathsParams,
+) {
+  return requestClient.post<DevCrudApi.ProjectPathsInfo>('/crud/paths', data);
+}
+
+/**
+ * 浏览服务端本机目录结构
+ */
+export async function devCrudListDirsApi(path?: string) {
+  return requestClient.get<DevCrudApi.DirListResult>('/crud/dirs', {
+    params: { path: path || '' },
+  });
 }
